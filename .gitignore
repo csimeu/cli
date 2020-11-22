@@ -1,0 +1,9 @@
+.project
+.buildpath
+.settings
+.vscode/
+*Thumbs.db
+
+**/_*/
+**/*_bck*
+**/*_backup*

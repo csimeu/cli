@@ -1,0 +1,487 @@
+#!/bin/bash
+# sed -i -e 's/\r$//' scriptname.sh
+
+AUTHOR=${AUTHOR}
+WWW=${WWW:-"/var/www"}
+WEB_HOME=${WEB_HOME:-"/var/www/html"}
+GITHUB_DOMAIN=${GITHUB_DOMAIN:-'https://github.com'}
+
+#!/bin/bash
+#
+
+function is_git_url()
+{
+    http_regex='(https?)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
+    ssh_regex='[-A-Za-z0-9_@/.]+:[-A-Za-z0-9\+&@#/%?=~_|!:,.;]'
+    path_regex='^/|(/[a-zA-Z0-9_-]+)+$'
+    string=$1
+    if [[ $string =~ $http_regex ]]
+    then 
+        true
+    elif  [[ $string =~ $ssh_regex ]]
+    then
+        true
+    elif  [[ $string =~ $path_regex ]]
+    then
+        true
+    else
+        false
+    fi
+}
+
+# Reads arguments options
+function parse_git_arguments()
+{
+  # if [ $# -ne 0 ]; then
+    TEMP=`getopt -o b::,r:: --long branch::,tag::,workspace-dir::,framework::,repo_url::,config-dir::,cache-dir::,logs-dir::,name::,repo::,team::,composer-update,workspace -n "$0" -- "$@"`
+    eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            # -e|--env) _env=${2:-"$_env"} ; shift 2 ;;
+            # -p|--path) _path=${2%"/"} ; shift 2 ;;
+            # -u|--user) _user=$2 ; shift 2 ;;
+            -b|--branch) _branch=${2:-"$_branch"}; shift 2 ;;
+            # --framework) _framework=${2:-"$_framework"}; shift 2 ;;
+            # --name) _name+=" ${2:-"$_name"}"; shift 2 ;;
+            -r|--repo) _repo+=" ${2:-"$_repo"}"; shift 2 ;;
+            # --repo_url) _repo_url=$2; shift 2 ;;
+            # --config-dir) _config_dir=$2; shift 2 ;;
+            # --cache-dir) _cache_dir=$2; shift 2 ;;
+            # --logs-dir) _logs_dir=$2; shift 2 ;;
+            # --team) _team=${2:-"$_team"}; shift 2 ;;
+            --composer-update) _composer=1; shift 1 ;;
+            # --workspace) _is_workspace=1; shift 1 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
+
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+
+  # fi
+}
+
+##
+## Retrieve repository name from git url
+function git_repo_name()
+{
+  set -e
+  if [ $# -ne 1 ]; then
+      echo "Invalid arguments! Usage: $0 git_repo_name  [repo_url]"
+      exit 1
+  fi
+  
+  local __repo=${1##*/}
+  echo "${__repo%%.*}"
+}
+
+
+# Clone git repository
+# usage: 
+# cpm git:clone git@github.com:csimeu/cpm.git /path/to/save --branch=v1.0 --composer-update
+# cpm git:clone csimeu/cpm /path/to/save --branch=v1.0 --composer-update --domain=github 
+# cpm git:clone --repo=csimeu/cpm -d /path/to/save
+# cpm git:clone --repo=csimeu/cpm --repo=csimeu/cpm --domain=github 
+function git_clone()
+{
+    set -e
+    local _params=
+    local _branch=
+    local _composer=
+    # local _is_workspace=0
+    # local _team=
+    local _path=
+    # local _repo=
+    # local _workspace_dir=
+
+    parse_git_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+    
+    local repo=$1
+    if [[ $repo =~ ^--(.*)$ ]]; then repo=; fi
+    if [[ -n "$_repo" ]]; then
+        repo=$_repo
+    else
+        shift 1
+    fi
+ 
+    local _pathdest=$1
+    if [[ $_pathdest =~ ^--(.*)$ ]]; then _pathdest=; fi
+    # if [ -n "$_path" ]; then
+    #     _pathdest=$_path
+    # fi
+
+    # if [[ -z "$repo" && -n "$_team" ]]; then
+    #     repo=${REPOS_LIST[$_team]}
+    # fi
+    
+    if [ -z "$repo" ]; then
+        echo "Invalid arguments! Usage: $0 [repo] <pathname> <--branch=v1.0>"
+        exit 1
+    fi
+    
+    _branch=${_branch:-'master'}
+    # if [ -n "$_branch" ]; then _params+="--branch=$_branch "; fi
+    if [ -n "$_env" ]; then _params+="--env=$_env "; fi
+    # if [ -n "$_workspace_dir" ]; then _params+="--workspace-dir=$_workspace_dir "; fi
+    if [[ $_composer == 1 ]] ; then _params+="--composer-update "; fi
+    # if [[ $_is_workspace == 1 ]] ; then _params+="--workspace "; fi
+    
+    # local _workspace_dir=
+    # if [[ -n "$_pathdest" ]]; then
+    #     mkdir -p $_pathdest
+    # fi
+
+    for repository in $repo
+    do
+        if ! is_git_url $repository
+        then
+            repository=$(gitlab_sshUrl $_team $repository)
+        fi
+        
+        # local _pathname=${_pathdest:-"."}/$(git_repo_name $repository)
+        echo 
+        echo "git clone $repository -b $_branch $_pathdest"
+        echo "########################################"
+        
+        git clone $repository -b $_branch $_pathdest
+        local _pathname=${_pathdest}
+        if [[ -n "$_pathdest" ]]; then
+            _pathname=./$(git_repo_name $repository)
+        fi
+        
+        if [[ $_composer == 1 ]] ; then  
+            echo "update composer $_pathname ...";
+            composer_update $_pathname $_params ;
+        fi
+    done
+}
+
+
+# Udapte a git repository branch or tag 
+# usage git_update  --branch=v1.0  </path> --composer-update
+function git_update()
+{
+  set -e
+  local _path=
+  local _branch=
+  local cmd=
+  local _composer=
+  local _latest=0
+  local _args=$@ 
+  # echo $_args
+  
+  local _parameters=
+  parse_arguments $@ 
+  set ${_parameters:-"."}
+
+  _path=${_path:-"$1"}
+  _path=${_path:-"."}
+
+  # is greater than
+  #if [ $# -gt 0 ] then 
+  if [ -n "$_path" ] 
+  then 
+    cd ${_path}
+  fi  
+  # echo "path $_path"
+
+  
+  if [[ $_latest == 1 || _branch == "latest" ]] ; then  
+    # echo 'Getting the most recent tag';
+    _branch=$(git describe);
+  fi
+
+  local current_branch=$(git branch | grep \* | cut -d ' ' -f2);
+  if [ -z "$current_branch" ]
+  then
+      echo failed
+      exit 1
+  fi
+
+  _branch=${_branch:-"$current_branch"};
+
+  # Check if tag exists
+  cmd="git tag | grep -w $_branch"
+  if eval $cmd ; 
+  then  
+    echo 'tag exists';
+    git tag -d "$_branch" ;
+    cmd="git branch | grep -w $_branch"
+    if eval $cmd ;  
+    then  
+      echo 'branch exist';
+      git checkout "master" && git branch -D "$_branch"
+    fi
+  fi
+
+  git fetch origin && git checkout "$_branch" ;
+
+  cmd="git tag | grep -w $_branch"
+  if eval $cmd ; 
+  then  
+    echo 'tag exists';
+    git checkout -b "$_branch" ;
+    
+  else
+    git pull origin $_branch;
+  fi
+
+  if [[ $_composer == 1 ]] ; then  
+    echo 'update composer';
+    composer_update $_args ;
+  fi
+  # composer_update $webapp_folder
+}
+
+
+# Checks existance of git repository 
+function git_exists()
+{
+    # set -e
+    if [ $# -eq 0 ]; then
+        echo "Invalid arguments! Usage: $0 git_exists [repo_url] "
+        exit 1
+    fi
+
+    GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git ls-remote $1 -q >/dev/null 2>&1
+    
+    echo $?
+}
+
+#!/bin/bash
+#
+
+
+function add_groups_usage()
+{
+    echo "Usage:"
+    echo "    ${cmd//_/:} [options] <console>"
+    echo ""
+    echo "Arguments:"
+    echo "  console                 The console: default=bin/console"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help              Display this help message"
+    echo "      --users             The path where saved orm mapping information"
+    echo "      --groups            The path where saved orm mapping information"
+    echo ""
+    echo "Help:"
+    echo "  The ${cmd//_/:} Ajouter des usagers dans des groupes"
+    # echo ""
+    # echo "  You have to limit generation of schema:"
+    # echo ""
+    # echo "  * To a single entity"
+    # echo ""
+    # echo "  $0 ${cmd//_/:} --name=User"
+    # echo ""
+    # echo "  * To a set of entities"
+    # echo ""
+    # echo "  $0 ${cmd//_/:} --name=User --name=Role"
+    echo ""
+}
+
+# bin/cpm build:dal --orm-path=$APP_ORM_DIR --path=.
+function add_groups() 
+{
+    set -e
+    local _HELP=0
+    local _USER=
+    local _USERS=
+    local _GROUP=
+    local _GROUPS=
+    local _PATH=
+    local _ENV=
+
+    local _parameters=
+    users_arguments_parser $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    if [[ -z "$_GROUPS" ]]; 
+    then
+        # echo "$_ORM_PATH:$_APP:$_entity_namespace!"
+        echo "Commande invalide!"
+        echo "    Required --group:              Group's name"
+        echo "    Required --groups:             Groups's name"
+        add_groups_usage
+        exit 1
+    fi
+
+    for group in $_GROUPS
+    do  
+        if ! grep -q "^${group}:" /etc/group
+        then
+            groupadd $group
+            echo "Group '$group' does not exist: group will create!"
+        fi
+        
+        for user in $_USERS
+        do  
+            # checks if user exit
+            if grep -q "^${user}:" /etc/passwd
+            then
+                usermod -aG $group ${user}
+            else
+                echo "User '$user' does not exist"
+            fi
+        done
+    done
+
+}
+    
+    
+#!/bin/bash
+#
+
+
+function add_users_usage()
+{
+    echo "Usage:"
+    echo "    ${cmd//_/:} [options] <console>"
+    echo ""
+    echo "Arguments:"
+    echo "  console                 The console: default=bin/console"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help              Display this help message"
+    echo "      --users             The path where saved orm mapping information"
+    echo "      --groups            The path where saved orm mapping information"
+    echo ""
+    echo "Help:"
+    echo "  The ${cmd//_/:} Ajouter des usagers dans des groupes"
+    # echo ""
+    # echo "  You have to limit generation of schema:"
+    # echo ""
+    # echo "  * To a single entity"
+    # echo ""
+    # echo "  $0 ${cmd//_/:} --name=User"
+    # echo ""
+    # echo "  * To a set of entities"
+    # echo ""
+    # echo "  $0 ${cmd//_/:} --name=User --name=Role"
+    echo ""
+}
+
+# bin/cpm build:dal --orm-path=$APP_ORM_DIR --path=.
+function add_users() 
+{
+    set -e
+    local _HELP=0
+    local _USER=
+    local _USERS=
+    local _GROUP=
+    local _GROUPS=
+    local _PATH=
+    local _ENV=
+
+    local _parameters=
+    users_arguments_parser $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    if [[ -z "$_USERS" ]]; 
+    then
+        # echo "$_ORM_PATH:$_APP:$_entity_namespace!"
+        echo "Commande invalide!"
+        echo "    Required --user:              Group's name"
+        echo "    Required --users:             Groups's name"
+        add_users_usage
+        exit 1
+    fi
+
+    for user in $_USERS
+    do  
+        if ! grep -q "^${user}:" /etc/passwd
+        then
+            useradd $group
+            echo "User '$user' does not exist,  user created!"
+        fi
+        
+        for group in $_GROUPS
+        do  
+            # checks if user exit
+            if ! grep -q "^${group}:" /etc/group
+            then
+                groupadd $group
+                echo "Group '$group' does not exist: group created!"                 
+            fi
+            usermod -aG $group ${user}
+        done
+    done
+
+}
+    
+    #!/bin/bash
+
+# Reads arguments options
+function users_arguments_parser()
+{
+  # if [ $# -ne 0 ]; then
+    TEMP=`getopt -o e::p::u::g:: --long env::,path::,user::,users::,group::groups:: -n "$0" -- "$@"`
+    eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            -h|--help) _HELP=1 ; shift 1 ;;
+            -u|--user) _USER=${2:-"$_USER"}; _USERS+="${_USER} ";  shift 2 ;;
+            --users) _USERS+="${2} ";  shift 2 ;;
+            -g|--group) _GROUP=${2:-"$_GROUP"}; _GROUPS+="${_GROUP} ";  shift 2 ;;
+            --groups) _GROUPS+="${2} ";  shift 2 ;;
+            -p|--path) _PATH=${2:-"$_PATH"} ;  shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
+
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
+#!/bin/bash
+#
+# Scripts cpm: Cen-R Package Manager
+#
+#   Emploi:     
+#
+##########   INSTANCE DE PRODUCTION  ##########
+#
+
+
+# Stop on first error [duplicate]
+set -e
+
+# source env_vars.sh
+# source cpm_funtions.sh
+# source git.sh
+# source cenr.sh
+# source files.sh
+# source dal.sh
+
+
+if [ $# -eq 0 ]; then
+    # Commande invalide
+    echo "Commande invalide!"
+    exit 1
+fi
+
+cmd=$1
+
+case "$cmd" in
+    "cc:dev")
+        shift
+        symfony_cc --env=dev $@
+        exit 0;
+        ;;
+    "cc" | "symfony:cc")
+        shift
+        symfony_cc $@
+        exit 0;
+        ;;
+    *)
+        cmd="${cmd//:/_}" 
+        shift
+        $cmd $@
+    ;;
+esac
