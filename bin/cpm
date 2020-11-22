@@ -440,6 +440,122 @@ function users_arguments_parser()
   # fi
 }
 #!/bin/bash
+
+# _VERSION=${1:-""}
+
+install_httpd() {
+    
+    sudo yum install -y httpd mod_ssl mod_wsgi mod_fcgid
+
+    sudo mkdir -p /etc/httpd/sites-enabled
+    sudo mkdir -p /etc/httpd/sites-availables
+    sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
+    
+
+sudo cat > /etc/httpd/sites-availables/php-fcgi.conf << EOF
+# Configure multiple php version
+ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
+AddHandler php-fcgi .php
+#Action php55-fcgi /cgi-bin/php55.fcgi
+#Action php56-fcgi /cgi-bin/php56.fcgi
+#Action php71-fcgi /cgi-bin/php71.fcgi
+#Action php72-fcgi /cgi-bin/php72.fcgi
+#Action php73-fcgi /cgi-bin/php73.fcgi
+#Action php74-fcgi /cgi-bin/php74.fcgi
+EOF
+
+if [[ "$(rpm -E %{rhel})" == "6"  ]];
+then
+    sudo chkconfig httpd on
+else 
+    sudo systemctl enable httpd --now
+fi
+
+}
+
+
+## detect if a script is being sourced or not
+if [[ $_ == $0 ]] then
+	install_httpd "$@"
+fi
+
+#!/bin/bash
+
+# Install a php
+
+# https://medium.com/@daniel.bui/multiple-php-version-with-apache-on-centos-7-17078c66692c
+
+
+
+
+function install_php() 
+{
+    set -e
+    local version="${1}"
+
+    sudo yum -y install php$version \
+		php$version-devel \
+		php$version-fpm \
+		php$version-mysql \
+		php$version-mssql \
+		php$version-pgsql \
+		php$version-odbc \
+		php$version-gd \
+		php$version-imap \
+		php$version-interbase \
+		php$version-intl \
+		php$version-mbstring \
+		php$version-mcrypt \
+		php$version-ldap \
+		php$version-xml \
+		php$version-xmlrpc \
+		php$version-soap \
+		php$version-pear \
+		php$version-process \
+		php$version-opcache \
+		php$version-pecl-geoip \
+		php$version-pecl-memcache \
+		php$version-pecl-memcached \
+		php$version-pecl-apcu \
+		php$version-pecl-apcu-devel \
+		php$version-pecl-igbinary \
+		php$version-pecl-mongodb \
+		php$version-pecl-redis \
+		php$version-pecl-xdebug \
+		php$version-pecl-imagick \
+		php$version-pecl-zip
+	
+	# Setting composer
+    if [ ! -f /usr/local/bin/composer ]
+    then 
+	    curl -sS https://getcomposer.org/installer | php$version && mv composer.phar /usr/local/bin/composer
+    fi
+
+	if [ -f /etc/httpd/conf.d/php$version-php.conf ]
+    then 
+	    mv /etc/httpd/conf.d/php$version-php.conf /etc/httpd/conf.d/php$version-php.conf.bck
+    fi
+
+    local _BIN_="/bin"
+
+    if [[ "$(rpm -E %{rhel})" == "6"  ]];
+    then
+        _BIN_="/usr/bin"
+    fi
+
+	if [ ! -f /var/www/cgi-bin/php$version.fcgi  ]
+    then 
+		echo "#!/bin/bash \n exec $_BIN_/php74-cgi"> /var/www/cgi-bin/php$version.fcgi
+    fi
+	
+	sudo chmod 755 /var/www/cgi-bin/*.fcgi
+}
+
+
+## detect if a script is being sourced or not
+if [[ $_ == $0 ]] then
+	install_httpd "$@"
+fi#!/bin/bash
 #
 # Scripts cpm: Cen-R Package Manager
 #
