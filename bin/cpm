@@ -479,7 +479,8 @@ fi
 
 
 ## detect if a script is being sourced or not
-if [[ $_ == $0 ]] then
+if [[ $_ == $0 ]] 
+then
 	install_httpd "$@"
 fi
 
@@ -557,9 +558,11 @@ function install_php()
 
 
 ## detect if a script is being sourced or not
-if [[ $_ == $0 ]] then
+if [[ $_ == $0 ]] 
+then
 	install_httpd "$@"
-fi#!/bin/bash
+fi
+#!/bin/bash
 #
 # Scripts cpm: Csimeu Package Manager
 #
@@ -603,7 +606,8 @@ _run_cpm() {
 }
 
 ## detect if a script is being sourced or not
-if [[ $_ == $0 ]] then
+if [[ $(basename $0) == 'cpm' ]]
+then
 	_run_cpm "$@"
 fi
 

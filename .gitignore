@@ -3,6 +3,7 @@
 .settings
 .vscode/
 *Thumbs.db
+.tests/
 
 **/_*/
 **/*_bck*

@@ -42,7 +42,8 @@ _run_cpm() {
 }
 
 ## detect if a script is being sourced or not
-if [[ $_ == $0 ]] then
+if [[ $(basename $0) == 'cpm' ]]
+then
 	_run_cpm "$@"
 fi
 

@@ -2,11 +2,9 @@
 #!/bin/bash
 
 # check to see if this file is being run or sourced from another script
-_is_sourced() {
-	# https://unix.stackexchange.com/a/215279
-	[ "${#FUNCNAME[@]}" -ge 2 ] \
-		&& [ "${FUNCNAME[0]}" = '_is_sourced' ] \
-		&& [ "${FUNCNAME[1]}" = 'source' ]
+is_sourced () {
+  [[ "${FUNCNAME[1]}" == "source" ]]  && return 0
+  return 1
 }
 
 # Checks if given string is an valid url

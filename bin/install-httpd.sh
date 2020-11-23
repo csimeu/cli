@@ -34,7 +34,8 @@ fi
 
 
 ## detect if a script is being sourced or not
-if [[ $_ == $0 ]] then
+if [[ $_ == $0 ]] 
+then
 	install_httpd "$@"
 fi
 
