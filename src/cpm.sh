@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Scripts cpm: Cen-R Package Manager
+# Scripts cpm: Csimeu Package Manager
 #
 #   Emploi:     
 #
@@ -9,38 +9,40 @@
 
 
 # Stop on first error [duplicate]
-set -e
-
-# source env_vars.sh
-# source cpm_funtions.sh
-# source git.sh
-# source cenr.sh
-# source files.sh
-# source dal.sh
 
 
-if [ $# -eq 0 ]; then
-    # Commande invalide
-    echo "Commande invalide!"
-    exit 1
+_run_cpm() {
+    set -e
+    if [ $# -eq 0 ]; then
+        # Commande invalide
+        echo "Commande invalide!"
+        exit 1
+    fi
+
+    cmd=$1
+
+    case "$cmd" in
+        "cc:dev")
+            shift
+            symfony_cc --env=dev $@
+            exit 0;
+            ;;
+        "cc" | "symfony:cc")
+            shift
+            symfony_cc $@
+            exit 0;
+            ;;
+        *)
+            cmd="${cmd//:/_}" 
+            shift
+            $cmd $@
+        ;;
+    esac
+
+}
+
+## detect if a script is being sourced or not
+if [[ $_ == $0 ]] then
+	_run_cpm "$@"
 fi
 
-cmd=$1
-
-case "$cmd" in
-    "cc:dev")
-        shift
-        symfony_cc --env=dev $@
-        exit 0;
-        ;;
-    "cc" | "symfony:cc")
-        shift
-        symfony_cc $@
-        exit 0;
-        ;;
-    *)
-        cmd="${cmd//:/_}" 
-        shift
-        $cmd $@
-    ;;
-esac

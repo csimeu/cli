@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 
-function is_git_url()
+is_git_url()
 {
     http_regex='(https?)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
     ssh_regex='[-A-Za-z0-9_@/.]+:[-A-Za-z0-9\+&@#/%?=~_|!:,.;]'
@@ -22,7 +22,7 @@ function is_git_url()
 }
 
 # Reads arguments options
-function parse_git_arguments()
+parse_git_arguments()
 {
   # if [ $# -ne 0 ]; then
     TEMP=`getopt -o b::,r:: --long branch::,tag::,workspace-dir::,framework::,repo_url::,config-dir::,cache-dir::,logs-dir::,name::,repo::,team::,composer-update,workspace -n "$0" -- "$@"`
@@ -55,9 +55,13 @@ function parse_git_arguments()
   # fi
 }
 
+git_branch() {
+    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+}
+
 ##
 ## Retrieve repository name from git url
-function git_repo_name()
+git_repo_name()
 {
   set -e
   if [ $# -ne 1 ]; then
@@ -76,7 +80,7 @@ function git_repo_name()
 # cpm git:clone csimeu/cpm /path/to/save --branch=v1.0 --composer-update --domain=github 
 # cpm git:clone --repo=csimeu/cpm -d /path/to/save
 # cpm git:clone --repo=csimeu/cpm --repo=csimeu/cpm --domain=github 
-function git_clone()
+git_clone()
 {
     set -e
     local _params=
@@ -154,7 +158,7 @@ function git_clone()
 
 # Udapte a git repository branch or tag 
 # usage git_update  --branch=v1.0  </path> --composer-update
-function git_update()
+git_update()
 {
   set -e
   local _path=
@@ -230,7 +234,7 @@ function git_update()
 
 
 # Checks existance of git repository 
-function git_exists()
+git_exists()
 {
     # set -e
     if [ $# -eq 0 ]; then
