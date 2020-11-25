@@ -58,6 +58,9 @@ fix bad interpreter: sed -i -e 's/\r$//' scriptname.sh
 ### Elasticsearch, logstach, Kibana
 
 ```bash
+# Mettre à jour le cpm
+cpm self-update
+
 # install elk
 cpm elk:install --version=7 --beats
 cpm elk:install:beats

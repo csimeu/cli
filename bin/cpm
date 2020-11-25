@@ -11,7 +11,7 @@ GITHUB_DOMAIN=${GITHUB_DOMAIN:-'https://github.com'}
 # Reads arguments options
 function parse_elk_arguments()
 {
-    local TEMP=`getopt --long version::,beats: -n "$0" -- "$@"`
+    local TEMP=`getopt -o p:: --long version::,beats:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
@@ -36,28 +36,28 @@ function parse_elk_arguments()
   # fi
 }
 
-
 elk_import_rpm() {
-    local _VERSION=${1:-"7"}
-    echo "[elasticsearch-${_VERSION}.x]" > /etc/yum.repos.d/elasticsearch.repo; \
-    echo "name=Elasticsearch repository for ${_VERSION}.x packages" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "baseurl=https://artifacts.elastic.co/packages/${_VERSION}.x/yum" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "gpgcheck=1" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "enabled=1" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "autorefresh=1" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "type=rpm-md" >> /etc/yum.repos.d/elasticsearch.repo
+    local version=$1
+    echo "[elasticsearch-${version}.x]" > /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "name=Elasticsearch repository for ${version}.x packages" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "baseurl=https://artifacts.elastic.co/packages/${version}.x/yum" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "gpgcheck=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "enabled=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "autorefresh=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "type=rpm-md" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo
     rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
 }
 
 elk_install_beats() {
-    sudo yum install -y filebeat auditbeat metricbeat packetbeat  heartbeat-elastic
+    sudo yum install -y filebeat auditbeat metricbeat packetbeat heartbeat-elastic
 }
 
 elk_install() {
     local version=7
     local _parameters=
     parse_elk_arguments $@ 
+    elk_import_rpm $version
     sudo yum -y install elasticsearch logstash kibana
 }
 
@@ -546,16 +546,10 @@ function mysql_install()
 	# mysqld --initialize-insecure --user=mysql; 
 }
 
-
-## detect if a script is being sourced or not
-# if [[ $_ == $0 ]] 
-# then
-#   mysql_install $1
-# fi
 #!/bin/bash
 
 
-install_beats() {
+node_install() {
     rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
 
     yum install -y mod_ssl nodejs npm yarn
@@ -576,8 +570,7 @@ install_beats() {
 
 
 
-
-function install_php() 
+function php_install()
 {
     set -e
     local version="${1}"
@@ -689,8 +682,8 @@ function psql_install()
 
     # Install postgresql 11  https://www.postgresql.org/download/linux/redhat/
     sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm \
-    && yum install -y postgresql$_version postgresql$_version-server postgresql$_version-devel postgis25_$_version \
-    && systemctl enable postgresql-$_version 
+    yum install -y postgresql$_version  postgresql$_version-libs postgresql$_version-server postgresql$_version-devel postgis25_$_version \
+    systemctl enable postgresql-$_version 
 
     # Configure postgresql server
     # /usr/pgsql-11/bin/postgresql-11-setup initdb
@@ -698,10 +691,80 @@ function psql_install()
 }
 #!/bin/bash
 
+# Install solr
+
+
+# Reads arguments options
+function parse_python_arguments()
+{
+  # if [ $# -ne 0 ]; then
+    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+    
+	eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
+            --data) data=${2%"/"} ; shift 2 ;;
+            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+            --version) version=${2:-"$version"}; shift 2 ;;
+            --port) port=${2:-"$port"}; shift 2 ;;
+            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+            # --port) port=${2:-"$port"}; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
+
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
+
+function python_install_requirements() 
+{
+    set -e
+    requirements=${1:-"requirements.txt"}
+    local _USE_PROXY
+    if [[ -n "$http_proxy" ]]; then
+        _USE_PROXY="--proxy $http_proxy";
+    fi
+
+    if [ -f $requirements ]; then
+        pip3 install ${PIP_USE_PROXY} $requirements
+    fi
+}
+
+
+function python_install() 
+{
+    set -e
+    local _USE_PROXY
+    if [[ -n "$http_proxy" ]]; then
+        _USE_PROXY="--proxy $http_proxy";
+    fi
+
+    pip3 install ${PIP_USE_PROXY} $@
+}
+
+
+# if [ ! $# -eq 0 ]; 
+# then
+#   install_solr $@
+# fi
+#!/bin/bash
+
 redis_install() {
-    yum install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
-    yum-config-manager --enable remi 
-    yum -y install redis
+    if [ ! -f /etc/yum.repo.d/remi.repo ] then
+        sudo yum install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    fi
+    sudo yum-config-manager --enable remi 
+    sudo yum -y install redis
 }
 
 #!/bin/bash
@@ -779,7 +842,7 @@ function solr_install()
     rm -rf solr-"$version".tgz install_solr_service.sh
 
     # echo 2
-    curl -fSL http://archive.apache.org/dist/lucene/solr/$version/solr-$version.tgz -o solr-$version.tgz
+    curl -fSL https://archive.apache.org/dist/lucene/solr/$version/solr-$version.tgz -o solr-$version.tgz
 
     #
     mkdir -p ${data} $INSTALL_DIR \
