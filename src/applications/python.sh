@@ -1,7 +1,10 @@
 #!/bin/bash
 
+# Install solr
+
+
 # Reads arguments options
-function parse_postgresql_arguments()
+function parse_python_arguments()
 {
   # if [ $# -ne 0 ]; then
     local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
@@ -10,9 +13,10 @@ function parse_postgresql_arguments()
     # extract options and their arguments into variables.
     while true ; do
         case "$1" in
+            --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
             --data) data=${2%"/"} ; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) _version=${2:-"$_version"}; shift 2 ;;
+            --version) version=${2:-"$version"}; shift 2 ;;
             --port) port=${2:-"$port"}; shift 2 ;;
             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
@@ -31,20 +35,34 @@ function parse_postgresql_arguments()
   # fi
 }
 
-function psql_install() 
+function python_install_requirements() 
 {
     set -e
-    local _version="${1:-"11"}"
-    local _parameters=
-    parse_postgresql_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
+    requirements=${1:-"requirements.txt"}
+    local _USE_PROXY
+    if [[ -n "$http_proxy" ]]; then
+        _USE_PROXY="--proxy $http_proxy";
+    fi
 
-    # Install postgresql 11  https://www.postgresql.org/download/linux/redhat/
-    sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm \
-    yum install -y postgresql$_version  postgresql$_version-libs postgresql$_version-server postgresql$_version-devel postgis25_$_version \
-    systemctl enable postgresql-$_version 
-
-    # Configure postgresql server
-    # /usr/pgsql-11/bin/postgresql-11-setup initdb
-
+    if [ -f $requirements ]; then
+        pip3 install ${PIP_USE_PROXY} $requirements
+    fi
 }
+
+
+function python_install() 
+{
+    set -e
+    local _USE_PROXY
+    if [[ -n "$http_proxy" ]]; then
+        _USE_PROXY="--proxy $http_proxy";
+    fi
+
+    pip3 install ${PIP_USE_PROXY} $@
+}
+
+
+# if [ ! $# -eq 0 ]; 
+# then
+#   install_solr $@
+# fi

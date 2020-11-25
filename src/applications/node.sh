@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-install_beats() {
+node_install() {
     rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
 
     yum install -y mod_ssl nodejs npm yarn

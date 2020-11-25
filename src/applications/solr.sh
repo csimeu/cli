@@ -73,7 +73,7 @@ function solr_install()
     rm -rf solr-"$version".tgz install_solr_service.sh
 
     # echo 2
-    curl -fSL http://archive.apache.org/dist/lucene/solr/$version/solr-$version.tgz -o solr-$version.tgz
+    curl -fSL https://archive.apache.org/dist/lucene/solr/$version/solr-$version.tgz -o solr-$version.tgz
 
     #
     mkdir -p ${data} $INSTALL_DIR \

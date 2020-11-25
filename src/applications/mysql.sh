@@ -28,9 +28,3 @@ function mysql_install()
 	# mysqld --initialize-insecure --user=mysql; 
 }
 
-
-## detect if a script is being sourced or not
-# if [[ $_ == $0 ]] 
-# then
-#   mysql_install $1
-# fi

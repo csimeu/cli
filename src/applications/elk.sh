@@ -3,7 +3,7 @@
 # Reads arguments options
 function parse_elk_arguments()
 {
-    local TEMP=`getopt --long version::,beats: -n "$0" -- "$@"`
+    local TEMP=`getopt -o p:: --long version::,beats:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
@@ -28,28 +28,28 @@ function parse_elk_arguments()
   # fi
 }
 
-
 elk_import_rpm() {
-    local _VERSION=${1:-"7"}
-    echo "[elasticsearch-${_VERSION}.x]" > /etc/yum.repos.d/elasticsearch.repo; \
-    echo "name=Elasticsearch repository for ${_VERSION}.x packages" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "baseurl=https://artifacts.elastic.co/packages/${_VERSION}.x/yum" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "gpgcheck=1" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "enabled=1" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "autorefresh=1" >> /etc/yum.repos.d/elasticsearch.repo; \
-    echo "type=rpm-md" >> /etc/yum.repos.d/elasticsearch.repo
+    local version=$1
+    echo "[elasticsearch-${version}.x]" > /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "name=Elasticsearch repository for ${version}.x packages" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "baseurl=https://artifacts.elastic.co/packages/${version}.x/yum" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "gpgcheck=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "enabled=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "autorefresh=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
+    echo "type=rpm-md" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo
     rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
 }
 
 elk_install_beats() {
-    sudo yum install -y filebeat auditbeat metricbeat packetbeat  heartbeat-elastic
+    sudo yum install -y filebeat auditbeat metricbeat packetbeat heartbeat-elastic
 }
 
 elk_install() {
     local version=7
     local _parameters=
     parse_elk_arguments $@ 
+    elk_import_rpm $version
     sudo yum -y install elasticsearch logstash kibana
 }
 

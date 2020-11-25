@@ -6,8 +6,7 @@
 
 
 
-
-function install_php() 
+function php_install()
 {
     set -e
     local version="${1}"
