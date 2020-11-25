@@ -21,7 +21,7 @@ GIT_DOMAIN=${GIT_DOMAIN:-"github.com"}
 - Retrieve repository name from git url `cpm git:repo:name [git_remote]`
 
 ```bash
-cpm git:repo:name https://github.com/csimeu/cpm.git
+cpm git:repo:name https://github.com/csimeu/cli.git
 cpm git:repo:name git@github.com:csimeu/cpm.git
 cpm git:repo:name /csimeu/cpm.git
 ```
@@ -52,3 +52,19 @@ fix bad interpreter: sed -i -e 's/\r$//' scriptname.sh
 
     /workplace/infra/bash/build_cpm /workplace/infra/bash/src/ /workplace/infra/bash/cpm
 
+
+## Applications
+
+### Elasticsearch, logstach, Kibana
+
+```bash
+# install elk
+cpm elk:install --version=7 --beats
+cpm elk:install:beats
+
+# httpd
+cpm httpd:install
+```
+
+```bash
+```

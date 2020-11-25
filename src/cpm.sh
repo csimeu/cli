@@ -10,6 +10,13 @@
 
 # Stop on first error [duplicate]
 
+_home() {
+    echo ${0/cpm/..}
+}
+
+_self_update() {
+    cd `_home` && git pull origin master
+}
 
 _run_cpm() {
     set -e
@@ -30,6 +37,11 @@ _run_cpm() {
         "cc" | "symfony:cc")
             shift
             symfony_cc $@
+            exit 0;
+            ;;
+        "self-update")
+            shift
+            _self_update $@
             exit 0;
             ;;
         *)

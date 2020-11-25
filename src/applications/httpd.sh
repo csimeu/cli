@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# _VERSION=${1:-""}
 
-install_httpd() {
+httpd_install() {
     
     sudo yum install -y httpd mod_ssl mod_wsgi mod_fcgid
 
@@ -34,8 +33,8 @@ fi
 
 
 ## detect if a script is being sourced or not
-if [[ $_ == $0 ]] 
-then
-	install_httpd "$@"
-fi
+# if [[ $_ == $0 ]] 
+# then
+# 	httpd_install "$@"
+# fi
 
