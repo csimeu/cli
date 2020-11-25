@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function add_user_usage()
+function user_usage()
 {
     echo "Usage:"
     echo "    ${cmd//_/:} [options] <username>"
@@ -12,8 +12,9 @@ function add_user_usage()
     echo "  -h, --help              Display this help message"
     echo "      --uid               User ID"
     echo "      --gid               User's group ID"
+    echo "      --home              User's home "
     echo "      --password          User's password"
-    echo "      --groups            Sets groups to user"
+    echo "      --group            Sets groups to user"
     echo "  -f, --update            Update user if already exist"
     echo ""
     echo "Help:"
@@ -24,53 +25,83 @@ function add_user_usage()
     echo ""
 }
 
-# # 
-# function add_user() 
-# {
-#     set -e
-#     local _HELP=0
-#     local _USER=
-#     local _USERS=
-#     local _GROUP=
-#     local _GROUPS=
-#     local _PATH=
-#     local _ENV=
+# Reads arguments options
+function parse_user_arguments()
+{
+  # if [ $# -ne 0 ]; then
+    local TEMP=`getopt -o p:: --long help::,uid::,gid::,home::,group:: -n "$0" -- "$@"`
+    
+	eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            --uid) uid="-u ${2}" ; shift 2 ;;
+            --gid) gid="-g ${2}" ; shift 2 ;;
+            --home) home="-d ${2}" ; shift 2 ;;
+            --group) groups+="${2} "; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
 
-#     local _parameters=
-#     users_arguments_parser $@ 
-#     if [ -n "$_parameters" ]; then set $_parameters; fi
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+}
 
-#     if [[ -z "$_USERS" ]]; 
-#     then
-#         # echo "$_ORM_PATH:$_APP:$_entity_namespace!"
-#         echo "Commande invalide!"
-#         echo "    Required --user:              Group's name"
-#         echo "    Required --users:             Groups's name"
-#         add_users_usage
-#         exit 1
-#     fi
+# 
+function useradd() 
+{
+    set -e
+    local help=0
+    local home=
+    local uid=
+    local gid=
+    local groups=
+
+    local _parameters=
+    parse_user_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    username=$1
+
+    if [[ -z "$username" ]]; 
+    then
+        echo "Commande invalide!"
+        echo "    Required username"
+        user_usage
+        exit 1
+    fi
+
+    
+    if [ ! $(getent group ${username}) ]; then 
+        groupadd $gid ${username};
+    # else
+    #     groupmod -g $USER_UID ${username};
+    fi
+
+
+    if ! getent passwd ${username} > /dev/null 2>&1; then
+        useradd $uid -g ${username} $home ${username};
+    else
+        usermod $uid -g ${username} ${username};
+    fi
+    
+    for group in $groups
+    do  
+        # checks if user exit
+        if ! $(getent group ${group})
+        then
+            groupadd $group
+            # echo "Group '$group' does not exist: group created!"                 
+        fi
+        usermod -aG $group ${username}
+    done
 
 #     for user in $_USERS
 #     do  
-#         if ! grep -q "^${user}:" /etc/passwd
-#         then
-#             useradd $group
-#             echo "User '$user' does not exist,  user created!"
-#         fi
-        
-#         for group in $_GROUPS
-#         do  
-#             # checks if user exit
-#             if ! grep -q "^${group}:" /etc/group
-#             then
-#                 groupadd $group
-#                 echo "Group '$group' does not exist: group created!"                 
-#             fi
-#             usermod -aG $group ${user}
-#         done
 #     done
 
-# }
+}
     
     
 # # Configuration des comptes administrateurs
