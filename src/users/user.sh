@@ -29,7 +29,7 @@ function user_usage()
 function parse_user_arguments()
 {
   # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long help::,uid::,gid::,home::,group:: -n "$0" -- "$@"`
+    local TEMP=`getopt -o p:: --long help::,uid::,gid::,home::,group::,password -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
@@ -38,6 +38,7 @@ function parse_user_arguments()
             --uid) uid="-u ${2}" ; shift 2 ;;
             --gid) gid="-g ${2}" ; shift 2 ;;
             --home) home="-d ${2}" ; shift 2 ;;
+            --password) password="${2}" ; shift 2 ;;
             --group) groups+="${2} "; shift 2 ;;
             --) shift ; break ;;
             *) echo "Internal error! $1" ; exit 1 ;;
@@ -56,6 +57,7 @@ function useradd()
     local home=
     local uid=
     local gid=
+    local password=
     local groups=
 
     local _parameters=
@@ -97,10 +99,66 @@ function useradd()
         usermod -aG $group ${username}
     done
 
+    if [ -n "$password" ]; then
+        echo "${password}" | passwd $username --stdin 
+    fi
 #     for user in $_USERS
 #     do  
 #     done
 
+}
+
+# 
+function usermod() 
+{
+    set -e
+    local help=0
+    local home=
+    local uid=
+    local gid=
+    local password=
+    local groups=
+
+    local _parameters=
+    parse_user_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    username=$1
+
+    if [[ -z "$username" ]]; 
+    then
+        echo "Commande invalide!"
+        echo "    Required username"
+        user_usage
+        exit 1
+    fi
+    
+    if getent passwd ${username} > /dev/null 2>&1; then
+        echo "Commande invalide!"
+        echo "    user '$username' not found"
+        exit 1
+    fi
+
+    if [ -n "$uid" ] ; then
+        usermod $uid ${username};
+    fi
+    if [ -n "$gid" ] ; then
+        usermod $gid ${username};
+    fi
+    
+    for group in $groups
+    do  
+        # checks if user exit
+        if ! $(getent group ${group})
+        then
+            groupadd $group               
+        fi
+        usermod -aG $group ${username}
+    done
+
+    if [ -n "$password" ]; then
+        echo "${password}" | passwd $username --stdin 
+    fi
 }
     
     
