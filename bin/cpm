@@ -6,6 +6,88 @@ WWW=${WWW:-"/var/www"}
 WEB_HOME=${WEB_HOME:-"/var/www/html"}
 GITHUB_DOMAIN=${GITHUB_DOMAIN:-'https://github.com'}
 
+
+
+# Reads arguments options
+function read_application_arguments()
+{
+    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home::install-dir:: -n "$0" -- "$@"`
+    
+	eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            --data) data=${2%"/"} ; shift 2 ;;
+            --name) name=${2} ; shift 2 ;;
+            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+            --version) version=${2:-"$version"}; shift 2 ;;
+            --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
+            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+            --install-dir) install_dir=${2:-"$install_dir"}; shift 2 ;;
+            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+            # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
+
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
+#!/bin/bash
+
+# Install blazegraph
+
+
+function blazegraph_install() 
+{
+    set -e
+    local version=2.1.5
+    local data=
+    local name=
+    local catalina_home=/usr/share/tomcat
+    local blazegraph_config=
+    local file_config=
+    # echo $@
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    if ! getent passwd tomcat > /dev/null 2>&1; then
+        tomcat_install
+    fi
+
+    # https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
+    cd /tmp
+    wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_2_1_5/blazegraph.war
+    mv blazegraph.war $catalina_home/webapps/
+
+
+    # # Configure
+    # # data=${data:-"$1"}
+    # data=${data:-"/var/lib/blazegraph"}
+    # data=${data%"/"} 
+
+    # wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_2_1_5/blazegraph.rpm
+    # sudo yum localinstall blazegraph.rpm
+    # ln -s /etc/alternatives/jre  /usr/lib/jvm/default-java
+
+    # mkdir -p /etc/blazegraph/
+    # chown tomcat:tomcat -R /etc/blazegraph/
+}
+
+## detect if a script is being sourced or not
+if [[ $_ == $0 ]] 
+then
+  blazegraph_install $@
+fi
+
 #!/bin/bash
 
 # Reads arguments options
@@ -76,60 +158,65 @@ elk_install() {
 # Install fedora commons repository
 
 
-# Reads arguments options
-function parse_fcrepo_arguments()
-{
-  # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file:: -n "$0" -- "$@"`
+# # Reads arguments options
+# function parse_fcrepo_arguments()
+# {
+#   # if [ $# -ne 0 ]; then
+#     local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file:: -n "$0" -- "$@"`
+#     local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home:: -n "$0" -- "$@"`
     
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --data) data=${2%"/"} ; shift 2 ;;
-            --name) name=${2} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) version=${2:-"$version"}; shift 2 ;;
-            # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
+# 	eval set -- "$TEMP"
+#     # extract options and their arguments into variables.
+#     while true ; do
+#         case "$1" in
+#             --data) data=${2%"/"} ; shift 2 ;;
+#             --name) name=${2} ; shift 2 ;;
+#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+#             --version) version=${2:-"$version"}; shift 2 ;;
+#             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
+#             # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
+#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+#             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+#             # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+#             # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+#             # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+#             # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
+#             --) shift ; break ;;
+#             *) echo "Internal error! $1" ; exit 1 ;;
+#         esac
+#     done
 
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
+#     shift $(expr $OPTIND - 1 )
+#     _parameters=$@
     
-  # fi
-}
+#   # fi
+# }
 
 function fcrepo_install() 
 {
     set -e
     local version=4.7.5
-    local data=
-    local name=
-    local catalina_home=/usr/share/tomcat
+    local data=/var/lib/fcrepo
+    local name=fcrepo
+    local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
     # local DB_PASSWORD=
     # local DB_HOST=localhost
     # local DB_PORT=3306
     local fcrepo_config=
     local file_config=
     # echo $@
+
     local _parameters=
-    parse_fcrepo_arguments $@ 
+    read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
-    # data=${data:-"$1"}
-    data=${data:-"/var/lib/fcrepo"}
-    data=${data%"/"} 
+
+    # name=${name:-"fcrepo-$version"}
+    # # data=${data:-"$1"}
+    # data=${data:-"/var/lib/$name"}
+    # data=${data%"/"} 
 
     if ! getent passwd tomcat > /dev/null 2>&1; then
-        install-tomcat.sh .
+        tomcat_install
     fi
 
     # ENV PATH $CATALINA_HOME/bin:$PATH
@@ -154,10 +241,12 @@ function fcrepo_install()
     local ModeshapeConfig=file-simple
     local JDBCConfig=
   # ARG FCREPO_DIR=${APP_DIR}/fcrepo
-    sudo mkdir -p "${data}" && sudo chown tomcat:tomcat -R ${data} \
-    && sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}' -Dfcrepo.audit.container=/audit"' >> /etc/tomcat/tomcat.conf \
-    && sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}"/webapps/${name:-"fcrepo-$version"}.war
+    sudo mkdir -p "${data}" && sudo chown tomcat:tomcat -R ${data} 
+    sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}' -Dfcrepo.audit.container=/audit"' >> /etc/tomcat/tomcat.conf \
+    sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}"/webapps/${name:-"fcrepo-$version"}.war
 
+    sudo mkdir -p /etc/$name
+    sudo chown tomcat:tomcat /etc/$name
 }
 
 ## detect if a script is being sourced or not
@@ -166,6 +255,31 @@ then
   fcrepo_install $@
 fi
 
+#!/bin/bash
+
+
+
+fuseki_install() {
+    
+    local name=fuseki
+    local data=
+    local version=3.14.0
+    local install_dir=/usr/share
+    local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+
+    curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o apache-jena-fuseki-$version.tar.gz
+    tar -xzf apache-jena-fuseki-"$version".tar.gz -C "${_INSTALL_DIR}"
+    cp -f "${INSTALL_DIR}/apache-jena-fuseki-${version}/fuseki.war" "${catalina_home}/webapps/$name"
+
+
+    mkdir -p /etc/$name/configuration
+    chown tomcat:tomcat -R /etc/$name
+}
 #!/bin/bash
 #
 
@@ -456,6 +570,96 @@ fi
 
 #!/bin/bash
 
+function keycloak_install() 
+{
+    set -e
+
+    local version=8.0.1
+    # local data=/var/li/fcrepo
+    local name=fcrepo
+    local install_dir=/usr/share
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    local KEYCLOAK_HOME=${install_dir}/keycloak
+
+    # _PORT=${3:-"8088"}
+
+    ## Install keycloak
+    # https://blog.ineat-conseil.fr/2017/11/securisez-vos-apis-spring-avec-keycloak-1-installation-de-keycloak/
+    # https://medium.com/@hasnat.saeed/setup-keycloak-server-on-ubuntu-18-04-ed8c7c79a2d9
+    mkdir -p $KEYCLOAK_HOME;
+    curl -fSL https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz -o keycloak-${version}.tar.gz;
+    tar -xzf keycloak-${version}.tar.gz -C $KEYCLOAK_HOME --strip-components=1;
+
+
+    useradd -s /bin/false -r -d $KEYCLOAK_HOME keycloak;
+    chown -R keycloak:keycloak $KEYCLOAK_HOME;
+    chmod g+wr $KEYCLOAK_HOME
+    chmod o+x $KEYCLOAK_HOME/bin/
+
+    if [[ -n "$USER_ADMIN" ]]; then sudo usermod -aG keycloak $USER_ADMIN; fi
+
+    mkdir -p $KEYCLOAK_HOME/modules/org/postgresql/main
+    curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o $KEYCLOAK_HOME/modules/org/postgresql/main/postgresql-42.2.5.jar
+echo '<?xml version="1.0" ?>
+<module xmlns="urn:jboss:module:1.3" name="org.postgresql">
+    <resources>
+        <resource-root path="postgresql-42.2.5.jar"/>
+    </resources>
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+    </dependencies>
+</module>' > $KEYCLOAK_HOME/modules/org/postgresql/main/module.xml
+
+    # curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o $KEYCLOAK_HOME/postgresql-42.2.5.jar
+    # $KEYCLOAK_HOME/bin/jboss-cli.sh -c "module add --name=org.postgresql  --dependencies=javax.api,javax.transaction.api --resources=postgresql-42.2.5.jar"
+
+
+    curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/mysql-connector-java-5.1.47.tar.gz
+    tar -xzf /tmp/mysql-connector-java-5.1.47.tar.gz mysql-connector-java-5.1.47/mysql-connector-java-5.1.47.jar --strip-components=1
+    cp -f mysql-connector-java-5.1.47.jar $KEYCLOAK_HOME
+    # $KEYCLOAK_HOME/bin/jboss-cli.sh -c "module add --name=org.mysql  --dependencies=javax.api,javax.transaction.api --resources=mysql-connector-java-5.1.47.jar"
+
+
+    mkdir -p /etc/keycloak;
+    cp -f $KEYCLOAK_HOME/docs/contrib/scripts/systemd/wildfly.conf /etc/keycloak/keycloak.conf;
+    cp -f $KEYCLOAK_HOME/docs/contrib/scripts/systemd/launch.sh $KEYCLOAK_HOME/bin/
+    sed -i -e "s|/opt/wildfly|$KEYCLOAK_HOME|" $KEYCLOAK_HOME/bin/launch.sh;
+    sed -i -e "s|standalone.sh.*|standalone.sh -c \$2 -b \$3 -Djboss.socket.binding.port-offset=100 |" $KEYCLOAK_HOME/bin/launch.sh;
+    chown -R keycloak:keycloak /etc/keycloak
+
+#  $WILDFLY_MODE $WILDFLY_CONFIG $WILDFLY_BIND
+# /usr/share/keycloak/bin/standalone.sh -c standalone.xml -b 0.0.0.0 -Djboss.socket.binding.port-offset=100
+
+if [[ ! -f /etc/systemd/system/keycloak.service ]]; then
+echo "
+[Unit]
+Description=The Keycloak Server
+After=syslog.target network.target tomcat.target
+Before=httpd.service
+
+[Service]
+Environment=LAUNCH_JBOSS_IN_BACKGROUND=1
+EnvironmentFile=/etc/keycloak/keycloak.conf
+User=keycloak
+LimitNOFILE=102642
+PIDFile=$KEYCLOAK_HOME/keycloak.pid
+ExecStart=$KEYCLOAK_HOME/bin/launch.sh \$WILDFLY_MODE \$WILDFLY_CONFIG \$WILDFLY_BIND
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target
+" > /etc/systemd/system/keycloak.service
+fi
+
+    $KEYCLOAK_HOME/bin/add-user-keycloak.sh -u admin -p admin -r master
+}
+#!/bin/bash
+
 # https://www.thegeekstuff.com/2015/01/openldap-linux/
 # https://www.itzgeek.com/how-tos/linux/centos-how-tos/step-step-openldap-server-configuration-centos-7-rhel-7.html
 # https://community.cloudera.com/t5/Community-Articles/How-to-setup-OpenLDAP-2-4-on-CentOS-7/ta-p/249263
@@ -518,6 +722,19 @@ function mariadb_install()
 # fi
 #!/bin/bash
 
+mongodb_install() {
+    echo "[MongoDB]" > /etc/yum.repos.d/mongodb.repo; \
+    echo "name=MongoDB Repository" >> /etc/yum.repos.d/mongodb.repo; \
+    echo "baseurl=http://repo.mongodb.org/yum/redhat/7/mongodb-org/4.2/x86_64/" >> /etc/yum.repos.d/mongodb.repo; \
+    echo "gpgcheck=1" >> /etc/yum.repos.d/mongodb.repo; \
+    echo "enabled=1" >> /etc/yum.repos.d/mongodb.repo; \
+    echo "gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc" >> /etc/yum.repos.d/mongodb.repo;
+
+    yum install -y mongodb-org
+    systemctl unmask mongodb
+}
+#!/bin/bash
+
 # Install a httpd
 
 function mysql_install() 
@@ -546,6 +763,21 @@ function mysql_install()
 	# mysqld --initialize-insecure --user=mysql; 
 }
 
+#!/bin/bash
+
+
+nexcloud_install() {
+    _VERSION=${1:-"latest"}
+    _DESTINATION=${2:-"/var/www"}
+    # Download
+    cd $_DESTINATION && \
+    curl -fSL https://download.nextcloud.com/server/releases/$_VERSION.tar.bz2  -o nextcloud-$_VERSION.tar.bz2 && \
+    tar -jxf nextcloud-$_VERSION.tar.bz2  # Extract files
+
+    #  Create nextcloud data folder
+    mkdir $_DESTINATION/nextcloud/data
+    chown -R apache:apache $_DESTINATION/nextcloud/
+}
 #!/bin/bash
 
 
@@ -852,7 +1084,7 @@ function python_install()
 #!/bin/bash
 
 redis_install() {
-    if [ ! -f /etc/yum.repo.d/remi.repo ]; then
+    if [ ! -f /etc/yum.repos.d/remi.repo ]; then
         sudo yum install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
     fi
     sudo yum-config-manager --enable remi 
@@ -956,7 +1188,7 @@ function solr_install()
     # && chown :"${GROUP_ADMIN}" -R /etc/default/ && chmod g+w -R /etc/default \
     # && usermod solr -g "${GROUP_ADMIN}" \
     # && systemctl enable solr 
-    rm -rf solr-"$version".tgz install_solr_service.sh && chown solr:solr -R "${INSTALL_DIR}" ${data}
+    rm -rf solr-"$version".tgz install_solr_service.sh && chown solr:solr -R "${INSTALL_DIR}/solr" ${data}
 
 
     # if [[ -n "$GROUP_ADMIN" ]]; then
@@ -1033,19 +1265,37 @@ function tomcat_install()
   
 	if [[ -n "$file_config" ]]
 	then
-    sudo rm -f /etc/tomcat/tomcat.conf.old
-    sudo mv /etc/tomcat/tomcat.conf /etc/tomcat/tomcat.conf.old
-    sudo mv  $file_config /etc/tomcat/tomcat.conf
+        sudo rm -f /etc/tomcat/tomcat.conf.old
+        sudo mv /etc/tomcat/tomcat.conf /etc/tomcat/tomcat.conf.old
+        sudo mv  $file_config /etc/tomcat/tomcat.conf
 	fi
   
 	if [[ -n "$users_config" ]]
 	then
-    sudo rm -f /etc/tomcat/tomcat-users.xml.old
-    sudo mv /etc/tomcat/tomcat-users.xml /etc/tomcat/tomcat-users.xml.old
-    sudo mv  $users_config /etc/tomcat/tomcat-users.xml
+        sudo rm -f /etc/tomcat/tomcat-users.xml.old
+        sudo mv /etc/tomcat/tomcat-users.xml /etc/tomcat/tomcat-users.xml.old
+        sudo mv  $users_config /etc/tomcat/tomcat-users.xml
 	fi
+    
+    echo "CATALINA_HOME=/usr/share/tomcat" >> /etc/profile.d/environnments.sh
 }
 
+
+function tomcat_make_install() 
+{
+    #https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
+    groupadd tomcat
+    mkdir /opt/tomcat
+    useradd -g tomcat -d /opt/tomcat -s /bin/nologin tomcat
+
+    cd /tmp
+    wget [link to the Tomcat 7.0.90 tar.gz file]
+    tar -zxvf apache-tomcat-7.0.90.tar.gz
+    mv apache-tomcat-7.0.90/* /opt/tomcat
+    chown -R tomcat:tomcat /opt/tomcat/
+    
+    echo "CATALINA_HOME=/opt/tomcat" >> /etc/profile.d/environnments.sh
+}
 
 # if [ ! $# -eq 0 ]; 
 # then
@@ -1138,6 +1388,56 @@ function wordpress_install()
 # then
 #   install_wordpress $@
 # fi
+#!/bin/bash
+
+
+wso2_install() {
+    _VERSION=${1:-"5.7.0"}
+    _INSTALL_DIR=${2:-"/usr/share"}
+
+    curl -fSL https://bintray.com/wso2/rpm/rpm -o /etc/yum.repos.d/bintray-wso2-rpm.repo
+    yum install -y wso2is-$_VERSION
+
+    _WSO2_DIR=/usr/lib64/wso2/wso2is/$_VERSION
+    _WSO2_HOME=/usr/lib64/wso2
+
+    if [[ -n "${_INSTALL_DIR}" && ! -d ${_INSTALL_DIR}/wso2 && ! -L ${_INSTALL_DIR}/wso2  ]]; then
+        ln -s $_WSO2_DIR ${_INSTALL_DIR}/wso2
+    fi
+
+    if ! getent passwd wso2 > /dev/null 2>&1; then
+        useradd -r -d ${_WSO2_HOME}/ wso2
+    fi
+
+    chown -R wso2:wso2 ${_WSO2_HOME}
+
+if [[ ! -f /etc/systemd/system/wso2.service ]]; then
+echo "
+[Unit]
+Description=WSO2 server identity provider
+After=syslog.target network.target
+
+[Service]
+Type=forking
+Environment=JAVA_HOME=/usr/lib/jvm/jre
+Environment=CARBON_HOME=${_WSO2_DIR}
+PermissionsStartOnly=true
+PIDFile=${_WSO2_DIR}/wso2carbon.pid
+
+ExecStart=${_WSO2_DIR}/bin/wso2server.sh start
+ExecStop=${_WSO2_DIR}/bin/wso2server.sh stop
+
+TimeoutStartSec=30s
+Restart=on-failure
+RestartSec=10s
+RemainAfterExit=yes
+
+User=wso2
+[Install]
+WantedBy=multi-user.target
+" > /etc/systemd/system/wso2.service
+fi
+}
 
 #!/bin/bash
 #

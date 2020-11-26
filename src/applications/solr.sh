@@ -95,7 +95,7 @@ function solr_install()
     # && chown :"${GROUP_ADMIN}" -R /etc/default/ && chmod g+w -R /etc/default \
     # && usermod solr -g "${GROUP_ADMIN}" \
     # && systemctl enable solr 
-    rm -rf solr-"$version".tgz install_solr_service.sh && chown solr:solr -R "${INSTALL_DIR}" ${data}
+    rm -rf solr-"$version".tgz install_solr_service.sh && chown solr:solr -R "${INSTALL_DIR}/solr" ${data}
 
 
     # if [[ -n "$GROUP_ADMIN" ]]; then

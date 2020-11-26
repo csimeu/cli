@@ -62,19 +62,37 @@ function tomcat_install()
   
 	if [[ -n "$file_config" ]]
 	then
-    sudo rm -f /etc/tomcat/tomcat.conf.old
-    sudo mv /etc/tomcat/tomcat.conf /etc/tomcat/tomcat.conf.old
-    sudo mv  $file_config /etc/tomcat/tomcat.conf
+        sudo rm -f /etc/tomcat/tomcat.conf.old
+        sudo mv /etc/tomcat/tomcat.conf /etc/tomcat/tomcat.conf.old
+        sudo mv  $file_config /etc/tomcat/tomcat.conf
 	fi
   
 	if [[ -n "$users_config" ]]
 	then
-    sudo rm -f /etc/tomcat/tomcat-users.xml.old
-    sudo mv /etc/tomcat/tomcat-users.xml /etc/tomcat/tomcat-users.xml.old
-    sudo mv  $users_config /etc/tomcat/tomcat-users.xml
+        sudo rm -f /etc/tomcat/tomcat-users.xml.old
+        sudo mv /etc/tomcat/tomcat-users.xml /etc/tomcat/tomcat-users.xml.old
+        sudo mv  $users_config /etc/tomcat/tomcat-users.xml
 	fi
+    
+    echo "CATALINA_HOME=/usr/share/tomcat" >> /etc/profile.d/environnments.sh
 }
 
+
+function tomcat_make_install() 
+{
+    #https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
+    groupadd tomcat
+    mkdir /opt/tomcat
+    useradd -g tomcat -d /opt/tomcat -s /bin/nologin tomcat
+
+    cd /tmp
+    wget [link to the Tomcat 7.0.90 tar.gz file]
+    tar -zxvf apache-tomcat-7.0.90.tar.gz
+    mv apache-tomcat-7.0.90/* /opt/tomcat
+    chown -R tomcat:tomcat /opt/tomcat/
+    
+    echo "CATALINA_HOME=/opt/tomcat" >> /etc/profile.d/environnments.sh
+}
 
 # if [ ! $# -eq 0 ]; 
 # then

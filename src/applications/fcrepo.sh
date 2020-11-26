@@ -3,60 +3,65 @@
 # Install fedora commons repository
 
 
-# Reads arguments options
-function parse_fcrepo_arguments()
-{
-  # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file:: -n "$0" -- "$@"`
+# # Reads arguments options
+# function parse_fcrepo_arguments()
+# {
+#   # if [ $# -ne 0 ]; then
+#     local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file:: -n "$0" -- "$@"`
+#     local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home:: -n "$0" -- "$@"`
     
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --data) data=${2%"/"} ; shift 2 ;;
-            --name) name=${2} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) version=${2:-"$version"}; shift 2 ;;
-            # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
+# 	eval set -- "$TEMP"
+#     # extract options and their arguments into variables.
+#     while true ; do
+#         case "$1" in
+#             --data) data=${2%"/"} ; shift 2 ;;
+#             --name) name=${2} ; shift 2 ;;
+#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+#             --version) version=${2:-"$version"}; shift 2 ;;
+#             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
+#             # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
+#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+#             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+#             # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+#             # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+#             # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+#             # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
+#             --) shift ; break ;;
+#             *) echo "Internal error! $1" ; exit 1 ;;
+#         esac
+#     done
 
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
+#     shift $(expr $OPTIND - 1 )
+#     _parameters=$@
     
-  # fi
-}
+#   # fi
+# }
 
 function fcrepo_install() 
 {
     set -e
     local version=4.7.5
-    local data=
-    local name=
-    local catalina_home=/usr/share/tomcat
+    local data=/var/lib/fcrepo
+    local name=fcrepo
+    local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
     # local DB_PASSWORD=
     # local DB_HOST=localhost
     # local DB_PORT=3306
     local fcrepo_config=
     local file_config=
     # echo $@
+
     local _parameters=
-    parse_fcrepo_arguments $@ 
+    read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
-    # data=${data:-"$1"}
-    data=${data:-"/var/lib/fcrepo"}
-    data=${data%"/"} 
+
+    # name=${name:-"fcrepo-$version"}
+    # # data=${data:-"$1"}
+    # data=${data:-"/var/lib/$name"}
+    # data=${data%"/"} 
 
     if ! getent passwd tomcat > /dev/null 2>&1; then
-        install-tomcat.sh .
+        tomcat_install
     fi
 
     # ENV PATH $CATALINA_HOME/bin:$PATH
@@ -81,10 +86,12 @@ function fcrepo_install()
     local ModeshapeConfig=file-simple
     local JDBCConfig=
   # ARG FCREPO_DIR=${APP_DIR}/fcrepo
-    sudo mkdir -p "${data}" && sudo chown tomcat:tomcat -R ${data} \
-    && sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}' -Dfcrepo.audit.container=/audit"' >> /etc/tomcat/tomcat.conf \
-    && sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}"/webapps/${name:-"fcrepo-$version"}.war
+    sudo mkdir -p "${data}" && sudo chown tomcat:tomcat -R ${data} 
+    sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}' -Dfcrepo.audit.container=/audit"' >> /etc/tomcat/tomcat.conf \
+    sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}"/webapps/${name:-"fcrepo-$version"}.war
 
+    sudo mkdir -p /etc/$name
+    sudo chown tomcat:tomcat /etc/$name
 }
 
 ## detect if a script is being sourced or not
