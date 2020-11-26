@@ -11,6 +11,5 @@ node_install() {
     fi
 
     npm install -g n && n stable
-    npm install -g grunt-cli @angular/cli sass less
 }
 

@@ -26,7 +26,7 @@ if [[ "$(rpm -E %{rhel})" == "6"  ]];
 then
     sudo chkconfig httpd on
 else 
-    sudo systemctl enable httpd --now
+    sudo systemctl enable httpd
 fi
 
 }
