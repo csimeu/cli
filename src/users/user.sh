@@ -50,7 +50,7 @@ function parse_user_arguments()
 }
 
 # 
-function useradd() 
+function user_add() 
 {
     set -e
     local help=0
@@ -109,7 +109,7 @@ function useradd()
 }
 
 # 
-function usermod() 
+function user_update() 
 {
     set -e
     local help=0

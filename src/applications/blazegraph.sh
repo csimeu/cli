@@ -24,7 +24,7 @@ function blazegraph_install()
 
     # https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
     cd /tmp
-    wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_2_1_5/blazegraph.war
+    wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war
     mv blazegraph.war $catalina_home/webapps/
 
 
