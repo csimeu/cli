@@ -1041,8 +1041,8 @@ function psql_install()
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     # Install postgresql 11  https://www.postgresql.org/download/linux/redhat/
-    sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm \
-    yum install -y postgresql$_version  postgresql$_version-libs postgresql$_version-server postgresql$_version-devel postgis25_$_version \
+    sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm 
+    yum install -y postgresql$_version  postgresql$_version-libs postgresql$_version-server postgresql$_version-devel postgis25_$_version 
     systemctl enable postgresql-$_version 
 
 }
