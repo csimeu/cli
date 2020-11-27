@@ -49,7 +49,7 @@ function blazegraph_install()
     set -e
     local version=2.1.5
     local data=
-    local name=
+    local name=blazegraph
     local catalina_home=/usr/share/tomcat
     local blazegraph_config=
     local file_config=
@@ -64,10 +64,7 @@ function blazegraph_install()
     fi
 
     # https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
-    cd /tmp
-    wget -q --show-progress https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war
-    mv blazegraph.war $catalina_home/webapps/
-
+    curl -fSL https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o ${catalina_home}/webapps/${name}.war
 
     # # Configure
     # # data=${data:-"$1"}
@@ -83,10 +80,10 @@ function blazegraph_install()
 }
 
 ## detect if a script is being sourced or not
-if [[ $_ == $0 ]] 
-then
-  blazegraph_install $@
-fi
+# if [[ $_ == $0 ]] 
+# then
+#   blazegraph_install $@
+# fi
 
 #!/bin/bash
 
@@ -236,14 +233,14 @@ function fcrepo_install()
     # ARG FCREPO_VERSION=4.7.5
     # ARG FCREPO_TAG=4.7.5
     # ARG FcrepoConfig=
-    curl -fSL https://github.com/fcrepo4-exts/fcrepo-webapp-plus/releases/download/fcrepo-webapp-plus-$version/fcrepo-webapp-plus-$fcrepo_config$version.war -o fcrepo-$fcrepo_config$version.war
+    curl -fSL https://github.com/fcrepo4-exts/fcrepo-webapp-plus/releases/download/fcrepo-webapp-plus-$version/fcrepo-webapp-plus-$fcrepo_config$version.war -o ${catalina_home}/webapps/${name}.war
     #
     local ModeshapeConfig=file-simple
     local JDBCConfig=
   # ARG FCREPO_DIR=${APP_DIR}/fcrepo
     sudo mkdir -p "${data}" && sudo chown tomcat:tomcat -R ${data} 
     sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}' -Dfcrepo.audit.container=/audit"' >> /etc/tomcat/tomcat.conf \
-    sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
+    # sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 
     sudo mkdir -p /etc/$name
     sudo chown tomcat:tomcat /etc/$name
@@ -337,9 +334,9 @@ parse_git_arguments()
   # fi
 }
 
-git_branch() {
-    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
-}
+# git_branch() {
+#     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+# }
 
 ##
 ## Retrieve repository name from git url
