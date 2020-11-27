@@ -44,7 +44,28 @@ function psql_install()
     yum install -y postgresql$_version  postgresql$_version-libs postgresql$_version-server postgresql$_version-devel postgis25_$_version \
     systemctl enable postgresql-$_version 
 
-    # Configure postgresql server
-    # /usr/pgsql-11/bin/postgresql-11-setup initdb
+}
 
+psql_init(){
+    local version=11
+    local data=
+
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+
+    local data=${data:-"/var/lib/pgsql/${version}/data"}
+
+    if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
+        echo "Init postgresql $version"
+        /usr/pgsql-${version}/bin/postgresql-${version}-setup initdb
+        # systemctl restart postgresql-${version} 
+        # systemctl restart postgresql-${version} 
+
+        if ! grep '0.0.0.0/0' $data/pg_hba.conf ; then
+            echo 'host      all     all     0.0.0.0/0 md5' >> $data/pg_hba.conf
+        fi
+    fi
 }
