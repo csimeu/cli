@@ -88,15 +88,15 @@ function fcrepo_install()
   # ARG FCREPO_DIR=${APP_DIR}/fcrepo
     sudo mkdir -p "${data}" && sudo chown tomcat:tomcat -R ${data} 
     sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}' -Dfcrepo.audit.container=/audit"' >> /etc/tomcat/tomcat.conf \
-    sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}"/webapps/${name:-"fcrepo-$version"}.war
+    sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 
     sudo mkdir -p /etc/$name
     sudo chown tomcat:tomcat /etc/$name
 }
 
 ## detect if a script is being sourced or not
-if [[ $_ == $0 ]] 
-then
-  fcrepo_install $@
-fi
+# if [[ $_ == $0 ]] 
+# then
+#   fcrepo_install $@
+# fi
 

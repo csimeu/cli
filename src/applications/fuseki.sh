@@ -17,7 +17,7 @@ fuseki_install() {
 
     curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o apache-jena-fuseki-$version.tar.gz
     tar -xzf apache-jena-fuseki-"$version".tar.gz -C "${install_dir}"
-    cp -f "${install_dir}/apache-jena-fuseki-${version}/fuseki.war" "${catalina_home}/webapps/$name"
+    cp -f "${install_dir}/apache-jena-fuseki-${version}/fuseki.war" "${catalina_home}/webapps/$name.war"
 
 
     mkdir -p /etc/$name/configuration

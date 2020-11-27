@@ -9,7 +9,6 @@ DIST="${1:-$_DIST}"
 cat \
 $_SRC/vars.sh \
 $_SRC/*/*.sh \
-$_HOME/bin/*.sh \
 $_SRC/cpm.sh \
 > $DIST
 

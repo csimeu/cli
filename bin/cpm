@@ -65,7 +65,7 @@ function blazegraph_install()
 
     # https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
     cd /tmp
-    wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_2_1_5/blazegraph.war
+    wget -q --show-progress https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war
     mv blazegraph.war $catalina_home/webapps/
 
 
@@ -243,17 +243,17 @@ function fcrepo_install()
   # ARG FCREPO_DIR=${APP_DIR}/fcrepo
     sudo mkdir -p "${data}" && sudo chown tomcat:tomcat -R ${data} 
     sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}' -Dfcrepo.audit.container=/audit"' >> /etc/tomcat/tomcat.conf \
-    sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}"/webapps/${name:-"fcrepo-$version"}.war
+    sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 
     sudo mkdir -p /etc/$name
     sudo chown tomcat:tomcat /etc/$name
 }
 
 ## detect if a script is being sourced or not
-if [[ $_ == $0 ]] 
-then
-  fcrepo_install $@
-fi
+# if [[ $_ == $0 ]] 
+# then
+#   fcrepo_install $@
+# fi
 
 #!/bin/bash
 
@@ -273,8 +273,8 @@ fuseki_install() {
 
 
     curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o apache-jena-fuseki-$version.tar.gz
-    tar -xzf apache-jena-fuseki-"$version".tar.gz -C "${_INSTALL_DIR}"
-    cp -f "${INSTALL_DIR}/apache-jena-fuseki-${version}/fuseki.war" "${catalina_home}/webapps/$name"
+    tar -xzf apache-jena-fuseki-"$version".tar.gz -C "${install_dir}"
+    cp -f "${install_dir}/apache-jena-fuseki-${version}/fuseki.war" "${catalina_home}/webapps/$name.war"
 
 
     mkdir -p /etc/$name/configuration
@@ -1679,7 +1679,7 @@ function parse_user_arguments()
 }
 
 # 
-function useradd() 
+function user_add() 
 {
     set -e
     local help=0
@@ -1738,7 +1738,7 @@ function useradd()
 }
 
 # 
-function usermod() 
+function user_update() 
 {
     set -e
     local help=0
@@ -1869,189 +1869,6 @@ function usermod()
 # fi
 
 # chown ${_USER}:${_USER} -R /home/${_USER}/#!/bin/bash
-
-# Install fedora commons repository
-
-
-# Reads arguments options
-function parse_fcrepo_arguments()
-{
-  # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file:: -n "$0" -- "$@"`
-    
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --data) data=${2%"/"} ; shift 2 ;;
-            --name) name=${2} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) version=${2:-"$version"}; shift 2 ;;
-            # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
-
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
-    
-  # fi
-}
-
-function fcrepo_install() 
-{
-    set -e
-    local version=4.7.5
-    local data=
-    local name=
-    local catalina_home=/usr/share/tomcat
-    # local DB_PASSWORD=
-    # local DB_HOST=localhost
-    # local DB_PORT=3306
-    local fcrepo_config=
-    local file_config=
-    # echo $@
-    local _parameters=
-    parse_fcrepo_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-    # data=${data:-"$1"}
-    data=${data:-"/var/lib/fcrepo"}
-    data=${data%"/"} 
-
-    if ! getent passwd tomcat > /dev/null 2>&1; then
-        install-tomcat.sh .
-    fi
-
-    # ENV PATH $CATALINA_HOME/bin:$PATH
-
-    # https://github.com/fcrepo4/fcrepo4/releases/download/fcrepo-5.1.0/fcrepo-webapp-5.1.0.war
-    # https://github.com/fcrepo4/fcrepo4/releases/download/fcrepo-4.7.5/fcrepo-webapp-4.7.5.war
-
-    case "$version" in
-
-        "4") version=4.7.5;;
-
-        "5") version=5.1.0;;
-        *)
-        ;;
-    esac
-    
-    # ARG FCREPO_VERSION=4.7.5
-    # ARG FCREPO_TAG=4.7.5
-    # ARG FcrepoConfig=
-    curl -fSL https://github.com/fcrepo4-exts/fcrepo-webapp-plus/releases/download/fcrepo-webapp-plus-$version/fcrepo-webapp-plus-$fcrepo_config$version.war -o fcrepo-$fcrepo_config$version.war
-    #
-    local ModeshapeConfig=file-simple
-    local JDBCConfig=
-  # ARG FCREPO_DIR=${APP_DIR}/fcrepo
-    sudo mkdir -p "${data}" && sudo chown tomcat:tomcat -R ${data} \
-    && sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}' -Dfcrepo.audit.container=/audit"' >> /etc/tomcat/tomcat.conf \
-    && sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}"/webapps/${name:-"fcrepo-$version"}.war
-
-}
-
-## detect if a script is being sourced or not
-if [[ $_ == $0 ]] 
-then
-  fcrepo_install $@
-fi
-
-#!/bin/bash
-
-# install_beats() {
-#     sudo yum install -y filebeat auditbeat metricbeat packetbeat  heartbeat-elastic
-# }
-
-# ## detect if a script is being sourced or not
-# if [[ $_ == $0 ]] 
-# then
-# 	install_beats "$@"
-# fi
-# #!/bin/bash
-
-# _VERSION=${1:-"8.0.1"}
-# _INSTALL_DIR=${2:-"/usr/share"}
-# _KEYCLOAK_HOME=${_INSTALL_DIR}/keycloak
-# # _PORT=${3:-"8088"}
-
-# ## Install keycloak
-# # https://blog.ineat-conseil.fr/2017/11/securisez-vos-apis-spring-avec-keycloak-1-installation-de-keycloak/
-# # https://medium.com/@hasnat.saeed/setup-keycloak-server-on-ubuntu-18-04-ed8c7c79a2d9
-# mkdir -p $_KEYCLOAK_HOME;
-# curl -fSL https://downloads.jboss.org/keycloak/${_VERSION}/keycloak-${_VERSION}.tar.gz -o keycloak-${_VERSION}.tar.gz;
-# tar -xzf keycloak-${_VERSION}.tar.gz -C $_KEYCLOAK_HOME --strip-components=1;
-
-
-# useradd -s /bin/false -r -d $_KEYCLOAK_HOME keycloak;
-# chown -R keycloak:keycloak $_KEYCLOAK_HOME;
-# chmod g+wr $_KEYCLOAK_HOME
-# chmod o+x $_KEYCLOAK_HOME/bin/
-
-# if [[ -n "$USER_ADMIN" ]]; then sudo usermod -aG keycloak $USER_ADMIN; fi
-
-# mkdir -p $_KEYCLOAK_HOME/modules/org/postgresql/main
-# curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o $_KEYCLOAK_HOME/modules/org/postgresql/main/postgresql-42.2.5.jar
-# echo '<?xml version="1.0" ?>
-# <module xmlns="urn:jboss:module:1.3" name="org.postgresql">
-#     <resources>
-#         <resource-root path="postgresql-42.2.5.jar"/>
-#     </resources>
-#     <dependencies>
-#         <module name="javax.api"/>
-#         <module name="javax.transaction.api"/>
-#     </dependencies>
-# </module>' > $_KEYCLOAK_HOME/modules/org/postgresql/main/module.xml
-
-# # curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o $_KEYCLOAK_HOME/postgresql-42.2.5.jar
-# # $_KEYCLOAK_HOME/bin/jboss-cli.sh -c "module add --name=org.postgresql  --dependencies=javax.api,javax.transaction.api --resources=postgresql-42.2.5.jar"
-
-
-# curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/mysql-connector-java-5.1.47.tar.gz
-# tar -xzf /tmp/mysql-connector-java-5.1.47.tar.gz mysql-connector-java-5.1.47/mysql-connector-java-5.1.47.jar --strip-components=1
-# cp -f mysql-connector-java-5.1.47.jar $_KEYCLOAK_HOME
-# # $_KEYCLOAK_HOME/bin/jboss-cli.sh -c "module add --name=org.mysql  --dependencies=javax.api,javax.transaction.api --resources=mysql-connector-java-5.1.47.jar"
-
-
-# mkdir -p /etc/keycloak;
-# cp -f $_KEYCLOAK_HOME/docs/contrib/scripts/systemd/wildfly.conf /etc/keycloak/keycloak.conf;
-# cp -f $_KEYCLOAK_HOME/docs/contrib/scripts/systemd/launch.sh $_KEYCLOAK_HOME/bin/
-# sed -i -e "s|/opt/wildfly|$_KEYCLOAK_HOME|" $_KEYCLOAK_HOME/bin/launch.sh;
-# sed -i -e "s|standalone.sh.*|standalone.sh -c \$2 -b \$3 -Djboss.socket.binding.port-offset=100 |" $_KEYCLOAK_HOME/bin/launch.sh;
-# chown -R keycloak:keycloak /etc/keycloak
-
-# #  $WILDFLY_MODE $WILDFLY_CONFIG $WILDFLY_BIND
-# # /usr/share/keycloak/bin/standalone.sh -c standalone.xml -b 0.0.0.0 -Djboss.socket.binding.port-offset=100
-
-# if [[ ! -f /etc/systemd/system/keycloak.service ]]; then
-# echo "
-# [Unit]
-# Description=The Keycloak Server
-# After=syslog.target network.target tomcat.target
-# Before=httpd.service
-
-# [Service]
-# Environment=LAUNCH_JBOSS_IN_BACKGROUND=1
-# EnvironmentFile=/etc/keycloak/keycloak.conf
-# User=keycloak
-# LimitNOFILE=102642
-# PIDFile=$_KEYCLOAK_HOME/keycloak.pid
-# ExecStart=$_KEYCLOAK_HOME/bin/launch.sh \$WILDFLY_MODE \$WILDFLY_CONFIG \$WILDFLY_BIND
-# StandardOutput=null
-
-# [Install]
-# WantedBy=multi-user.target
-# " > /etc/systemd/system/keycloak.service
-# fi
-
-# $_KEYCLOAK_HOME/bin/add-user-keycloak.sh -u admin -p admin -r master
-#!/bin/bash
 #
 # Scripts cpm: Csimeu Package Manager
 #
