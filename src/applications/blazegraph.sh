@@ -8,7 +8,7 @@ function blazegraph_install()
     set -e
     local version=2.1.5
     local data=
-    local name=
+    local name=blazegraph
     local catalina_home=/usr/share/tomcat
     local blazegraph_config=
     local file_config=
@@ -23,9 +23,11 @@ function blazegraph_install()
     fi
 
     # https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
-    cd /tmp
-    wget -q --show-progress https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war
-    mv blazegraph.war $catalina_home/webapps/
+    # cd /tmp
+    # wget -q --show-progress https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war
+    curl -fSL https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o ${catalina_home}/webapps/${name}.war
+
+    # mv blazegraph.war $catalina_home/webapps/
 
 
     # # Configure
@@ -42,8 +44,8 @@ function blazegraph_install()
 }
 
 ## detect if a script is being sourced or not
-if [[ $_ == $0 ]] 
-then
-  blazegraph_install $@
-fi
+# if [[ $_ == $0 ]] 
+# then
+#   blazegraph_install $@
+# fi
 
