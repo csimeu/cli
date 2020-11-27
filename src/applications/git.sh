@@ -55,9 +55,9 @@ parse_git_arguments()
   # fi
 }
 
-git_branch() {
-    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
-}
+# git_branch() {
+#     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+# }
 
 ##
 ## Retrieve repository name from git url

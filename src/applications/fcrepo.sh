@@ -81,14 +81,14 @@ function fcrepo_install()
     # ARG FCREPO_VERSION=4.7.5
     # ARG FCREPO_TAG=4.7.5
     # ARG FcrepoConfig=
-    curl -fSL https://github.com/fcrepo4-exts/fcrepo-webapp-plus/releases/download/fcrepo-webapp-plus-$version/fcrepo-webapp-plus-$fcrepo_config$version.war -o fcrepo-$fcrepo_config$version.war
+    curl -fSL https://github.com/fcrepo4-exts/fcrepo-webapp-plus/releases/download/fcrepo-webapp-plus-$version/fcrepo-webapp-plus-$fcrepo_config$version.war -o ${catalina_home}/webapps/${name}.war
     #
     local ModeshapeConfig=file-simple
     local JDBCConfig=
   # ARG FCREPO_DIR=${APP_DIR}/fcrepo
     sudo mkdir -p "${data}" && sudo chown tomcat:tomcat -R ${data} 
     sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}' -Dfcrepo.audit.container=/audit"' >> /etc/tomcat/tomcat.conf \
-    sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
+    # sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 
     sudo mkdir -p /etc/$name
     sudo chown tomcat:tomcat /etc/$name
