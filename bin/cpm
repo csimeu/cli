@@ -797,7 +797,9 @@ mysql_init(){
 	fi
 
 
-}#!/bin/bash
+}
+
+#!/bin/bash
 
 
 nexcloud_install() {
@@ -1067,7 +1069,9 @@ psql_init(){
             echo 'host      all     all     0.0.0.0/0 md5' >> $data/pg_hba.conf
         fi
     fi
-}#!/bin/bash
+}
+
+#!/bin/bash
 
 # Install solr
 

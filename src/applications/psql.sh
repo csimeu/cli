@@ -69,3 +69,4 @@ psql_init(){
         fi
     fi
 }
+
