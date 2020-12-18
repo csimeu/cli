@@ -11,7 +11,7 @@ GITHUB_DOMAIN=${GITHUB_DOMAIN:-'https://github.com'}
 # Reads arguments options
 function read_application_arguments()
 {
-    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home::install-dir::,port-offset:: -n "$0" -- "$@"`
+    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home::install-dir::,port-offset::,password::,user:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
@@ -25,6 +25,8 @@ function read_application_arguments()
             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
             --install-dir) install_dir=${2:-"$install_dir"}; shift 2 ;;
             --port-offset) port_offset=${2:-"$port_offset"}; shift 2 ;;
+            --user) user=${2:-"$user"}; shift 2 ;;
+            --password) password=${2:-"$password"}; shift 2 ;;
             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
             # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
             # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
@@ -764,6 +766,8 @@ function mysql_install()
 mysql_init(){
     local version=11
     local data=
+    local user=
+    local password=
 
 
     local _parameters=
@@ -775,7 +779,7 @@ mysql_init(){
 	# grep 'temporary password' /var/log/mysqld.log
 	# How to remove root password
 	# mysqladmin -u root -p"temporary password" password ''
-	echo 'validate_password_policy=LOW' >> /etc/my.cnf
+	echo 'validate_password = OFF' >> /etc/my.cnf
 
 	service mysqld restart
 	if [ -f /var/log/mysqld.log ] ; then
@@ -789,17 +793,22 @@ mysql_init(){
 		fi
 	fi
 
-
-	if [ -n "$DB_USER" ] ; then
-		EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$DB_USER')")"
+	if [ -n "$user" ] ; then
+		EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$user')")"
 		if [ "$EXISTS_DB_USER" = 0 ]; then
-			mysql -u root --execute="CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'%'; FLUSH PRIVILEGES; ";
+			mysql -u root --execute="CREATE USER '$user'@'%' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'%'; FLUSH PRIVILEGES; ";
 		fi
 	fi
 
 
 }
 
+
+mysql_createdb() {
+	db=${1}
+	mysql -u root --execute="DROP SCHEMA IF EXISTS $db;"
+	mysql -u root --execute="CREATE SCHEMA IF NOT EXISTS $db DEFAULT CHARACTER SET utf8;"
+}
 #!/bin/bash
 
 
