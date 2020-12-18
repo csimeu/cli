@@ -32,6 +32,8 @@ function mysql_install()
 mysql_init(){
     local version=11
     local data=
+    local user=
+    local password=
 
 
     local _parameters=
@@ -57,14 +59,19 @@ mysql_init(){
 		fi
 	fi
 
-mysqladmin -u root -pCtS680i)Gpg2 password ''
-	if [ -n "$DB_USER" ] ; then
-		EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$DB_USER')")"
+	if [ -n "$user" ] ; then
+		EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$user')")"
 		if [ "$EXISTS_DB_USER" = 0 ]; then
-			mysql -u root --execute="CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'%'; FLUSH PRIVILEGES; ";
+			mysql -u root --execute="CREATE USER '$user'@'%' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'%'; FLUSH PRIVILEGES; ";
 		fi
 	fi
 
 
 }
 
+
+mysql_createdb() {
+	db=${1}
+	mysql -u root --execute="DROP SCHEMA IF EXISTS $db;"
+	mysql -u root --execute="CREATE SCHEMA IF NOT EXISTS $db DEFAULT CHARACTER SET utf8;"
+}
