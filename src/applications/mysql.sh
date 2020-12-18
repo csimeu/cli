@@ -43,7 +43,7 @@ mysql_init(){
 	# grep 'temporary password' /var/log/mysqld.log
 	# How to remove root password
 	# mysqladmin -u root -p"temporary password" password ''
-	echo 'validate_password_policy=LOW' >> /etc/my.cnf
+	echo 'validate_password = OFF' >> /etc/my.cnf
 
 	service mysqld restart
 	if [ -f /var/log/mysqld.log ] ; then
@@ -57,7 +57,7 @@ mysql_init(){
 		fi
 	fi
 
-
+mysqladmin -u root -pCtS680i)Gpg2 password ''
 	if [ -n "$DB_USER" ] ; then
 		EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$DB_USER')")"
 		if [ "$EXISTS_DB_USER" = 0 ]; then
