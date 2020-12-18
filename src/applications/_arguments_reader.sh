@@ -3,7 +3,7 @@
 # Reads arguments options
 function read_application_arguments()
 {
-    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home::install-dir:: -n "$0" -- "$@"`
+    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home::install-dir::,port-offset:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
@@ -16,6 +16,7 @@ function read_application_arguments()
             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
             --install-dir) install_dir=${2:-"$install_dir"}; shift 2 ;;
+            --port-offset) port_offset=${2:-"$port_offset"}; shift 2 ;;
             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
             # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
             # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;

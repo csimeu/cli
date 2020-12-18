@@ -63,7 +63,7 @@ function php_install()
 
 	if [ ! -f /var/www/cgi-bin/php$version.fcgi  ]
     then 
-		echo "#!/bin/bash \n exec $_BIN_/php74-cgi"> /var/www/cgi-bin/php$version.fcgi
+		echo "#!/bin/bash \n exec $_BIN_/php$version-cgi"> /var/www/cgi-bin/php$version.fcgi
     fi
 	
 	sudo chmod 755 /var/www/cgi-bin/*.fcgi

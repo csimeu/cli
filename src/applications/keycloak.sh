@@ -5,15 +5,15 @@ function keycloak_install()
     set -e
 
     local version=8.0.1
-    # local data=/var/li/fcrepo
-    local name=fcrepo
+    local name=keycloak
     local install_dir=/usr/share
+    local port_offset=100
 
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    local KEYCLOAK_HOME=${install_dir}/keycloak
+    local KEYCLOAK_HOME=${install_dir}/$name
 
     # _PORT=${3:-"8088"}
 
@@ -23,7 +23,6 @@ function keycloak_install()
     mkdir -p $KEYCLOAK_HOME;
     curl -fSL https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz -o keycloak-${version}.tar.gz;
     tar -xzf keycloak-${version}.tar.gz -C $KEYCLOAK_HOME --strip-components=1;
-
 
     useradd -s /bin/false -r -d $KEYCLOAK_HOME keycloak;
     chown -R keycloak:keycloak $KEYCLOAK_HOME;
@@ -59,7 +58,7 @@ echo '<?xml version="1.0" ?>
     cp -f $KEYCLOAK_HOME/docs/contrib/scripts/systemd/wildfly.conf /etc/keycloak/keycloak.conf;
     cp -f $KEYCLOAK_HOME/docs/contrib/scripts/systemd/launch.sh $KEYCLOAK_HOME/bin/
     sed -i -e "s|/opt/wildfly|$KEYCLOAK_HOME|" $KEYCLOAK_HOME/bin/launch.sh;
-    sed -i -e "s|standalone.sh.*|standalone.sh -c \$2 -b \$3 -Djboss.socket.binding.port-offset=100 |" $KEYCLOAK_HOME/bin/launch.sh;
+    sed -i -e "s|standalone.sh.*|standalone.sh -c \$2 -b \$3 -Djboss.socket.binding.port-offset=$port_offset |" $KEYCLOAK_HOME/bin/launch.sh;
     chown -R keycloak:keycloak /etc/keycloak
 
 #  $WILDFLY_MODE $WILDFLY_CONFIG $WILDFLY_BIND

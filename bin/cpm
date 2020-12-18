@@ -11,7 +11,7 @@ GITHUB_DOMAIN=${GITHUB_DOMAIN:-'https://github.com'}
 # Reads arguments options
 function read_application_arguments()
 {
-    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home::install-dir:: -n "$0" -- "$@"`
+    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home::install-dir::,port-offset:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
@@ -24,6 +24,7 @@ function read_application_arguments()
             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
             --install-dir) install_dir=${2:-"$install_dir"}; shift 2 ;;
+            --port-offset) port_offset=${2:-"$port_offset"}; shift 2 ;;
             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
             # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
             # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
@@ -572,15 +573,15 @@ function keycloak_install()
     set -e
 
     local version=8.0.1
-    # local data=/var/li/fcrepo
-    local name=fcrepo
+    local name=keycloak
     local install_dir=/usr/share
+    local port_offset=100
 
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    local KEYCLOAK_HOME=${install_dir}/keycloak
+    local KEYCLOAK_HOME=${install_dir}/$name
 
     # _PORT=${3:-"8088"}
 
@@ -590,7 +591,6 @@ function keycloak_install()
     mkdir -p $KEYCLOAK_HOME;
     curl -fSL https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz -o keycloak-${version}.tar.gz;
     tar -xzf keycloak-${version}.tar.gz -C $KEYCLOAK_HOME --strip-components=1;
-
 
     useradd -s /bin/false -r -d $KEYCLOAK_HOME keycloak;
     chown -R keycloak:keycloak $KEYCLOAK_HOME;
@@ -626,7 +626,7 @@ echo '<?xml version="1.0" ?>
     cp -f $KEYCLOAK_HOME/docs/contrib/scripts/systemd/wildfly.conf /etc/keycloak/keycloak.conf;
     cp -f $KEYCLOAK_HOME/docs/contrib/scripts/systemd/launch.sh $KEYCLOAK_HOME/bin/
     sed -i -e "s|/opt/wildfly|$KEYCLOAK_HOME|" $KEYCLOAK_HOME/bin/launch.sh;
-    sed -i -e "s|standalone.sh.*|standalone.sh -c \$2 -b \$3 -Djboss.socket.binding.port-offset=100 |" $KEYCLOAK_HOME/bin/launch.sh;
+    sed -i -e "s|standalone.sh.*|standalone.sh -c \$2 -b \$3 -Djboss.socket.binding.port-offset=$port_offset |" $KEYCLOAK_HOME/bin/launch.sh;
     chown -R keycloak:keycloak /etc/keycloak
 
 #  $WILDFLY_MODE $WILDFLY_CONFIG $WILDFLY_BIND
@@ -775,6 +775,7 @@ mysql_init(){
 	# grep 'temporary password' /var/log/mysqld.log
 	# How to remove root password
 	# mysqladmin -u root -p"temporary password" password ''
+	echo 'validate_password_policy=LOW' >> /etc/my.cnf
 
 	service mysqld restart
 	if [ -f /var/log/mysqld.log ] ; then
@@ -782,7 +783,7 @@ mysql_init(){
 		tmp_pwd=${tmp_pwd_line##*root@localhost\:}
 		tmp_pwd=${tmp_pwd#"${tmp_pwd%%[![:space:]]*}"}
 		if [ -n "$tmp_pwd" ] ; then
-			echo "Trying to remove root@localhost password"
+			echo "Trying to remove root@localhost password: $tmp_pwd"
 			mysqladmin -u root -p${tmp_pwd} password '' && \
 			sed -i -e "s/temporary password/temporary_password/" /var/log/mysqld.log
 		fi
@@ -894,7 +895,7 @@ function php_install()
 
 	if [ ! -f /var/www/cgi-bin/php$version.fcgi  ]
     then 
-		echo "#!/bin/bash \n exec $_BIN_/php74-cgi"> /var/www/cgi-bin/php$version.fcgi
+		echo "#!/bin/bash \n exec $_BIN_/php$version-cgi"> /var/www/cgi-bin/php$version.fcgi
     fi
 	
 	sudo chmod 755 /var/www/cgi-bin/*.fcgi
