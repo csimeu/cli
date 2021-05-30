@@ -75,3 +75,20 @@ mysql_createdb() {
 	mysql -u root --execute="DROP SCHEMA IF EXISTS $db;"
 	mysql -u root --execute="CREATE SCHEMA IF NOT EXISTS $db DEFAULT CHARACTER SET utf8;"
 }
+
+mysql_createuser() {
+    local user=
+    local host=localhost
+    local password=
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+	if [ -n "$user" ] ; then
+	fi
+
+	mysql -u root --execute="CREATE USER '$user'@'$host' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'$host'; FLUSH PRIVILEGES; ";
+
+}
+

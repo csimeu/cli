@@ -4,44 +4,79 @@
 
 # https://medium.com/@daniel.bui/multiple-php-version-with-apache-on-centos-7-17078c66692c
 
+# Reads arguments options
+function parse_php_arguments()
+{
+  # if [ $# -ne 0 ]; then
+    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+    
+	eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            # --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
+            # --data) data=${2%"/"} ; shift 2 ;;
+            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+            --version) version=${2:-"$version"}; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
 
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
 
 function php_install()
 {
     set -e
-    local version="${1}"
+    local version=
+    local phpversion=
+    local _parameters=
+    parse_php_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    sudo yum -y install php$version \
-		php$version-devel \
-		php$version-fpm \
-		php$version-mysql \
-		php$version-mssql \
-		php$version-pgsql \
-		php$version-odbc \
-		php$version-gd \
-		php$version-imap \
-		php$version-interbase \
-		php$version-intl \
-		php$version-mbstring \
-		php$version-mcrypt \
-		php$version-ldap \
-		php$version-xml \
-		php$version-xmlrpc \
-		php$version-soap \
-		php$version-pear \
-		php$version-process \
-		php$version-opcache \
-		php$version-pecl-geoip \
-		php$version-pecl-memcache \
-		php$version-pecl-memcached \
-		php$version-pecl-apcu \
-		php$version-pecl-apcu-devel \
-		php$version-pecl-igbinary \
-		php$version-pecl-mongodb \
-		php$version-pecl-redis \
-		php$version-pecl-xdebug \
-		php$version-pecl-imagick \
-		php$version-pecl-zip
+	version=${version/./}
+	version=${version/-php/}
+	
+	if [ -n "$version"];
+	then 
+		phpversion=${version}-php
+	fi
+
+    sudo yum -y install php$phpversion \
+		php$phpversion-devel \
+		php$phpversion-fpm \
+		php$phpversion-mysql \
+		php$phpversion-mssql \
+		php$phpversion-pgsql \
+		php$phpversion-odbc \
+		php$phpversion-gd \
+		php$phpversion-imap \
+		php$phpversion-interbase \
+		php$phpversion-intl \
+		php$phpversion-mbstring \
+		php$phpversion-mcrypt \
+		php$phpversion-ldap \
+		php$phpversion-xml \
+		php$phpversion-xmlrpc \
+		php$phpversion-soap \
+		php$phpversion-pear \
+		php$phpversion-process \
+		php$phpversion-opcache \
+		php$phpversion-pecl-geoip \
+		php$phpversion-pecl-memcache \
+		php$phpversion-pecl-memcached \
+		php$phpversion-pecl-apcu \
+		php$phpversion-pecl-apcu-devel \
+		php$phpversion-pecl-igbinary \
+		php$phpversion-pecl-mongodb \
+		php$phpversion-pecl-redis \
+		php$phpversion-pecl-xdebug \
+		php$phpversion-pecl-imagick \
+		php$phpversion-pecl-zip
 	
 	# Setting composer
     if [ ! -f /usr/local/bin/composer ]
@@ -51,7 +86,7 @@ function php_install()
 
 	if [ -f /etc/httpd/conf.d/php$version-php.conf ]
     then 
-	    mv /etc/httpd/conf.d/php$version-php.conf /etc/httpd/conf.d/php$version-php.conf.bck
+	    sudo mv /etc/httpd/conf.d/php$version-php.conf /etc/httpd/conf.d/php$version-php.conf.bck
     fi
 
     local _BIN_="/bin"

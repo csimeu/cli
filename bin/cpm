@@ -120,15 +120,20 @@ function parse_elk_arguments()
 
 elk_import_rpm() {
     local version=$1
-    echo "[elasticsearch-${version}.x]" > /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "name=Elasticsearch repository for ${version}.x packages" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "baseurl=https://artifacts.elastic.co/packages/${version}.x/yum" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "gpgcheck=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "enabled=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "autorefresh=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "type=rpm-md" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo
-    rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    if [ ! -f /etc/yum.repos.d/elasticsearch-${version}.x.repo ] then
+
+    sudo cat > /etc/yum.repos.d/elasticsearch-${version}.x.repo << EOF
+[elasticsearch-${version}.x]
+name=Elasticsearch repository for ${version}.x packages
+baseurl=https://artifacts.elastic.co/packages/${version}.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md
+EOF
+    sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    fi
 }
 
 elk_install_beats() {
@@ -530,6 +535,67 @@ git_exists()
 }
 #!/bin/bash
 
+# Install grafana 
+# https://www.fosslinux.com/8328/how-to-install-and-configure-grafana-on-centos-7.htm
+
+# Reads arguments options
+function parse_grafana _arguments()
+{
+  # if [ $# -ne 0 ]; then
+    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+    
+	eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
+            --data) data=${2%"/"} ; shift 2 ;;
+            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+            --version) version=${2:-"$version"}; shift 2 ;;
+            --port) port=${2:-"$port"}; shift 2 ;;
+            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+            # --port) port=${2:-"$port"}; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
+
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
+
+function grafana _install() 
+{
+    set -e
+      
+echo "
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/oss/rpm
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+" > /etc/yum.repos.d/grafana.repo
+    
+    sudo yum -y install grafana
+    sudo yum install -y fontconfig freetype* urw-fonts
+
+    sudo systemctl enable grafana-server.service
+
+}
+
+
+#!/bin/bash
+
 
 httpd_install() {
     
@@ -809,6 +875,23 @@ mysql_createdb() {
 	mysql -u root --execute="DROP SCHEMA IF EXISTS $db;"
 	mysql -u root --execute="CREATE SCHEMA IF NOT EXISTS $db DEFAULT CHARACTER SET utf8;"
 }
+
+mysql_createuser() {
+    local user=
+    local host=localhost
+    local password=
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+	if [ -n "$user" ] ; then
+	fi
+
+	mysql -u root --execute="CREATE USER '$user'@'$host' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'$host'; FLUSH PRIVILEGES; ";
+
+}
+
 #!/bin/bash
 
 
@@ -845,44 +928,79 @@ node_install() {
 
 # https://medium.com/@daniel.bui/multiple-php-version-with-apache-on-centos-7-17078c66692c
 
+# Reads arguments options
+function parse_php_arguments()
+{
+  # if [ $# -ne 0 ]; then
+    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+    
+	eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            # --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
+            # --data) data=${2%"/"} ; shift 2 ;;
+            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+            --version) version=${2:-"$version"}; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
 
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
 
 function php_install()
 {
     set -e
-    local version="${1}"
+    local version=
+    local phpversion=
+    local _parameters=
+    parse_php_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    sudo yum -y install php$version \
-		php$version-devel \
-		php$version-fpm \
-		php$version-mysql \
-		php$version-mssql \
-		php$version-pgsql \
-		php$version-odbc \
-		php$version-gd \
-		php$version-imap \
-		php$version-interbase \
-		php$version-intl \
-		php$version-mbstring \
-		php$version-mcrypt \
-		php$version-ldap \
-		php$version-xml \
-		php$version-xmlrpc \
-		php$version-soap \
-		php$version-pear \
-		php$version-process \
-		php$version-opcache \
-		php$version-pecl-geoip \
-		php$version-pecl-memcache \
-		php$version-pecl-memcached \
-		php$version-pecl-apcu \
-		php$version-pecl-apcu-devel \
-		php$version-pecl-igbinary \
-		php$version-pecl-mongodb \
-		php$version-pecl-redis \
-		php$version-pecl-xdebug \
-		php$version-pecl-imagick \
-		php$version-pecl-zip
+	version=${version/./}
+	version=${version/-php/}
+	
+	if [ -n "$version"];
+	then 
+		phpversion=${version}-php
+	fi
+
+    sudo yum -y install php$phpversion \
+		php$phpversion-devel \
+		php$phpversion-fpm \
+		php$phpversion-mysql \
+		php$phpversion-mssql \
+		php$phpversion-pgsql \
+		php$phpversion-odbc \
+		php$phpversion-gd \
+		php$phpversion-imap \
+		php$phpversion-interbase \
+		php$phpversion-intl \
+		php$phpversion-mbstring \
+		php$phpversion-mcrypt \
+		php$phpversion-ldap \
+		php$phpversion-xml \
+		php$phpversion-xmlrpc \
+		php$phpversion-soap \
+		php$phpversion-pear \
+		php$phpversion-process \
+		php$phpversion-opcache \
+		php$phpversion-pecl-geoip \
+		php$phpversion-pecl-memcache \
+		php$phpversion-pecl-memcached \
+		php$phpversion-pecl-apcu \
+		php$phpversion-pecl-apcu-devel \
+		php$phpversion-pecl-igbinary \
+		php$phpversion-pecl-mongodb \
+		php$phpversion-pecl-redis \
+		php$phpversion-pecl-xdebug \
+		php$phpversion-pecl-imagick \
+		php$phpversion-pecl-zip
 	
 	# Setting composer
     if [ ! -f /usr/local/bin/composer ]
@@ -892,7 +1010,7 @@ function php_install()
 
 	if [ -f /etc/httpd/conf.d/php$version-php.conf ]
     then 
-	    mv /etc/httpd/conf.d/php$version-php.conf /etc/httpd/conf.d/php$version-php.conf.bck
+	    sudo mv /etc/httpd/conf.d/php$version-php.conf /etc/httpd/conf.d/php$version-php.conf.bck
     fi
 
     local _BIN_="/bin"
@@ -916,6 +1034,122 @@ function php_install()
 # then
 # 	install_httpd "$@"
 # fi
+#!/bin/bash
+
+# Install prometheus
+# https://www.fosslinux.com/10398/how-to-install-and-configure-prometheus-on-centos-7.htm
+
+# Reads arguments options
+function parse_prometheus_arguments()
+{
+  # if [ $# -ne 0 ]; then
+    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+    
+	eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
+            --data) data=${2%"/"} ; shift 2 ;;
+            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+            --version) version=${2:-"$version"}; shift 2 ;;
+            --port) port=${2:-"$port"}; shift 2 ;;
+            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+            # --port) port=${2:-"$port"}; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
+
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
+
+function prometheus_install() 
+{
+    set -e
+      cd /tmp
+    local version=2.24.1
+    local data=
+    local port=9099
+    # local prometheus_config=
+    # local file_config=
+    # local INSTALL_DIR=/usr/share
+    # echo $@
+    local _parameters=
+    parse_prometheus_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    # data=${data:-"$1"}
+    # data=${data%"/"} 
+    # INSTALL_DIR=${INSTALL_DIR%"/"} 
+    useradd --no-create-home --shell /bin/false prometheus
+    mkdir /etc/prometheus /var/lib/prometheus
+    chown prometheus:prometheus /etc/prometheus /var/lib/prometheus
+    
+    curl -fSL  https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz -o prometheus-$version.tar.gz
+    tar -xvzf prometheus-$version.tar.gz
+    mv prometheus-$version.linux-amd64 prometheuspackage
+    #
+    cp prometheuspackage/prometheus /usr/local/bin/
+    cp prometheuspackage/promtool /usr/local/bin/
+    chown prometheus:prometheus /usr/local/bin/prometheus
+    chown prometheus:prometheus /usr/local/bin/promtool
+    #
+    cp -r prometheuspackage/consoles /etc/prometheus
+    cp -r prometheuspackage/console_libraries /etc/prometheus
+    chown -R prometheus:prometheus /etc/prometheus/consoles
+    chown -R prometheus:prometheus /etc/prometheus/console_libraries
+    #
+    vim /etc/prometheus/prometheus.yml
+
+echo "
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+  - job_name: 'prometheus_master'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:$port']
+" > /etc/prometheus/prometheus.yml
+
+    chown prometheus:prometheus /etc/prometheus/prometheus.yml
+
+echo "
+[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+#User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/local/bin/prometheus \
+--config.file /etc/prometheus/prometheus.yml \
+--storage.tsdb.path /var/lib/prometheus/ \
+--web.listen-address 0.0.0.0:$port \
+--web.console.templates=/etc/prometheus/consoles \
+--web.console.libraries=/etc/prometheus/console_libraries
+
+[Install]
+WantedBy=multi-user.target
+" > /etc/systemd/system/prometheus.service
+
+    systemctl daemon-reload
+    systemctl enable prometheus
+
+
+}
+
+
 #!/bin/bash
 
 function proxy_usage()

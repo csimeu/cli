@@ -30,15 +30,20 @@ function parse_elk_arguments()
 
 elk_import_rpm() {
     local version=$1
-    echo "[elasticsearch-${version}.x]" > /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "name=Elasticsearch repository for ${version}.x packages" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "baseurl=https://artifacts.elastic.co/packages/${version}.x/yum" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "gpgcheck=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "enabled=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "autorefresh=1" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo; \
-    echo "type=rpm-md" >> /etc/yum.repos.d/elasticsearch-${version}.x.repo
-    rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    if [ ! -f /etc/yum.repos.d/elasticsearch-${version}.x.repo ] then
+
+    sudo cat > /etc/yum.repos.d/elasticsearch-${version}.x.repo << EOF
+[elasticsearch-${version}.x]
+name=Elasticsearch repository for ${version}.x packages
+baseurl=https://artifacts.elastic.co/packages/${version}.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md
+EOF
+    sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    fi
 }
 
 elk_install_beats() {

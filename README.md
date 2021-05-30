@@ -67,7 +67,29 @@ cpm elk:install:beats
 
 # httpd
 cpm httpd:install
+
+# php
+cpm php:install 56-php
 ```
+
+### Mysql
+
+```bash
+# 
+cpm mysql:init --user=$DB_USER --password=$DB_PASSWORD
+```
+
+### 
+
+```bash
+```
+
+### 
+
+```bash
+```
+
+### 
 
 ```bash
 ```
