@@ -41,7 +41,7 @@ function php_install()
 	version=${version/./}
 	version=${version/-php/}
 	
-	if [ -n "$version"];
+	if [ -n "$version" ];
 	then 
 		phpversion=${version}-php
 	fi
