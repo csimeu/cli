@@ -4,7 +4,7 @@
 # https://www.fosslinux.com/8328/how-to-install-and-configure-grafana-on-centos-7.htm
 
 # Reads arguments options
-function parse_grafana _arguments()
+function parse_grafana_arguments()
 {
   # if [ $# -ne 0 ]; then
     local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
@@ -35,11 +35,12 @@ function parse_grafana _arguments()
   # fi
 }
 
-function grafana _install() 
+function grafana_install() 
 {
     set -e
       
-echo "
+    if [ ! -f /etc/yum.repos.d/grafana.repo ]; then 
+        sudo cat > /etc/yum.repos.d/grafana.repo << EOF
 [grafana]
 name=grafana
 baseurl=https://packages.grafana.com/oss/rpm
@@ -49,7 +50,8 @@ gpgcheck=1
 gpgkey=https://packages.grafana.com/gpg.key
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-" > /etc/yum.repos.d/grafana.repo
+EOF
+    fi
     
     sudo yum -y install grafana
     sudo yum install -y fontconfig freetype* urw-fonts

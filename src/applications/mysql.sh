@@ -85,10 +85,11 @@ mysql_createuser() {
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-	if [ -n "$user" ] ; then
-	fi
 
-	mysql -u root --execute="CREATE USER '$user'@'$host' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'$host'; FLUSH PRIVILEGES; ";
+	EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$user'@'$host')")"
+	if [ "$EXISTS_DB_USER" = 0 ]; then
+		mysql -u root --execute="CREATE USER '$user'@'$host' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'$host'; FLUSH PRIVILEGES; ";
+	fi
 
 }
 

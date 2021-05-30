@@ -30,7 +30,7 @@ function parse_elk_arguments()
 
 elk_import_rpm() {
     local version=$1
-    if [ ! -f /etc/yum.repos.d/elasticsearch-${version}.x.repo ] then
+    if [ ! -f /etc/yum.repos.d/elasticsearch-${version}.x.repo ]; then
 
     sudo cat > /etc/yum.repos.d/elasticsearch-${version}.x.repo << EOF
 [elasticsearch-${version}.x]

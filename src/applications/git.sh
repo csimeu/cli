@@ -246,3 +246,4 @@ git_exists()
     
     echo $?
 }
+
