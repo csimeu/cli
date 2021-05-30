@@ -1245,7 +1245,7 @@ function proxy_unset()
     unset no_proxy
 
     if [[ -f /etc/yum.conf ]]; then 
-        sed -i '/^proxy .*/d' /etc/yum.conf
+        sed -i '/^proxy=.*/d' /etc/yum.conf
     fi
 }
 #!/bin/bash
