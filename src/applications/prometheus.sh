@@ -117,7 +117,7 @@ ExecStart=/usr/local/bin/prometheus \
 WantedBy=multi-user.target
 EOF
 
-    systemctl daemon-reload
+    # systemctl daemon-reload
     # systemctl enable prometheus
 
 

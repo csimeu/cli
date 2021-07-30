@@ -9,7 +9,7 @@ INSTALL_DIR=/usr/share
 function parse_tomcat_arguments()
 {
     # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p::,f --long version::tomcat-config::,users-config::,config-file::,install-dir,force,default -n "$0" -- "$@"`
+    local TEMP=`getopt -o p::,f --long version::,tomcat-config::,users-config::,config-file::,install-dir,force,default -n "$0" -- "$@"`
       
     eval set -- "$TEMP"
     # extract options and their arguments into variables.
@@ -131,7 +131,7 @@ ExecStop=/usr/share/tomcat/bin/shutdown.sh
 [Install]
 WantedBy=multi-user.target
 EOF
-            sudo systemctl daemon-reload
+            # sudo systemctl daemon-reload
         fi
     fi
 

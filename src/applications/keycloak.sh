@@ -156,7 +156,7 @@ EOF
             sudo cp /etc/systemd/system/$name.service /etc/systemd/system/$appName.service
         fi
 
-        sudo systemctl daemon-reload
+        # sudo systemctl daemon-reload
     fi
 
     if [ '1' == $IS_DEFAULT ]; then 
