@@ -10,6 +10,8 @@ apache_install() {
             sudo mkdir -p /etc/httpd/sites-availables
             sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
             # pip install mod_wsgi
+            sudo chown apache:apache -R /etc/httpd
+            sudo chmod -R g+w /etc/httpd
             ;;
         debian)
             ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
@@ -20,13 +22,15 @@ apache_install() {
                 sudo groupadd --system apache
                 sudo useradd -d /var/www -r -s /bin/false -g apache apache
             fi
+            sudo chown apache:apache -R /etc/apache2
+            sudo chmod -R g+w /etc/apache2
         ;;
     esac
 
     sudo mkdir -p /var/www/cgi-bin/
     # sudo chown apache:apache -R /var/www/cgi-bin/
-    sudo chown apache:apache -R /var/www /etc/apache2
-    sudo chmod -R g+w /var/www /etc/apache2
+    sudo chown apache:apache -R /var/www
+    sudo chmod -R g+w /var/www
 
     
 
