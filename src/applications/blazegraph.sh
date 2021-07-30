@@ -52,13 +52,13 @@ function blazegraph_install()
         ;;
     esac
 
-    if [ ! -f /tmp/blazegraph-$version.war ];
+    if [ ! -f /tmp/releases/blazegraph-$version.war ];
     then
-        echo "https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/blazegraph-$version.war"
-        curl -fSL https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/blazegraph-$version.war
+        echo "https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/releases/blazegraph-$version.war"
+        curl -fSL https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/releases/blazegraph-$version.war
     fi
 
-    sudo cp -f /tmp/blazegraph-$version.war ${catalina_home}/webapps/${name}.war
+    sudo cp -f /tmp/releases/blazegraph-$version.war ${catalina_home}/webapps/${name}.war
 
 
     # https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html

@@ -88,7 +88,7 @@ function tomcat_install()
         exit 0
     fi
 
-    cd /tmp
+    cd /tmp/releases
     local major=`echo $version | cut -d. -f1`
     if [ ! -f apache-tomcat-${version}.tar.gz ]
     then
@@ -101,10 +101,11 @@ function tomcat_install()
 
     if [ "1" == "$IS_DEFAULT" ]
     then
-        sudo rm -rf /usr/share/tomcat /etc/tomcat/
+        if [ -L /etc/tomcat ]; then unlink /etc/tomcat; fi
+        sudo rm -rf /usr/share/tomcat etc/tomcat
         sudo ln -s $INSTALL_DIR/tomcat-$version /usr/share/tomcat
-        # sudo ln -s /usr/share/tomcat/conf /etc/tomcat
-        sudo chown -R tomcat:tomcat /usr/share/tomcat /etc/tomcat/
+        sudo ln -s /usr/share/tomcat/conf /etc/tomcat
+        sudo chown -R tomcat:tomcat /usr/share/tomcat /etc/tomcat
 
         if [[ "6" != $OS_VERSION ]]; then
 
@@ -146,7 +147,7 @@ EOF
 #     mkdir /opt/tomcat
 #     useradd -g tomcat -d /opt/tomcat -s /bin/nologin tomcat
 
-#     cd /tmp
+#     cd /tmp/releases
 #     wget [link to the Tomcat  7.0.90tar.gz file]
 #     tar -zxvf apache-tomcat-7.0.90.tar.gz
 #     mv apache-tomcat-7.0.90/* /opt/tomcat

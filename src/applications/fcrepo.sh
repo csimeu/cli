@@ -59,12 +59,12 @@ function fcrepo_install()
     esac
     
     
-    if [ ! -f /tmp/fcrepo-webapp-$version.war ];
+    if [ ! -f /tmp/releases/fcrepo-webapp-$version.war ];
     then 
-        curl -fSL https://github.com/fcrepo/fcrepo/releases/download/fcrepo-$version/fcrepo-webapp-$version.war -o /tmp/fcrepo-webapp-$version.war
+        curl -fSL https://github.com/fcrepo/fcrepo/releases/download/fcrepo-$version/fcrepo-webapp-$version.war -o /tmp/releases/fcrepo-webapp-$version.war
     fi
 
-    sudo cp -f /tmp/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
+    sudo cp -f /tmp/releases/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
 
     # sudo curl -fSL https://github.com/fcrepo4-exts/fcrepo-webapp-plus/releases/download/fcrepo-webapp-plus-$version/fcrepo-webapp-plus-$fcrepo_config$version.war -o ${catalina_home}/webapps/${name}.war
     #
@@ -72,7 +72,9 @@ function fcrepo_install()
     local JDBCConfig=
   # ARG FCREPO_DIR=${APP_DIR}/fcrepo
     sudo mkdir -p "${data}/${name}" && sudo chown tomcat:tomcat -R ${data}/${name}
-    sudo sed -ie "/JAVA_OPTS=\"-Dfcrepo.*/d" $catalina_home/conf/tomcat.conf
+    if [ -f $catalina_home/conf/tomcat.conf ]; then 
+        sudo sed -ie "/JAVA_OPTS=\"-Dfcrepo.*/d" $catalina_home/conf/tomcat.conf
+    fi
     sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}/${name}' -Dfcrepo.audit.container=/audit"' >> $catalina_home/conf/tomcat.conf \
     # sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 

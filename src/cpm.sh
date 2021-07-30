@@ -11,6 +11,7 @@
 # Stop on first error [duplicate]
 OS_NAME=$(plateform_name)
 OS_VERSION=$(plateform_version)
+mkdir -p /tmp/releases
 
 _home() {
     echo ${0/cpm/..}

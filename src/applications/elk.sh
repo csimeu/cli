@@ -29,7 +29,6 @@ function parse_elk_arguments()
 }
 
 elk_import_repolist() {
-    cd /tmp
     # echo $(plateform)
     case `plateform` in 
         debian)

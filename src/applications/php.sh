@@ -45,13 +45,21 @@ function php_install()
 
     case `plateform` in 
         redhat)
-			case $OS_VERSION in 
-				8)
-					if [ -z $version ]; then dnf module install php:remi-$PHP_DEFAULT_VERSION; fi
-					# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
-					# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
-				;;
-			esac
+			if [ -z $version ]; then 
+				echo "PHP_DEFAULT_VERSION=$PHP_DEFAULT_VERSION"
+				case $OS_VERSION in 
+					8)
+						if [ "$EUID" -ne 0 ]; then sudo yum module install php:remi-$PHP_DEFAULT_VERSION; else yum module install php:remi-$PHP_DEFAULT_VERSION; fi
+						# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
+						# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
+					;;
+					6|7)
+						if [ "$EUID" -ne 0 ]; then sudo yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./}; else yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./}; fi
+						# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
+						# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
+					;;
+				esac
+			fi 
 
 			version=${version/./}
 			local pversion=

@@ -39,7 +39,7 @@ function prometheus_install()
 {
     set -e
     local appName=prometheus
-      cd /tmp
+      cd /tmp/releases
     local version=2.24.1
     local data=/var/lib/$appName
     local port=9099
@@ -64,12 +64,12 @@ function prometheus_install()
     sudo mkdir /etc/$appName /var/lib/$appName
     sudo chown $appName:$appName /etc/$appName /var/lib/$appName
     
-    if [ ! -f /tmp/prometheus-$version.tar.gz ];
+    if [ ! -f /tmp/releases/prometheus-$version.tar.gz ];
     then 
-      curl -fSL  https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz -o /tmp/prometheus-$version.tar.gz
+      curl -fSL  https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz -o /tmp/releases/prometheus-$version.tar.gz
     fi
-    cd /tmp
-    tar -xvzf /tmp/prometheus-$version.tar.gz
+    cd /tmp/releases
+    tar -xvzf /tmp/releases/prometheus-$version.tar.gz
     mv prometheus-$version.linux-amd64 prometheuspackage
     #
     sudo cp prometheuspackage/prometheus /usr/local/bin/

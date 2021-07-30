@@ -49,17 +49,17 @@ fuseki_install() {
     # local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
 
 
-    if [ ! -f /tmp/apache-jena-fuseki-$version.tar.gz ];
+    if [ ! -f /tmp/releases/apache-jena-fuseki-$version.tar.gz ];
     then 
-        echo "https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz"
-        curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz
-        # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz
+        echo "https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/releases/apache-jena-fuseki-$version.tar.gz"
+        curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/releases/apache-jena-fuseki-$version.tar.gz
+        # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/releases/apache-jena-fuseki-$version.tar.gz
     fi
     
-    # sudo cp -f /tmp/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
+    # sudo cp -f /tmp/releases/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
 
     # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o apache-jena-fuseki-$version.tar.gz
-    sudo tar -xzf /tmp/apache-jena-fuseki-$version.tar.gz -C $INSTALL_DIR
+    sudo tar -xzf /tmp/releases/apache-jena-fuseki-$version.tar.gz -C $INSTALL_DIR
     sudo mv $INSTALL_DIR/apache-jena-fuseki-${version} $INSTALL_DIR/$name
 
 

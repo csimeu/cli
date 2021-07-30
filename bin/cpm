@@ -153,12 +153,20 @@ function install()
     case `plateform` in 
         debian)
             echo "sudo apt-get install $@"
-            sudo apt-get install $@
+            if [ "$EUID" -ne 0 ]; then 
+                sudo apt-get install $@
+            else
+                apt-get install $@
+            fi
             ;;
             
         redhat)
             echo "sudo yum install $@"
-            sudo yum install $@
+            if [ "$EUID" -ne 0 ]; then 
+                sudo yum install $@
+            else
+                yum install $@
+            fi
         ;;
     esac
 
@@ -316,13 +324,13 @@ function blazegraph_install()
         ;;
     esac
 
-    if [ ! -f /tmp/blazegraph-$version.war ];
+    if [ ! -f /tmp/releases/blazegraph-$version.war ];
     then
-        echo "https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/blazegraph-$version.war"
-        curl -fSL https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/blazegraph-$version.war
+        echo "https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/releases/blazegraph-$version.war"
+        curl -fSL https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/releases/blazegraph-$version.war
     fi
 
-    sudo cp -f /tmp/blazegraph-$version.war ${catalina_home}/webapps/${name}.war
+    sudo cp -f /tmp/releases/blazegraph-$version.war ${catalina_home}/webapps/${name}.war
 
 
     # https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
@@ -370,7 +378,6 @@ function parse_elk_arguments()
 }
 
 elk_import_repolist() {
-    cd /tmp
     # echo $(plateform)
     case `plateform` in 
         debian)
@@ -524,12 +531,12 @@ function fcrepo_install()
     esac
     
     
-    if [ ! -f /tmp/fcrepo-webapp-$version.war ];
+    if [ ! -f /tmp/releases/fcrepo-webapp-$version.war ];
     then 
-        curl -fSL https://github.com/fcrepo/fcrepo/releases/download/fcrepo-$version/fcrepo-webapp-$version.war -o /tmp/fcrepo-webapp-$version.war
+        curl -fSL https://github.com/fcrepo/fcrepo/releases/download/fcrepo-$version/fcrepo-webapp-$version.war -o /tmp/releases/fcrepo-webapp-$version.war
     fi
 
-    sudo cp -f /tmp/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
+    sudo cp -f /tmp/releases/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
 
     # sudo curl -fSL https://github.com/fcrepo4-exts/fcrepo-webapp-plus/releases/download/fcrepo-webapp-plus-$version/fcrepo-webapp-plus-$fcrepo_config$version.war -o ${catalina_home}/webapps/${name}.war
     #
@@ -537,7 +544,9 @@ function fcrepo_install()
     local JDBCConfig=
   # ARG FCREPO_DIR=${APP_DIR}/fcrepo
     sudo mkdir -p "${data}/${name}" && sudo chown tomcat:tomcat -R ${data}/${name}
-    sudo sed -ie "/JAVA_OPTS=\"-Dfcrepo.*/d" $catalina_home/conf/tomcat.conf
+    if [ -f $catalina_home/conf/tomcat.conf ]; then 
+        sudo sed -ie "/JAVA_OPTS=\"-Dfcrepo.*/d" $catalina_home/conf/tomcat.conf
+    fi
     sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}/${name}' -Dfcrepo.audit.container=/audit"' >> $catalina_home/conf/tomcat.conf \
     # sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 
@@ -604,17 +613,17 @@ fuseki_install() {
     # local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
 
 
-    if [ ! -f /tmp/apache-jena-fuseki-$version.tar.gz ];
+    if [ ! -f /tmp/releases/apache-jena-fuseki-$version.tar.gz ];
     then 
-        echo "https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz"
-        curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz
-        # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz
+        echo "https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/releases/apache-jena-fuseki-$version.tar.gz"
+        curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/releases/apache-jena-fuseki-$version.tar.gz
+        # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/releases/apache-jena-fuseki-$version.tar.gz
     fi
     
-    # sudo cp -f /tmp/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
+    # sudo cp -f /tmp/releases/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
 
     # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o apache-jena-fuseki-$version.tar.gz
-    sudo tar -xzf /tmp/apache-jena-fuseki-$version.tar.gz -C $INSTALL_DIR
+    sudo tar -xzf /tmp/releases/apache-jena-fuseki-$version.tar.gz -C $INSTALL_DIR
     sudo mv $INSTALL_DIR/apache-jena-fuseki-${version} $INSTALL_DIR/$name
 
 
@@ -767,13 +776,13 @@ function keycloak_install()
     # https://medium.com/@hasnat.saeed/setup-keycloak-server-on-ubuntu-18-04-ed8c7c79a2d9
     mkdir -p $KEYCLOAK_HOME;
     
-    if [ ! -f /tmp/keycloak-${version}.tar.gz ];
+    if [ ! -f /tmp/releases/keycloak-${version}.tar.gz ];
     then
         echo "https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz"
-        curl -fSL https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz -o /tmp/keycloak-${version}.tar.gz;
+        curl -fSL https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz -o /tmp/releases/keycloak-${version}.tar.gz;
     fi
     
-    tar -xzf /tmp/keycloak-${version}.tar.gz -C $KEYCLOAK_HOME --strip-components=1;
+    tar -xzf /tmp/releases/keycloak-${version}.tar.gz -C $KEYCLOAK_HOME --strip-components=1;
 
     if ! getent passwd $appName > /dev/null 2>&1; then
         sudo groupadd --system $appName
@@ -788,8 +797,8 @@ function keycloak_install()
     mkdir -p $KEYCLOAK_HOME/modules/org/postgresql/main
     if [ ! -f $KEYCLOAK_HOME/modules/org/postgresql/main/postgresql-42.2.5.jar ]
     then
-        curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o /tmp/postgresql-42.2.5.jar
-        mv /tmp/postgresql-42.2.5.jar $KEYCLOAK_HOME/modules/org/postgresql/main/
+        curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o /tmp/releases/postgresql-42.2.5.jar
+        mv /tmp/releases/postgresql-42.2.5.jar $KEYCLOAK_HOME/modules/org/postgresql/main/
     fi
 
     if [ ! -f $KEYCLOAK_HOME/modules/org/postgresql/main/module.xml ]
@@ -814,13 +823,13 @@ EOF
     mkdir -p $KEYCLOAK_HOME/modules/org/mysql/main
     if [ ! -f $KEYCLOAK_HOME/modules/org/mysql/main/mysql-connector-java-5.1.47.jar ]
     then
-        curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/mysql-connector-java-5.1.47.tar.gz
-        tar -xzf /tmp/mysql-connector-java-5.1.47.tar.gz mysql-connector-java-5.1.47/mysql-connector-java-5.1.47.jar --strip-components=1
+        curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/releases/mysql-connector-java-5.1.47.tar.gz
+        tar -xzf /tmp/releases/mysql-connector-java-5.1.47.tar.gz mysql-connector-java-5.1.47/mysql-connector-java-5.1.47.jar --strip-components=1
         sudo mv mysql-connector-java-5.1.47.jar $KEYCLOAK_HOME/modules/org/mysql/main/
     fi
 
-    # curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/mysql-connector-java-5.1.47.tar.gz
-    # tar -xzf /tmp/mysql-connector-java-5.1.47.tar.gz mysql-connector-java-5.1.47/mysql-connector-java-5.1.47.jar --strip-components=1
+    # curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/releases/mysql-connector-java-5.1.47.tar.gz
+    # tar -xzf /tmp/releases/mysql-connector-java-5.1.47.tar.gz mysql-connector-java-5.1.47/mysql-connector-java-5.1.47.jar --strip-components=1
     # cp -f mysql-connector-java-5.1.47.jar $KEYCLOAK_HOME
     # # $KEYCLOAK_HOME/bin/jboss-cli.sh -c "module add --name=org.mysql  --dependencies=javax.api,javax.transaction.api --resources=mysql-connector-java-5.1.47.jar"
 
@@ -1151,13 +1160,21 @@ function php_install()
 
     case `plateform` in 
         redhat)
-			case $OS_VERSION in 
-				8)
-					if [ -z $version ]; then dnf module install php:remi-$PHP_DEFAULT_VERSION; fi
-					# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
-					# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
-				;;
-			esac
+			if [ -z $version ]; then 
+				echo "PHP_DEFAULT_VERSION=$PHP_DEFAULT_VERSION"
+				case $OS_VERSION in 
+					8)
+						if [ "$EUID" -ne 0 ]; then sudo yum module install php:remi-$PHP_DEFAULT_VERSION; else yum module install php:remi-$PHP_DEFAULT_VERSION; fi
+						# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
+						# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
+					;;
+					6|7)
+						if [ "$EUID" -ne 0 ]; then sudo yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./}; else yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./}; fi
+						# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
+						# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
+					;;
+				esac
+			fi 
 
 			version=${version/./}
 			local pversion=
@@ -1444,7 +1461,7 @@ function prometheus_install()
 {
     set -e
     local appName=prometheus
-      cd /tmp
+      cd /tmp/releases
     local version=2.24.1
     local data=/var/lib/$appName
     local port=9099
@@ -1469,12 +1486,12 @@ function prometheus_install()
     sudo mkdir /etc/$appName /var/lib/$appName
     sudo chown $appName:$appName /etc/$appName /var/lib/$appName
     
-    if [ ! -f /tmp/prometheus-$version.tar.gz ];
+    if [ ! -f /tmp/releases/prometheus-$version.tar.gz ];
     then 
-      curl -fSL  https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz -o /tmp/prometheus-$version.tar.gz
+      curl -fSL  https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz -o /tmp/releases/prometheus-$version.tar.gz
     fi
-    cd /tmp
-    tar -xvzf /tmp/prometheus-$version.tar.gz
+    cd /tmp/releases
+    tar -xvzf /tmp/releases/prometheus-$version.tar.gz
     mv prometheus-$version.linux-amd64 prometheuspackage
     #
     sudo cp prometheuspackage/prometheus /usr/local/bin/
@@ -1632,13 +1649,13 @@ function solr_install()
     rm -rf solr-"$version".tgz install_solr_service.sh
 
     # echo 2
-    if [ ! -f /tmp/solr-$version.tgz ]
+    if [ ! -f /tmp/releases/solr-$version.tgz ]
     then 
-        curl -fSL https://archive.apache.org/dist/lucene/solr/$version/solr-$version.tgz -o /tmp/solr-$version.tgz
+        curl -fSL https://archive.apache.org/dist/lucene/solr/$version/solr-$version.tgz -o /tmp/releases/solr-$version.tgz
     fi
 
     # 
-    cd /tmp
+    cd /tmp/releases
     mkdir -p ${data} $INSTALL_DIR
     tar -xzf solr-"$version".tgz solr-"$version"/bin/install_solr_service.sh --strip-components=2
 
@@ -1762,7 +1779,7 @@ function tomcat_install()
         exit 0
     fi
 
-    cd /tmp
+    cd /tmp/releases
     local major=`echo $version | cut -d. -f1`
     if [ ! -f apache-tomcat-${version}.tar.gz ]
     then
@@ -1775,10 +1792,11 @@ function tomcat_install()
 
     if [ "1" == "$IS_DEFAULT" ]
     then
-        sudo rm -rf /usr/share/tomcat /etc/tomcat/
+        if [ -L /etc/tomcat ]; then unlink /etc/tomcat; fi
+        sudo rm -rf /usr/share/tomcat etc/tomcat
         sudo ln -s $INSTALL_DIR/tomcat-$version /usr/share/tomcat
-        # sudo ln -s /usr/share/tomcat/conf /etc/tomcat
-        sudo chown -R tomcat:tomcat /usr/share/tomcat /etc/tomcat/
+        sudo ln -s /usr/share/tomcat/conf /etc/tomcat
+        sudo chown -R tomcat:tomcat /usr/share/tomcat /etc/tomcat
 
         if [[ "6" != $OS_VERSION ]]; then
 
@@ -1820,7 +1838,7 @@ EOF
 #     mkdir /opt/tomcat
 #     useradd -g tomcat -d /opt/tomcat -s /bin/nologin tomcat
 
-#     cd /tmp
+#     cd /tmp/releases
 #     wget [link to the Tomcat  7.0.90tar.gz file]
 #     tar -zxvf apache-tomcat-7.0.90.tar.gz
 #     mv apache-tomcat-7.0.90/* /opt/tomcat
@@ -2862,6 +2880,7 @@ function user_update()
 # Stop on first error [duplicate]
 OS_NAME=$(plateform_name)
 OS_VERSION=$(plateform_version)
+mkdir -p /tmp/releases
 
 _home() {
     echo ${0/cpm/..}

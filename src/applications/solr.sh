@@ -83,13 +83,13 @@ function solr_install()
     rm -rf solr-"$version".tgz install_solr_service.sh
 
     # echo 2
-    if [ ! -f /tmp/solr-$version.tgz ]
+    if [ ! -f /tmp/releases/solr-$version.tgz ]
     then 
-        curl -fSL https://archive.apache.org/dist/lucene/solr/$version/solr-$version.tgz -o /tmp/solr-$version.tgz
+        curl -fSL https://archive.apache.org/dist/lucene/solr/$version/solr-$version.tgz -o /tmp/releases/solr-$version.tgz
     fi
 
     # 
-    cd /tmp
+    cd /tmp/releases
     mkdir -p ${data} $INSTALL_DIR
     tar -xzf solr-"$version".tgz solr-"$version"/bin/install_solr_service.sh --strip-components=2
 
