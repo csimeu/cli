@@ -103,7 +103,7 @@ function tomcat_install()
     then
         sudo rm -rf /usr/share/tomcat /etc/tomcat/
         sudo ln -s $INSTALL_DIR/tomcat-$version /usr/share/tomcat
-        sudo ln -s /usr/share/tomcat/conf /etc/tomcat
+        # sudo ln -s /usr/share/tomcat/conf /etc/tomcat
         sudo chown -R tomcat:tomcat /usr/share/tomcat /etc/tomcat/
 
         if [[ "6" != $OS_VERSION ]]; then
