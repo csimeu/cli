@@ -16,6 +16,11 @@ GROUP_ADMIN=
 GIT_DOMAIN=${GIT_DOMAIN:-"github.com"}
 ```
 
+## USER
+cpm user:add --help
+cpm user:update --help
+
+
 ## Git
 
 - Retrieve repository name from git url `cpm git:repo:name [git_remote]`

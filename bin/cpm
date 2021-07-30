@@ -1,30 +1,245 @@
 #!/bin/bash
 # sed -i -e 's/\r$//' scriptname.sh
 
+port_offset=0
+
 AUTHOR=${AUTHOR}
 WWW=${WWW:-"/var/www"}
 WEB_HOME=${WEB_HOME:-"/var/www/html"}
 GITHUB_DOMAIN=${GITHUB_DOMAIN:-'https://github.com'}
+
+INSTALL_DIR=${INSTALL_DIR:-"/usr/share"}
+
+POSTGRESQL_RELEASES="11 12 13 14"
+POSTGIS_RELEASES="2.4 2.5 3"
+POSTGRESQL_DEFAULT_VERSION=${POSTGRESQL_DEFAULT_VERSION:-"11"}
+POSTGIS_DEFAULT_VERSION=${POSTGIS_DEFAULT_VERSION:-"2.4"}
+
+
+TOMCAT_RELEASES="7 8 9"
+TOMCAT_DEFAULT_VERSION=${TOMCAT_DEFAULT_VERSION:-"8"}
+
+FCREPO_RELEASES="5.1.1 4.7.5"
+FCREPO_DEFAULT_VERSION=${FCREPO_DEFAULT_VERSION:-"4.7.5"}
+
+FUSEKI_RELEASES="4.1.0 3.14.0"
+FUSEKI_DEFAULT_VERSION=${FUSEKI_DEFAULT_VERSION:-"4.1.0"}
+
+BLAZEGRAPH_RELEASES="2.1.5"
+BLAZEGRAPH_DEFAULT_VERSION=${BLAZEGRAPH_DEFAULT_VERSION:-"2.1.5"}
+
+KEYCLOAK_RELEASES="14.0.0 13.0.0 12.0.0 11.0.0 9.0.1 8.0.2"
+KEYCLOAK_DEFAULT_VERSION=${KEYCLOAK_DEFAULT_VERSION:-"8.0.2"}
+
+
+MYSQL_RELEASES="5 8"
+MYSQL_DEFAULT_VERSION=${MYSQL_DEFAULT_VERSION:-"5"}
+
+SORL_RELEASES="7 8"
+SORL_DEFAULT_VERSION=${SORL_DEFAULT_VERSION:-"8"}
+
+PHP_DEFAULT_VERSION=${PHP_DEFAULT_VERSION:-7.3}
+
+#!/bin/bash
+
+# check to see if this file is being run or sourced from another script
+is_sourced () {
+  [[ "${FUNCNAME[1]}" == "source" ]]  && return 0
+  return 1
+}
+
+# Checks if given string is an valid url
+function is_url()
+{
+    # -- supported protocols (HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET, LDAP or FILE) --
+    regex='([a-z]{3,6})://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
+    string=$1
+    if [[ $string =~ $regex ]]
+    then 
+        true
+    else
+        false
+    fi
+}
+
+# Transform snake words to camel
+function snake_to_camel()
+{
+    echo $(echo $1 | sed -r 's/(^|_)(\w)/\U\2/g' )
+}
+
+# Transform camel words to snake
+function camel_to_snake() 
+{
+    echo $(echo $1 | sed 's/\(.\)\([A-Z]\)/\1_\2/g' | tr '[:upper:]' '[:lower:]')
+}
+
+# get plateform
+function plateform() 
+{
+    local value="debian"
+    case `plateform_name` in
+        centos|rhel|fedora)
+            value="redhat";
+            ;;
+        *)
+            value="debian"
+        ;;
+    esac
+
+    echo $value
+}
+
+# get plateform name
+function plateform_name() 
+{
+    local value=$(awk -F= '/^ID=/{print $2}' /etc/os-release)
+    echo ${value//\"/}
+}
+
+# get plateform version
+function plateform_version() 
+{
+    local value=$(awk -F= '/^VERSION_ID=/{print $2}' /etc/os-release)
+    echo ${value//\"/}
+}
+
+
+# get plateform version
+function os_type() 
+{
+    local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
+    value=${value//\"/}
+    regex="^(debian|ubuntu)$"
+    if [[ $value =~ $regex ]]
+    then 
+        true
+    else
+        false
+    fi
+}
+function is_debian() 
+{
+    local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
+    value=${value//\"/}
+    regex="^(debian|ubuntu)$"
+    if [[ $value =~ $regex ]]
+    then 
+        true
+    else
+        false
+    fi
+}
+
+function is_redhat() 
+{    
+    local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
+    value=${value//\"/}
+    regex="^(rhel|centos|fedora)$"
+
+
+    # echo $value
+    if [[ $value =~ $regex ]]
+    then 
+        true
+    else
+        false
+    fi
+}
+
+function install() 
+{
+    # echo "sudo yum install $@"
+    case `plateform` in 
+        debian)
+            echo "sudo apt-get install $@"
+            sudo apt-get install $@
+            ;;
+            
+        redhat)
+            echo "sudo yum install $@"
+            sudo yum install $@
+        ;;
+    esac
+
+}
+
+#!/bin/bash
+
+
+apache_install() {
+    
+    case `plateform` in 
+        redhat)
+            install -y httpd mod_ssl mod_fcgid
+            sudo mkdir -p /etc/httpd/sites-enabled
+            sudo mkdir -p /etc/httpd/sites-availables
+            sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
+            # pip install mod_wsgi
+            ;;
+        debian)
+            ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
+            install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi libapache2-mod-php
+            a2enmod ssl
+            # a2enconf mod-wsgi
+            if ! getent passwd apache > /dev/null 2>&1; then
+                sudo groupadd --system apache
+                sudo useradd -d /var/www -r -s /bin/false -g apache apache
+            fi
+        ;;
+    esac
+
+    sudo mkdir -p /var/www/cgi-bin/
+    # sudo chown apache:apache -R /var/www/cgi-bin/
+    sudo chown apache:apache -R /var/www /etc/apache2
+    sudo chmod -R g+w /var/www /etc/apache2
+
+    
+
+# sudo cat > /etc/httpd/sites-availables/php-fcgi.conf << EOF
+# # Configure multiple php version
+# ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
+# AddHandler php-fcgi .php
+# #Action php55-fcgi /cgi-bin/php55.fcgi
+# #Action php56-fcgi /cgi-bin/php56.fcgi
+# #Action php71-fcgi /cgi-bin/php71.fcgi
+# #Action php72-fcgi /cgi-bin/php72.fcgi
+# #Action php73-fcgi /cgi-bin/php73.fcgi
+# #Action php74-fcgi /cgi-bin/php74.fcgi
+# EOF
+
+# if [[ "$(rpm -E %{rhel})" == "6"  ]];
+# then
+#     sudo chkconfig httpd on
+# else 
+#     sudo systemctl enable httpd
+# fi
+
+}
 
 
 
 # Reads arguments options
 function read_application_arguments()
 {
-    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home::install-dir::,port-offset::,password::,user::,host:: -n "$0" -- "$@"`
+    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::"
+    local TEMP=`getopt -o p::,f,h --long $long,password::,user::,host::,port:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
     while true ; do
         case "$1" in
+            -f|--force) FORCE=1 ; shift 1 ;;
+            --default) IS_DEFAULT=1 ; shift 1 ;;
             --data) data=${2%"/"} ; shift 2 ;;
             --name) name=${2} ; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
             --version) version=${2:-"$version"}; shift 2 ;;
             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            --install-dir) install_dir=${2:-"$install_dir"}; shift 2 ;;
+            --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"}; shift 2 ;;
             --port-offset) port_offset=${2:-"$port_offset"}; shift 2 ;;
+            --port) port=${2:-"$port"}; shift 2 ;;
             --user) user=${2:-"$user"}; shift 2 ;;
             --host) host=${2:-"$host"}; shift 2 ;;
             --password) password=${2:-"$password"}; shift 2 ;;
@@ -51,11 +266,14 @@ function read_application_arguments()
 function blazegraph_install() 
 {
     set -e
-    local version=2.1.5
-    local data=
-    local name=blazegraph
-    local catalina_home=/usr/share/tomcat
-    local blazegraph_config=
+    local appName=blazegraph
+    local FORCE=0
+    local IS_DEFAULT=0
+    local version=$BLAZEGRAPH_DEFAULT_VERSION
+    local data=/var/lib
+    local name=
+    local catalina_home=
+    local fcrepo_config=
     local file_config=
     # echo $@
 
@@ -63,24 +281,52 @@ function blazegraph_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    if ! getent passwd tomcat > /dev/null 2>&1; then
-        tomcat_install
+    name=${name:-"$appName-$version"}
+    name=${name//./-/}
+
+    if [ '1' == $IS_DEFAULT ]; then 
+        catalina_home=/usr/share/tomcat; 
+        name=$appName
     fi
 
+    if [ -z $catalina_home ]; then
+        echo "If not --default, --catalina_home value is required"
+        exit 1
+    fi
+
+    if [ '1' == $FORCE ]; then 
+        sudo rm -f ${catalina_home}/webapps/${name}.war
+    fi
+
+    if [ -f ${catalina_home}/webapps/${name}.war ]
+    then 
+        echo "Current file already exist: ${catalina_home}/webapps/${name}.war"
+        exit 0
+    fi
+
+    case "$version" in
+
+        "2") version=2.1.5;;
+
+        *)
+        ;;
+    esac
+
+    if [ ! -f /tmp/blazegraph-$version.war ];
+    then
+        echo "https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/blazegraph-$version.war"
+        curl -fSL https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/blazegraph-$version.war
+    fi
+
+    sudo cp -f /tmp/blazegraph-$version.war ${catalina_home}/webapps/${name}.war
+
+
     # https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
-    curl -fSL https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o ${catalina_home}/webapps/${name}.war
 
-    # # Configure
-    # # data=${data:-"$1"}
-    # data=${data:-"/var/lib/blazegraph"}
-    # data=${data%"/"} 
-
-    # wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_2_1_5/blazegraph.rpm
-    # sudo yum localinstall blazegraph.rpm
-    # ln -s /etc/alternatives/jre  /usr/lib/jvm/default-java
 
     # mkdir -p /etc/blazegraph/
     # chown tomcat:tomcat -R /etc/blazegraph/
+    echo ">> Installed application '$appName' (version = $version) in ${catalina_home}/webapps/${name}.war"
 }
 
 ## detect if a script is being sourced or not
@@ -119,10 +365,22 @@ function parse_elk_arguments()
   # fi
 }
 
-elk_import_rpm() {
-    local version=$1
-    if [ ! -f /etc/yum.repos.d/elasticsearch-${version}.x.repo ]; then
-        sudo cat > /etc/yum.repos.d/elasticsearch-${version}.x.repo << EOF
+elk_import_repolist() {
+    cd /tmp
+    # echo $(plateform)
+    case `plateform` in 
+        debian)
+            # echo "debian"
+            if [[ ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]]; then
+                wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+                # echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
+                sudo apt-get -y update
+            fi
+            ;;
+        redhat)
+            # echo "redhat"
+            if [[ ! -f /etc/yum.repos.d/elasticsearch-${version}.x.repo ]]; then
+                sudo cat > /etc/yum.repos.d/elasticsearch-${version}.x.repo << EOF
 [elasticsearch-${version}.x]
 name=Elasticsearch repository for ${version}.x packages
 baseurl=https://artifacts.elastic.co/packages/${version}.x/yum
@@ -132,20 +390,63 @@ enabled=1
 autorefresh=1
 type=rpm-md
 EOF
-        # sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
-    fi
+            # sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        fi
+        ;;
+    esac
+
+    # # if [[ is_debian && ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]]; then
+    # #     wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+    # #     echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
+    # #     sudo apt-get -y update
+    # # fi
+    # # snake_to_camel test
+    # if [[  `is_redhat`  ]]; then
+    #     # echo $(is_debian)
+    #     echo $(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
+    # # fi
+    # fi
 }
 
+# elk_import_deb() {
+#     if [ ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]
+#     then 
+#         wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+#         echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
+#         sudo apt-get -y update
+#     fi
+# }
+
 elk_install_beats() {
-    sudo yum install -y filebeat auditbeat metricbeat packetbeat heartbeat-elastic
+    elk_import_repolist
+    install -y filebeat auditbeat metricbeat packetbeat heartbeat-elastic
 }
 
 elk_install() {
     local version=7
     local _parameters=
     parse_elk_arguments $@ 
-    elk_import_rpm $version
-    sudo yum -y install elasticsearch logstash kibana
+    
+    elk_import_repolist
+    install -y elasticsearch kibana
+}
+
+elasticsearch_install() {
+    local version=7
+    local _parameters=
+    parse_elk_arguments $@ 
+    
+    elk_import_repolist
+    install -y elasticsearch
+}
+
+kibana_install() {
+    local version=7
+    local _parameters=
+    parse_elk_arguments $@ 
+    
+    elk_import_repolist
+    install -y kibana
 }
 
 ## detect if a script is being sourced or not
@@ -163,50 +464,16 @@ elk_install() {
 # Install fedora commons repository
 
 
-# # Reads arguments options
-# function parse_fcrepo_arguments()
-# {
-#   # if [ $# -ne 0 ]; then
-#     local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file:: -n "$0" -- "$@"`
-#     local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home:: -n "$0" -- "$@"`
-    
-# 	eval set -- "$TEMP"
-#     # extract options and their arguments into variables.
-#     while true ; do
-#         case "$1" in
-#             --data) data=${2%"/"} ; shift 2 ;;
-#             --name) name=${2} ; shift 2 ;;
-#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-#             --version) version=${2:-"$version"}; shift 2 ;;
-#             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
-#             # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
-#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-#             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-#             # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-#             # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-#             # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-#             # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
-#             --) shift ; break ;;
-#             *) echo "Internal error! $1" ; exit 1 ;;
-#         esac
-#     done
-
-#     shift $(expr $OPTIND - 1 )
-#     _parameters=$@
-    
-#   # fi
-# }
 
 function fcrepo_install() 
 {
     set -e
-    local version=4.7.5
-    local data=/var/lib/fcrepo
-    local name=fcrepo
-    local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
-    # local DB_PASSWORD=
-    # local DB_HOST=localhost
-    # local DB_PORT=3306
+    local FORCE=0
+    local IS_DEFAULT=0
+    local version=$FCREPO_DEFAULT_VERSION
+    local data=/var/lib
+    local name=
+    local catalina_home=
     local fcrepo_config=
     local file_config=
     # echo $@
@@ -215,43 +482,65 @@ function fcrepo_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    # name=${name:-"fcrepo-$version"}
-    # # data=${data:-"$1"}
-    # data=${data:-"/var/lib/$name"}
-    # data=${data%"/"} 
+    name=${name:-"fcrepo$version"}
+    name=${name//./-/}
 
-    if ! getent passwd tomcat > /dev/null 2>&1; then
-        tomcat_install
+    if [ '1' == $IS_DEFAULT ]; then 
+        catalina_home=/usr/share/tomcat; 
+        name=fcrepo
     fi
 
-    # ENV PATH $CATALINA_HOME/bin:$PATH
+    if [ -z $catalina_home ]; then
+        echo "If not --default, --catalina_home value is required"
+        exit 1
+    fi
 
-    # https://github.com/fcrepo4/fcrepo4/releases/download/fcrepo-5.1.0/fcrepo-webapp-5.1.0.war
+    if [ '1' == $FORCE ]; then 
+        sudo rm -f ${catalina_home}/webapps/${name}.war
+    fi
+
+    if [ -f ${catalina_home}/webapps/${name}.war ]
+    then 
+        echo "Current file already exist: ${catalina_home}/webapps/${name}.war"
+        exit 0
+    fi
+
+
+    # https://github.com/fcrepo/fcrepo/releases/download/fcrepo-5.1.0/fcrepo-webapp-5.1.0.war
+    # 
     # https://github.com/fcrepo4/fcrepo4/releases/download/fcrepo-4.7.5/fcrepo-webapp-4.7.5.war
 
     case "$version" in
 
         "4") version=4.7.5;;
 
-        "5") version=5.1.0;;
+        "5") version=5.1.1;;
         *)
         ;;
     esac
     
-    # ARG FCREPO_VERSION=4.7.5
-    # ARG FCREPO_TAG=4.7.5
-    # ARG FcrepoConfig=
-    curl -fSL https://github.com/fcrepo4-exts/fcrepo-webapp-plus/releases/download/fcrepo-webapp-plus-$version/fcrepo-webapp-plus-$fcrepo_config$version.war -o ${catalina_home}/webapps/${name}.war
+    
+    if [ ! -f /tmp/fcrepo-webapp-$version.war ];
+    then 
+        curl -fSL https://github.com/fcrepo/fcrepo/releases/download/fcrepo-$version/fcrepo-webapp-$version.war -o /tmp/fcrepo-webapp-$version.war
+    fi
+
+    sudo cp -f /tmp/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
+
+    # sudo curl -fSL https://github.com/fcrepo4-exts/fcrepo-webapp-plus/releases/download/fcrepo-webapp-plus-$version/fcrepo-webapp-plus-$fcrepo_config$version.war -o ${catalina_home}/webapps/${name}.war
     #
     local ModeshapeConfig=file-simple
     local JDBCConfig=
   # ARG FCREPO_DIR=${APP_DIR}/fcrepo
-    sudo mkdir -p "${data}" && sudo chown tomcat:tomcat -R ${data} 
-    sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}' -Dfcrepo.audit.container=/audit"' >> /etc/tomcat/tomcat.conf \
+    sudo mkdir -p "${data}/${name}" && sudo chown tomcat:tomcat -R ${data}/${name}
+    sudo sed -ie "/JAVA_OPTS=\"-Dfcrepo.*/d" $catalina_home/conf/tomcat.conf
+    sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}/${name}' -Dfcrepo.audit.container=/audit"' >> $catalina_home/conf/tomcat.conf \
     # sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 
-    sudo mkdir -p /etc/$name
-    sudo chown tomcat:tomcat /etc/$name
+    sudo mkdir -p /etc/${name}
+    sudo chown tomcat:tomcat /etc/${name}
+
+    echo ">> Installed application '$name' (version = $version) in ${catalina_home}/webapps/${name}.war"
 }
 
 ## detect if a script is being sourced or not
@@ -266,24 +555,1416 @@ function fcrepo_install()
 
 fuseki_install() {
     
-    local name=fuseki
-    local data=
-    local version=3.14.0
-    local install_dir=/usr/share
-    local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
+    local _name=fuseki
+    local FORCE=0
+    local IS_DEFAULT=0
+    local version=$FUSEKI_DEFAULT_VERSION
+    local data=/var/lib
+    local name=
+    local catalina_home=
+    
+    local _parameters=
+    read_application_arguments $@
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    local repo_url=downloads.apache.org
+    case "$version" in
+        "4") version=4.1.0;;
+        "3") version=3.14.0; repo_url=archive.apache.org/dist ;;
+        *)
+        ;;
+    esac
+
+    local givenname=$name
+    name="$_name-$version"
+
+    if [ '1' == $FORCE ]; then 
+        sudo rm -rf $INSTALL_DIR/$name
+    fi
+    
+    if [ -d $INSTALL_DIR/$name ]
+    then 
+        echo "Application already installed into  $INSTALL_DIR/$name"
+        exit 0
+    fi
+
+
+    # name=${name//./-/}
+
+
+
+    # local name=fuseki
+    # local data=
+    # local version=3.14.0
+    # local install_dir=/usr/share
+    # local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
+
+
+    if [ ! -f /tmp/apache-jena-fuseki-$version.tar.gz ];
+    then 
+        echo "https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz"
+        curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz
+        # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz
+    fi
+    
+    # sudo cp -f /tmp/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
+
+    # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o apache-jena-fuseki-$version.tar.gz
+    sudo tar -xzf /tmp/apache-jena-fuseki-$version.tar.gz -C $INSTALL_DIR
+    sudo mv $INSTALL_DIR/apache-jena-fuseki-${version} $INSTALL_DIR/$name
+
+
+    if [ '1' == $IS_DEFAULT ]; then 
+        catalina_home=/usr/share/tomcat; 
+        givename=$_name
+        sudo rm -rf /usr/share/$_name
+        sudo ln -s $INSTALL_DIR/$name /usr/share/$_name
+    fi
+
+    if [ -d $catalina_home/webapps ]; then
+        if [ '1' == $FORCE ]; then sudo rm -f ${catalina_home}/webapps/${name}.war ; fi
+        
+        if [ ! -f ${catalina_home}/webapps/${name}.war ]
+        then 
+            sudo cp -f "$INSTALL_DIR/${name}/fuseki.war" ${catalina_home}/webapps/${givename:-$name}.war
+        fi
+
+    fi
+
+    
+
+
+    # sudo cp -f "$INSTALL_DIR/fuseki-${version}/fuseki.war" "${catalina_home}/webapps/$name.war"
+
+
+    # mkdir -p /etc/$name/configuration
+    # chown tomcat:tomcat -R /etc/$name
+    echo ">> Installed application '$_name' (version = $version) in $INSTALL_DIR/${name}"
+}
+#!/bin/bash
+
+# Install grafana 
+# https://www.fosslinux.com/8328/how-to-install-and-configure-grafana-on-centos-7.htm
+
+# Reads arguments options
+function parse_grafana_arguments()
+{
+  # if [ $# -ne 0 ]; then
+    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+    
+	eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
+            --data) data=${2%"/"} ; shift 2 ;;
+            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+            --version) version=${2:-"$version"}; shift 2 ;;
+            --port) port=${2:-"$port"}; shift 2 ;;
+            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+            # --port) port=${2:-"$port"}; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
+
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
+
+function grafana_install() 
+{
+    set -e
+      
+    if [ ! -f /etc/yum.repos.d/grafana.repo ]; then 
+        sudo cat > /etc/yum.repos.d/grafana.repo << EOF
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/oss/rpm
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+EOF
+    fi
+    
+    sudo yum -y install grafana
+    sudo yum install -y fontconfig freetype* urw-fonts
+
+    sudo systemctl enable grafana-server.service
+
+}
+
+
+#!/bin/bash
+
+function keycloak_install() 
+{
+    set -e
+
+    local appName=keycloak
+
+    local FORCE=0
+    local IS_DEFAULT=0
+    local version=$KEYCLOAK_DEFAULT_VERSION
+    # local data=/var/lib
+    local name=
+    # local catalina_home=
+    # local fcrepo_config=
+    # local file_config=
+    # echo $@
+
+
+    # local version=8.0.1
+    # local name=keycloak
+    # local INSTALL_DIR=/usr/share
+    # local port_offset=100
 
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
 
-    curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o apache-jena-fuseki-$version.tar.gz
-    tar -xzf apache-jena-fuseki-"$version".tar.gz -C "${install_dir}"
-    cp -f "${install_dir}/apache-jena-fuseki-${version}/fuseki.war" "${catalina_home}/webapps/$name.war"
+
+    case "$version" in
+        "8") version=8.0.2;;
+        14|13|12|11|10) version=$version.0.0;;
+        *)
+        ;;
+    esac
+
+    name="$appName-$version"
+    local KEYCLOAK_HOME=${INSTALL_DIR}/$name
 
 
-    mkdir -p /etc/$name/configuration
-    chown tomcat:tomcat -R /etc/$name
+    
+    if [ -d $INSTALL_DIR/$name ]
+    then 
+        if [ '0' == $FORCE ]; then 
+            # sudo rm -rf $INSTALL_DIR/$name
+            echo "Application already installed into  $INSTALL_DIR/$name"
+            exit 0
+        fi
+    fi
+
+
+    # _PORT=${3:-"8088"}
+
+    ## Install keycloak
+    # https://blog.ineat-conseil.fr/2017/11/securisez-vos-apis-spring-avec-keycloak-1-installation-de-keycloak/
+    # https://medium.com/@hasnat.saeed/setup-keycloak-server-on-ubuntu-18-04-ed8c7c79a2d9
+    mkdir -p $KEYCLOAK_HOME;
+    
+    if [ ! -f /tmp/keycloak-${version}.tar.gz ];
+    then
+        echo "https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz"
+        curl -fSL https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz -o /tmp/keycloak-${version}.tar.gz;
+    fi
+    
+    tar -xzf /tmp/keycloak-${version}.tar.gz -C $KEYCLOAK_HOME --strip-components=1;
+
+    if ! getent passwd $appName > /dev/null 2>&1; then
+        sudo groupadd --system $appName
+        sudo useradd -d /var/www -r -s /bin/false -g $appName $appName
+    fi
+    
+    chown -R $appName:$appName $KEYCLOAK_HOME;
+    chmod g+w -R $KEYCLOAK_HOME
+    chmod o+x $KEYCLOAK_HOME/bin/
+
+
+    mkdir -p $KEYCLOAK_HOME/modules/org/postgresql/main
+    if [ ! -f $KEYCLOAK_HOME/modules/org/postgresql/main/postgresql-42.2.5.jar ]
+    then
+        curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o /tmp/postgresql-42.2.5.jar
+        mv /tmp/postgresql-42.2.5.jar $KEYCLOAK_HOME/modules/org/postgresql/main/
+    fi
+
+    if [ ! -f $KEYCLOAK_HOME/modules/org/postgresql/main/module.xml ]
+    then
+        sudo cat > $KEYCLOAK_HOME/modules/org/postgresql/main/module.xml <<  EOF
+<?xml version="1.0" ?>
+<module xmlns="urn:jboss:module:1.3" name="org.postgresql">
+    <resources>
+        <resource-root path="postgresql-42.2.5.jar"/>
+    </resources>
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+    </dependencies>
+</module>'
+EOF
+    fi
+
+    # curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o $KEYCLOAK_HOME/postgresql-42.2.5.jar
+    # $KEYCLOAK_HOME/bin/jboss-cli.sh -c "module add --name=org.postgresql  --dependencies=javax.api,javax.transaction.api --resources=postgresql-42.2.5.jar"
+
+    mkdir -p $KEYCLOAK_HOME/modules/org/mysql/main
+    if [ ! -f $KEYCLOAK_HOME/modules/org/mysql/main/mysql-connector-java-5.1.47.jar ]
+    then
+        curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/mysql-connector-java-5.1.47.tar.gz
+        tar -xzf /tmp/mysql-connector-java-5.1.47.tar.gz mysql-connector-java-5.1.47/mysql-connector-java-5.1.47.jar --strip-components=1
+        sudo mv mysql-connector-java-5.1.47.jar $KEYCLOAK_HOME/modules/org/mysql/main/
+    fi
+
+    # curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/mysql-connector-java-5.1.47.tar.gz
+    # tar -xzf /tmp/mysql-connector-java-5.1.47.tar.gz mysql-connector-java-5.1.47/mysql-connector-java-5.1.47.jar --strip-components=1
+    # cp -f mysql-connector-java-5.1.47.jar $KEYCLOAK_HOME
+    # # $KEYCLOAK_HOME/bin/jboss-cli.sh -c "module add --name=org.mysql  --dependencies=javax.api,javax.transaction.api --resources=mysql-connector-java-5.1.47.jar"
+
+
+    cp -f $KEYCLOAK_HOME/docs/contrib/scripts/systemd/launch.sh $KEYCLOAK_HOME/bin/
+    sed -i -e "s|/opt/wildfly|$KEYCLOAK_HOME|" $KEYCLOAK_HOME/bin/launch.sh;
+    if [ -n "$port_offset" ]; then
+        sed -i -e "s|standalone.sh.*|standalone.sh -c \$2 -b \$3 -Djboss.socket.binding.port-offset=$port_offset |" $KEYCLOAK_HOME/bin/launch.sh;
+    fi
+
+#  $WILDFLY_MODE $WILDFLY_CONFIG $WILDFLY_BIND
+# /usr/share/keycloak/bin/standalone.sh -c standalone.xml -b 0.0.0.0 -Djboss.socket.binding.port-offset=100
+    sudo mkdir -p /etc/$appName
+    if [ ! -f /etc/$appName/$name.conf ];
+    then 
+        sudo cp -f $KEYCLOAK_HOME/docs/contrib/scripts/systemd/wildfly.conf /etc/$appName/$name.conf;
+        
+    fi
+    sudo chown -R keycloak:keycloak /etc/keycloak
+
+
+    if [[ "6" != $OS_VERSION ]]; then
+        sudo cat > /etc/systemd/system/$name.service << EOF
+[Unit]
+Description=The Keycloak Server $version
+After=syslog.target network.target tomcat.target
+Before=httpd.service
+
+[Service]
+Environment=LAUNCH_JBOSS_IN_BACKGROUND=1
+EnvironmentFile=/etc/$appName/$name.conf
+User=keycloak
+LimitNOFILE=102642
+PIDFile=$KEYCLOAK_HOME/keycloak.pid
+ExecStart=$KEYCLOAK_HOME/bin/launch.sh \$WILDFLY_MODE \$WILDFLY_CONFIG \$WILDFLY_BIND
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        if [ '1' == $IS_DEFAULT ]; then 
+            sudo rm -f /etc/systemd/system/$appName.service
+            sudo cp /etc/systemd/system/$name.service /etc/systemd/system/$appName.service
+        fi
+
+        sudo systemctl daemon-reload
+    fi
+
+    if [ '1' == $IS_DEFAULT ]; then 
+        sudo rm -rf /usr/share/$appName
+        sudo ln -s $KEYCLOAK_HOME /usr/share/$appName
+    fi
+
+    sudo rm -f $KEYCLOAK_HOME/standalone/configuration/keycloak-add-user.json
+    $KEYCLOAK_HOME/bin/add-user-keycloak.sh -u admin -p admin -r master
+    
+    echo ">> Installed application '$appName' (version = $version) in $INSTALL_DIR/${name}"
+}
+#!/bin/bash
+
+# https://www.thegeekstuff.com/2015/01/openldap-linux/
+# https://www.itzgeek.com/how-tos/linux/centos-how-tos/step-step-openldap-server-configuration-centos-7-rhel-7.html
+# https://community.cloudera.com/t5/Community-Articles/How-to-setup-OpenLDAP-2-4-on-CentOS-7/ta-p/249263
+# # https://www.tecmint.com/install-openldap-server-for-centralized-authentication/
+# https://linuxhostsupport.com/blog/how-to-install-ldap-on-centos-7/
+
+# centos 7
+
+
+
+ldap_install() {
+    _major_centos_version=$(rpm -E %{rhel})
+    if [[ "$_major_centos_version" == "7" ]];
+    then 
+        sudo yum -y install openldap compat-openldap openldap-clients openldap-servers openldap-servers-sql openldap-devel
+    fi
+
+    if [[ "$_major_centos_version" == "8" ]];
+    then 
+        # for centos 8 -> https://kifarunix.com/install-and-setup-openldap-on-centos-8/
+        # for centos 8 -> https://repo.symas.com/sofl/rhel8/
+        # yum config-manager --add-repo https://repo.symas.com/configs/SOFL/rhel8/sofl.repo
+        # yum update
+        sudo yum install -y symas-openldap-clients symas-openldap-servers
+    fi
+}
+
+## detect if a script is being sourced or not
+# if [[ $_ == $0 ]] 
+# then
+# 	ldap_install "$@"
+# fi
+#!/bin/bash
+
+# Install mariadb https://www.tecmint.com/install-mariadb-in-centos-6/
+
+function mariadb_install() 
+{
+    set -e
+    local _version="${1:-"5.7"}"
+	local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
+    
+	if [[ $_version =~ ^8.*$ ]];
+	then 
+		MYSQL_RPM=mysql80-community-release-el7-1.noarch.rpm
+	fi
+     
+	wget https://dev.mysql.com/get/$MYSQL_RPM
+	rpm -ivh "${MYSQL_RPM}" && \
+	yum -y install mysql-server &&
+	systemctl enable mysqld
+	
+	# mysqld --initialize-insecure --user=mysql; 
+}
+
+# ## detect if a script is being sourced or not
+# if [[ $_ == $0 ]] 
+# then
+# 	mariadb_install "$@"
+# fi
+#!/bin/bash
+
+mongodb_install() {
+    echo "[MongoDB]" > /etc/yum.repos.d/mongodb.repo; \
+    echo "name=MongoDB Repository" >> /etc/yum.repos.d/mongodb.repo; \
+    echo "baseurl=http://repo.mongodb.org/yum/redhat/7/mongodb-org/4.2/x86_64/" >> /etc/yum.repos.d/mongodb.repo; \
+    echo "gpgcheck=1" >> /etc/yum.repos.d/mongodb.repo; \
+    echo "enabled=1" >> /etc/yum.repos.d/mongodb.repo; \
+    echo "gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc" >> /etc/yum.repos.d/mongodb.repo;
+
+    yum install -y mongodb-org
+    systemctl unmask mongodb
+}
+#!/bin/bash
+
+# Install a httpd
+
+function mysql_install() 
+{
+    set -e
+    local appName=mysql
+
+    local FORCE=0
+    local IS_DEFAULT=0
+    local version=$MYSQL_DEFAULT_VERSION
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+	local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
+
+    case `plateform` in 
+        redhat)
+			if [[ $_version =~ ^8.*$ ]];
+			then 
+				MYSQL_RPM=mysql80-community-release-el$OS_VERSION-1.noarch.rpm
+			fi
+			wget https://dev.mysql.com/get/$MYSQL_RPM
+			sudo rpm -ivh "${MYSQL_RPM}"
+            ;;
+        debian)
+			if [[ $_version =~ ^8.*$ ]];
+			then 
+				wget https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb
+				apt-get install -y ./mysql-apt-config_0.8.16-1_all.deb
+			fi
+        ;;
+    esac
+	
+	install -y mysql-server
+
+	
+
+	if [[ $OS_VERSION =~ 6 ]]; then chkconfig --add mysqld ; else systemctl enable mysqld; fi
+	
+	# mysqld --initialize-insecure --user=mysql; 
+}
+
+
+mysql_init(){
+    local version=11
+    local data=
+    local user=
+    local password=
+
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+	# mysqld --initialize-insecure --user=mysql;
+	# get temporary password
+	# grep 'temporary password' /var/log/mysqld.log
+	# How to remove root password
+	# mysqladmin -u root -p"temporary password" password ''
+	echo 'validate_password = OFF' >> /etc/my.cnf
+
+	service mysqld restart
+	if [ -f /var/log/mysqld.log ] ; then
+		tmp_pwd_line=$(grep 'temporary password' /var/log/mysqld.log)
+		tmp_pwd=${tmp_pwd_line##*root@localhost\:}
+		tmp_pwd=${tmp_pwd#"${tmp_pwd%%[![:space:]]*}"}
+		if [ -n "$tmp_pwd" ] ; then
+			echo "Trying to remove root@localhost password: $tmp_pwd"
+			mysqladmin -u root -p${tmp_pwd} password '' && \
+			sed -i -e "s/temporary password/temporary_password/" /var/log/mysqld.log
+		fi
+	fi
+
+	if [ -n "$user" ] ; then
+		EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$user')")"
+		if [ "$EXISTS_DB_USER" = 0 ]; then
+			mysql -u root --execute="CREATE USER '$user'@'%' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'%'; FLUSH PRIVILEGES; ";
+		fi
+	fi
+
+
+}
+
+
+mysql_createdb() {
+	db=${1}
+	mysql -u root --execute="DROP SCHEMA IF EXISTS $db;"
+	mysql -u root --execute="CREATE SCHEMA IF NOT EXISTS $db DEFAULT CHARACTER SET utf8;"
+}
+
+mysql_createuser() {
+    local user=
+    local host=localhost
+    local password=
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+
+	EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$user'@'$host')")"
+	if [ "$EXISTS_DB_USER" = 0 ]; then
+		mysql -u root --execute="CREATE USER '$user'@'$host' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'$host'; FLUSH PRIVILEGES; ";
+	fi
+
+}
+
+#!/bin/bash
+
+
+nexcloud_install() {
+    _VERSION=${1:-"latest"}
+    _DESTINATION=${2:-"/var/www"}
+    # Download
+    cd $_DESTINATION && \
+    curl -fSL https://download.nextcloud.com/server/releases/$_VERSION.tar.bz2  -o nextcloud-$_VERSION.tar.bz2 && \
+    tar -jxf nextcloud-$_VERSION.tar.bz2  # Extract files
+
+    #  Create nextcloud data folder
+    mkdir $_DESTINATION/nextcloud/data
+    chown -R apache:apache $_DESTINATION/nextcloud/
+}
+#!/bin/bash
+
+
+node_install() {
+    local appName="nodejs npm yarn"
+    
+    case `plateform` in 
+        redhat)
+            if [ ! -f /etc/yum.repos.d/yarn.repo ]
+            then
+                curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
+                rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
+            fi
+            ;;
+        # debian)
+        # ;;
+    esac
+
+    install -y nodejs npm yarn
+    npm install -g n && n stable
+    
+    echo ">> Installed applications '$appName' "
+}
+
+#!/bin/bash
+
+# Install a php
+
+# https://medium.com/@daniel.bui/multiple-php-version-with-apache-on-centos-7-17078c66692c
+
+# Reads arguments options
+# function parse_php_arguments()
+# {
+#   # if [ $# -ne 0 ]; then
+#     local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+    
+# 	eval set -- "$TEMP"
+#     # extract options and their arguments into variables.
+#     while true ; do
+#         case "$1" in
+#             # --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
+#             # --data) data=${2%"/"} ; shift 2 ;;
+#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+#             --version) version=${2:-"$version"}; shift 2 ;;
+#             --) shift ; break ;;
+#             *) echo "Internal error! $1" ; exit 1 ;;
+#         esac
+#     done
+
+#     shift $(expr $OPTIND - 1 )
+#     _parameters=$@
+    
+#   # fi
+# }
+
+function php_install()
+{
+    set -e
+    local version=
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+
+	local php_exts="fpm mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pear opcache json  "
+	local pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip   "
+
+	local cmd=
+
+    case `plateform` in 
+        redhat)
+			case $OS_VERSION in 
+				8)
+					if [ -z $version ]; then dnf module install php:remi-$PHP_DEFAULT_VERSION; fi
+					# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
+					# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
+				;;
+			esac
+
+			version=${version/./}
+			local pversion=
+			if [ -n "$version" ]; then pversion=${version}-php;	fi
+			#mcrypt mssql process
+			for ext in $php_exts ; do  cmd+=" php$pversion-$ext"; done
+			for ext in $pecl_exts ; do  cmd+=" php$pversion-pecl-$ext"; done
+			# echo 
+			install -y php$pversion  $cmd
+            ;;
+        debian)
+			# https://www.digitalocean.com/community/tutorials/how-to-run-multiple-php-versions-on-one-server-using-apache-and-php-fpm-on-ubuntu-18-04
+			sudo apt-get install software-properties-common -y
+			sudo apt-get update -y
+			# sudo add-apt-repository ppa:ondrej/php
+			for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
+			for ext in $pecl_exts ; do  cmd+=" php$version-$ext"; done
+			install -y php$version  $cmd
+        ;;
+    esac
+
+
+	
+
+	# version=${version/./}
+	# version=${version/-php/}
+	
+    # local phpversion=
+	# if [ -n "$version" ];
+	# then 
+	# 	phpversion=${version}-php
+	# fi
+
+    # sudo yum -y install php$phpversion \
+	# 	php$phpversion-devel \
+	# 	php$phpversion-fpm \
+	# 	php$phpversion-mysql \
+	# 	php$phpversion-mssql \
+	# 	php$phpversion-pgsql \
+	# 	php$phpversion-odbc \
+	# 	php$phpversion-gd \
+	# 	php$phpversion-imap \
+	# 	php$phpversion- \
+	# 	php$phpversion- \
+	# 	php$phpversion- \
+	# 	php$phpversion- \
+	# 	php$phpversion- \
+	# 	php$phpversion- \
+	# 	php$phpversion- \
+	# 	php$phpversion- \
+	# 	php$phpversion- \
+	# 	php$phpversion- \
+	# 	php$phpversion- \
+	# 	php$phpversion-pecl- \
+	# 	php$phpversion-pecl- \
+	# 	php$phpversion-pecl- \
+	# 	php$phpversion-pecl- \
+	# 	php$phpversion-pecl- \
+	# 	php$phpversion-pecl- \
+	# 	php$phpversion-pecl- \
+	# 	php$phpversion-pecl- \
+	# 	php$phpversion-pecl- \
+	# 	php$phpversion-pecl- \
+	# 	php$phpversion-pecl-
+	
+	# # Setting composer
+    if [ ! -f /usr/local/bin/composer ]
+    then 
+	    curl -sS https://getcomposer.org/installer | php$version && sudo mv composer.phar /usr/local/bin/composer
+    fi
+
+	if [ -f /etc/httpd/conf.d/php$version-php.conf ]
+    then 
+	    sudo mv /etc/httpd/conf.d/php$version-php.conf /etc/httpd/conf.d/php$version-php.conf.bck
+    fi
+
+    local _BIN_="/bin"
+
+    if [[ "$OS_VERSION" == "6" || "$(plateform)" == "debian" ]];
+    then
+        _BIN_="/usr/bin"
+    fi
+
+	sudo mkdir -p /var/www/cgi-bin
+	if [ ! -f /var/www/cgi-bin/php$version.fcgi  ]
+    then 
+		sudo cat > /var/www/cgi-bin/php$version.fcgi << EOF 
+#!/bin/bash 
+exec $_BIN_/php$version-cgi
+EOF
+    fi
+	
+	sudo chmod 755 /var/www/cgi-bin/*.fcgi
+}
+
+
+# ## detect if a script is being sourced or not
+# if [[ $_ == $0 ]] 
+# then
+# 	install_httpd "$@"
+# fi
+#!/bin/bash
+
+
+# Reads arguments options
+function parse_postgresql_arguments()
+{
+  # if [ $# -ne 0 ]; then
+    local long="data::,version::,postgis-version::,postgresql-version::,port::,config-file::"
+    # echo "long = $long"
+    local TEMP=`getopt -o p:: --long $long -n "$0" -- "$@"`
+    
+	eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            --data) data=${2%"/"} ; shift 2 ;;
+            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+            --version) _version=${2:-"$_version"}; shift 2 ;;
+            --postgis-version) _postgis_version=${2}; shift 2 ;;
+            --postgis) _postgis_version=${2}; shift 2 ;;
+            --postgresql-version) _postgresql_version=${2:-$_postgresql_version}; shift 2 ;;
+            --postgresql) _postgresql_version=${2}; shift 2 ;;
+            --port) port=${2:-"$port"}; shift 2 ;;
+            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+            # --port) port=${2:-"$port"}; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
+
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
+
+postgresql_add_repolist() {
+    case `plateform` in 
+        debian)
+            if [[ ! -f /etc/apt/sources.list.d/pgdg.list ]]; then
+                cd /tmp
+                wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+                echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" |sudo tee  /etc/apt/sources.list.d/pgdg.list
+                sudo apt -y update
+            fi
+            ;;
+        redhat)
+            if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
+                sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+            fi
+        ;;
+    esac
+}
+
+
+function postgis_install() 
+{
+    set -e
+    local _postgresql_version=
+    local _postgis_version=$POSTGIS_DEFAULT_VERSION
+    local _parameters=
+    parse_postgresql_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    postgresql_add_repolist
+
+    case `plateform` in 
+        debian)
+            install -y postgresql-$_postgresql_version-postgis-$_postgis_version
+            ;;
+        redhat)
+            if [ '8' == "$OS_VERSION" ]; then 
+                # https://serverfault.com/questions/1049330/error-conflicting-requests-in-centos-8-package-installation
+                sudo dnf -qy module disable postgresql
+                install -y dnf-plugins-core
+                install -y gdal-devel
+            fi
+            install -y postgis${_postgis_version//./}_$_postgresql_version # postgis24_11
+        ;;
+    esac
+
+}
+
+function postgresql_install() 
+{
+    set -e
+    local _postgresql_version=$POSTGRESQL_DEFAULT_VERSION
+    local _postgis_version=
+    local _parameters=
+    parse_postgresql_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    postgresql_add_repolist
+
+    case `plateform` in 
+        debian)
+            install -y postgresql-${_postgresql_version} postgresql-client-${_postgresql_version} postgresql-$_postgresql_version-pglogical pgbouncer
+            ;;
+        redhat)
+            if [ '8' == "$OS_VERSION" ]; then 
+                # sudo dnf config-manager --set-enabled PowerTools
+                # sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+                sudo dnf -qy module disable postgresql
+            fi
+            install -y postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server
+            
+        ;;
+    esac
+    
+    if [[ -n "$_postgis_version" ]]
+    then 
+        # echo "postgis_install --postgresql-version=$_postgresql_version --postgis-version=$_postgis_version"
+        postgis_install --postgresql-version=$_postgresql_version --postgis-version=$_postgis_version
+    fi
+}
+
+postgresql_init(){
+    local version=11
+    local data=
+
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+
+    local data=${data:-"/var/lib/pgsql/${version}/data"}
+
+    if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
+        echo "Init postgresql $version"
+        /usr/pgsql-${version}/bin/postgresql-${version}-setup initdb
+        # systemctl restart postgresql-${version} 
+        # systemctl restart postgresql-${version} 
+
+        if ! grep '0.0.0.0/0' $data/pg_hba.conf ; then
+            echo 'host      all     all     0.0.0.0/0 md5' >> $data/pg_hba.conf
+        fi
+    fi
+}
+
+#!/bin/bash
+
+# Install prometheus
+# https://www.fosslinux.com/10398/how-to-install-and-configure-prometheus-on-centos-7.htm
+
+# # Reads arguments options
+# function parse_prometheus_arguments()
+# {
+#   # if [ $# -ne 0 ]; then
+#     local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+    
+# 	eval set -- "$TEMP"
+#     # extract options and their arguments into variables.
+#     while true ; do
+#         case "$1" in
+#             --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
+#             --data) data=${2%"/"} ; shift 2 ;;
+#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+#             --version) version=${2:-"$version"}; shift 2 ;;
+#             --port) port=${2:-"$port"}; shift 2 ;;
+#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+#             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+#             # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+#             # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+#             # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+#             # --port) port=${2:-"$port"}; shift 2 ;;
+#             --) shift ; break ;;
+#             *) echo "Internal error! $1" ; exit 1 ;;
+#         esac
+#     done
+
+#     shift $(expr $OPTIND - 1 )
+#     _parameters=$@
+    
+#   # fi
+# }
+
+function prometheus_install() 
+{
+    set -e
+    local appName=prometheus
+      cd /tmp
+    local version=2.24.1
+    local data=/var/lib/$appName
+    local port=9099
+    # local prometheus_config=
+    # local file_config=
+    # local INSTALL_DIR=/usr/share
+    # echo $@
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    # data=${data:-"$1"}
+    # data=${data%"/"} 
+    # INSTALL_DIR=${INSTALL_DIR%"/"} 
+
+    if ! getent passwd $appName > /dev/null 2>&1; then
+        sudo groupadd --system $appName
+        sudo useradd --no-create-home --shell /bin/false -g $appName $appName
+    fi
+    
+    
+    sudo mkdir /etc/$appName /var/lib/$appName
+    sudo chown $appName:$appName /etc/$appName /var/lib/$appName
+    
+    if [ ! -f /tmp/prometheus-$version.tar.gz ];
+    then 
+      curl -fSL  https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz -o /tmp/prometheus-$version.tar.gz
+    fi
+    cd /tmp
+    tar -xvzf /tmp/prometheus-$version.tar.gz
+    mv prometheus-$version.linux-amd64 prometheuspackage
+    #
+    sudo cp prometheuspackage/prometheus /usr/local/bin/
+    sudo cp prometheuspackage/promtool /usr/local/bin/
+    sudo chown prometheus:prometheus /usr/local/bin/prometheus
+    sudo chown prometheus:prometheus /usr/local/bin/promtool
+    #
+    sudo cp -r prometheuspackage/consoles /etc/prometheus
+    sudo cp -r prometheuspackage/console_libraries /etc/prometheus
+    sudo chown -R prometheus:prometheus /etc/prometheus/consoles
+    sudo chown -R prometheus:prometheus /etc/prometheus/console_libraries
+    #
+    # sudo vim /etc/prometheus/prometheus.yml
+
+    cat > /etc/prometheus/prometheus.yml << EOF
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+  - job_name: 'prometheus_master'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:$port']
+EOF
+    chown prometheus:prometheus /etc/prometheus/prometheus.yml
+
+    cat /etc/systemd/system/prometheus.service << EOF
+[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+#User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/local/bin/prometheus \
+--config.file /etc/prometheus/prometheus.yml \
+--storage.tsdb.path /var/lib/prometheus/ \
+--web.listen-address 0.0.0.0:$port \
+--web.console.templates=/etc/prometheus/consoles \
+--web.console.libraries=/etc/prometheus/console_libraries
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    systemctl daemon-reload
+    # systemctl enable prometheus
+
+
+}
+
+
+#!/bin/bash
+
+redis_install() {
+    local appName=redis
+    case `plateform` in 
+        redhat)
+            if [ ! -f /etc/yum.repos.d/remi.repo ]; then
+                sudo yum install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+            fi
+            sudo yum-config-manager --enable remi 
+        ;;
+    esac
+
+    install -y  redis
+    
+    echo ">> Installed applications '$appName' "
+}
+
+#!/bin/bash
+
+# Install solr
+
+
+# # Reads arguments options
+# function parse_solr_arguments()
+# {
+#   # if [ $# -ne 0 ]; then
+#     local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+    
+# 	eval set -- "$TEMP"
+#     # extract options and their arguments into variables.
+#     while true ; do
+#         case "$1" in
+#             --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
+#             --data) data=${2%"/"} ; shift 2 ;;
+#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+#             --version) version=${2:-"$version"}; shift 2 ;;
+#             --port) port=${2:-"$port"}; shift 2 ;;
+#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+#             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+#             # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+#             # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+#             # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+#             # --port) port=${2:-"$port"}; shift 2 ;;
+#             --) shift ; break ;;
+#             *) echo "Internal error! $1" ; exit 1 ;;
+#         esac
+#     done
+
+#     shift $(expr $OPTIND - 1 )
+#     _parameters=$@
+    
+#   # fi
+# }
+
+function solr_install() 
+{
+    set -e
+    local appName=solr
+
+    local FORCE=0
+    local IS_DEFAULT=0
+    local version=$SORL_DEFAULT_VERSION
+    local port=8983
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    case "$version" in
+        "8") version=8.2.0 ;;
+        "7") version=7.7.2 ;;
+        *)
+        ;;
+    esac
+
+
+    # local name="solr"
+    # local version=8.2.0
+    # local data=
+    # local catalina_home=/usr/share/tomcat
+    # local DB_PASSWORD=
+    # local DB_HOST=localhost
+    # local solr_config=
+    # local file_config=
+    # local INSTALL_DIR=/usr/share
+    # # echo $@
+    # local _parameters=
+    # parse_solr_arguments $@ 
+    # if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    # data=${data:-"$1"}
+    data=${data%"/"} 
+    INSTALL_DIR=${INSTALL_DIR%"/"}
+
+    # Install Solr
+    # ARG version=7.4.0
+    # ARG SOLR_PORT=8983
+    # ENV SOLR_DIR=${APP_DIR}/solr
+
+    rm -rf solr-"$version".tgz install_solr_service.sh
+
+    # echo 2
+    if [ ! -f /tmp/solr-$version.tgz ]
+    then 
+        curl -fSL https://archive.apache.org/dist/lucene/solr/$version/solr-$version.tgz -o /tmp/solr-$version.tgz
+    fi
+
+    # 
+    cd /tmp
+    mkdir -p ${data} $INSTALL_DIR
+    tar -xzf solr-"$version".tgz solr-"$version"/bin/install_solr_service.sh --strip-components=2
+
+    if [ -n "$data" ]; then 
+        ./install_solr_service.sh solr-"$version".tgz -i "${INSTALL_DIR}" -d "$data" -p "${port}" 
+    else
+        ./install_solr_service.sh solr-"$version".tgz -i "${INSTALL_DIR}" -p "${port}" 
+    fi
+      
+    # echo " ./install_solr_service.sh solr-$version.tgz -i ${INSTALL_DIR} -d $data -p ${port} "
+    
+    cd $INSTALL_DIR/solr-$version/server/solr-webapp/webapp/WEB-INF/lib && \
+    wget https://github.com/locationtech/jts/releases/download/jts-1.16.1/jts-core-1.16.1.jar
+    # cd $INSTALL_DIR/solr/server/solr-webapp/webapp/WEB-INF/lib && \
+    # wget http://central.maven.org/maven2/org/locationtech/jts/jts-core/1.15.0/jts-core-1.15.0.jar
+
+    # && chown :"${GROUP_ADMIN}" -R /etc/default/ && chmod g+w -R /etc/default \
+    # && usermod solr -g "${GROUP_ADMIN}" \
+    # && systemctl enable solr 
+    sudo chown solr:solr -R "${INSTALL_DIR}/solr-$version" ${data}
+
+
+    # if [[ -n "$GROUP_ADMIN" ]]; then
+    #     sudo usermod -g $GROUP_ADMIN solr;
+    # fi
+    echo ">> Installed applications '$appName' "
+}
+
+
+# if [ ! $# -eq 0 ]; 
+# then
+#   install_solr $@
+# fi
+#!/bin/bash
+
+# Install tomcat
+FORCE=0
+IS_DEFAULT=0
+INSTALL_DIR=/usr/share
+
+# Reads arguments options
+function parse_tomcat_arguments()
+{
+    # if [ $# -ne 0 ]; then
+    local TEMP=`getopt -o p::,f --long version::tomcat-config::,users-config::,config-file::,install-dir,force,default -n "$0" -- "$@"`
+      
+    eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            -h|--help) _HELP=1 ; shift 1 ;;
+            -f|--force) FORCE=1 ; shift 1 ;;
+            --default) IS_DEFAULT=1 ; shift 1 ;;
+            --install-dir) INSTALL_DIR=${2%"/"} ; shift 2 ;;
+            --data) data=${2%"/"} ; shift 2 ;;   
+            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+            --version) version=${2:-"$version"}; shift 2 ;;
+            # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
+            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
+
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
+
+function tomcat_install() 
+{
+	set -e
+	local users_config=
+	local file_config=
+	# local INSTALL_DIR=/usr/share
+	local version=$TOMCAT_DEFAULT_VERSION
+    # echo $@
+    local _parameters=
+    parse_tomcat_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+    # data=${data:-"$1"}
+    # data=${data:-"."}
+    # data=${data%"/"} 
+
+	if [[ -n "$file_config" && ! -f $file_config ]]
+	then
+    echo "File not found $file_config" 
+    exit 1
+	fi
+
+	if [[ -n "$users_config" && ! -f $users_config ]]
+	then
+    echo "File not found $users_config" 
+    exit 1
+	fi
+
+    # https://computingforgeeks.com/install-apache-tomcat-9-on-linux-rhel-centos/
+    if ! getent passwd tomcat > /dev/null 2>&1; then
+        sudo groupadd --system tomcat
+        sudo useradd -d /usr/share/tomcat -r -s /bin/false -g tomcat tomcat
+    fi
+    
+    
+    case "$version" in
+        "7") version=7.0.90;;
+        "8") version=8.5.69;;
+        "9") version=9.0.50;;
+        *)
+        ;;
+    esac
+
+    if [ "1" == "$FORCE" ]
+    then 
+        sudo rm -rf $INSTALL_DIR/tomcat-$version
+    fi
+
+    if [ -d $INSTALL_DIR/tomcat-$version ]
+    then 
+        echo "Tomcat $version already installed"
+        exit 0
+    fi
+
+    cd /tmp
+    local major=`echo $version | cut -d. -f1`
+    if [ ! -f apache-tomcat-${version}.tar.gz ]
+    then
+        wget https://archive.apache.org/dist/tomcat/tomcat-$major/v${version}/bin/apache-tomcat-${version}.tar.gz
+    fi
+
+    sudo tar xf apache-tomcat-${version}.tar.gz -C $INSTALL_DIR
+    sudo mv $INSTALL_DIR/apache-tomcat-$version $INSTALL_DIR/tomcat-$version
+    sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat-$version
+
+    if [ "1" == "$IS_DEFAULT" ]
+    then
+        sudo rm -rf /usr/share/tomcat /etc/tomcat/
+        sudo ln -s $INSTALL_DIR/tomcat-$version /usr/share/tomcat
+        sudo ln -s /usr/share/tomcat/conf /etc/tomcat
+        sudo chown -R tomcat:tomcat /usr/share/tomcat /etc/tomcat/
+
+        if [[ "6" != $OS_VERSION ]]; then
+
+            sudo cat > /etc/systemd/system/tomcat.service << EOF
+[Unit]
+Description=Tomcat $version Server
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=tomcat
+Group=tomcat
+
+Environment=JAVA_HOME=$(readlink -f $(which java) | sed -e "s/\/bin\/java//")
+Environment='JAVA_OPTS=-Djava.awt.headless=true'
+Environment=CATALINA_HOME=/usr/share/tomcat
+Environment=CATALINA_BASE=/usr/share/tomcat
+Environment=CATALINA_PID=/usr/share/tomcat/temp/tomcat.pid
+Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'
+
+ExecStart=/usr/share/tomcat/bin/startup.sh
+ExecStop=/usr/share/tomcat/bin/shutdown.sh 
+
+[Install]
+WantedBy=multi-user.target
+EOF
+            sudo systemctl daemon-reload
+        fi
+    fi
+
+    # echo "CATALINA_HOME=/usr/share/tomcat" >> /etc/profile.d/environnments.sh
+}
+
+
+# function tomcat_make_install() 
+# {
+#     #https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
+#     groupadd tomcat
+#     mkdir /opt/tomcat
+#     useradd -g tomcat -d /opt/tomcat -s /bin/nologin tomcat
+
+#     cd /tmp
+#     wget [link to the Tomcat  7.0.90tar.gz file]
+#     tar -zxvf apache-tomcat-7.0.90.tar.gz
+#     mv apache-tomcat-7.0.90/* /opt/tomcat
+#     chown -R tomcat:tomcat /opt/tomcat/
+    
+#     echo "CATALINA_HOME=/opt/tomcat" >> /etc/profile.d/environnments.sh
+# }
+
+# if [ ! $# -eq 0 ]; 
+# then
+#   install_tomcat $@
+# fi
+#!/bin/bash
+
+# Install a wordpress
+
+
+# Reads arguments options
+function parse_wp_arguments()
+{
+  # if [ $# -ne 0 ]; then
+    local TEMP=`getopt -o p:: --long data::,name::,version::,db-name::,db-user::,db-password::,db-host::,config-file:: -n "$0" -- "$@"`
+    
+	eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            --data) data=${2%"/"} ; shift 2 ;;
+            --version) version=${2:-"$version"}; shift 2 ;;
+            --name) name=${2:-"$name"}; shift 2 ;;
+            --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+            --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+            --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+            --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+            --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
+            --config-file) config_file=${2:-"$config_file"}; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
+
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
+
+function wordpress_install() 
+{
+	set -e
+  local name="wordpress"
+	local version=
+	local DB_NAME=
+	local DB_USER=
+	local DB_PASSWORD=
+	local DB_HOST=localhost
+	local DB_PORT=3306
+	local data=
+	local config_file=
+    # echo $@
+    local _parameters=
+    parse_wp_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+    data=${data:-"$1"}
+    data=${data:-"."}
+    data=${data%"/"} 
+
+	local DIR_NAME=$data/$name
+	
+	wget http://wordpress.org/latest.zip
+	rm -rf $DIR_NAME
+	unzip -q latest.zip -d $data
+	rm -f latest.zip
+
+	if [ ! "$name" == "wordpress" ]
+	then
+		# echo mv $data/wordpress $data/$name
+		mv -f $data/wordpress $data/$name
+	fi
+
+	# mv $_INSTALL_DIR/wordpress $_INSTALL_DIR/$_SITE_NAME
+	# chown -R :$ $_INSTALL_DIR/$_SITE_NAME
+
+	chmod -R 775 $DIR_NAME
+	mkdir -p $DIR_NAME/wp-content/uploads
+	# chown -R :apache $DIR_NAME/wp-content/uploads
+	cp -f $DIR_NAME/wp-config-sample.php $DIR_NAME/wp-config.php
+
+	sed -i "s/database_name_here/$DB_NAME/" $DIR_NAME/wp-config.php
+	sed -i "s/username_here/$DB_USER/" $DIR_NAME/wp-config.php
+	sed -i "s/password_here/$DB_PASSWORD/" $DIR_NAME/wp-config.php
+	sed -i "s/localhost/$DB_HOST:$DB_PORT/" $DIR_NAME/wp-config.php
+}
+
+
+# if [ ! $# -eq 0 ]; 
+# then
+#   install_wordpress $@
+# fi
+#!/bin/bash
+
+
+wso2_install() {
+    _VERSION=${1:-"5.7.0"}
+    _INSTALL_DIR=${2:-"/usr/share"}
+
+    curl -fSL https://bintray.com/wso2/rpm/rpm -o /etc/yum.repos.d/bintray-wso2-rpm.repo
+    yum install -y wso2is-$_VERSION
+
+    _WSO2_DIR=/usr/lib64/wso2/wso2is/$_VERSION
+    _WSO2_HOME=/usr/lib64/wso2
+
+    if [[ -n "${_INSTALL_DIR}" && ! -d ${_INSTALL_DIR}/wso2 && ! -L ${_INSTALL_DIR}/wso2  ]]; then
+        ln -s $_WSO2_DIR ${_INSTALL_DIR}/wso2
+    fi
+
+    if ! getent passwd wso2 > /dev/null 2>&1; then
+        useradd -r -d ${_WSO2_HOME}/ wso2
+    fi
+
+    chown -R wso2:wso2 ${_WSO2_HOME}
+
+if [[ ! -f /etc/systemd/system/wso2.service ]]; then
+echo "
+[Unit]
+Description=WSO2 server identity provider
+After=syslog.target network.target
+
+[Service]
+Type=forking
+Environment=JAVA_HOME=/usr/lib/jvm/jre
+Environment=CARBON_HOME=${_WSO2_DIR}
+PermissionsStartOnly=true
+PIDFile=${_WSO2_DIR}/wso2carbon.pid
+
+ExecStart=${_WSO2_DIR}/bin/wso2server.sh start
+ExecStop=${_WSO2_DIR}/bin/wso2server.sh stop
+
+TimeoutStartSec=30s
+Restart=on-failure
+RestartSec=10s
+RemainAfterExit=yes
+
+User=wso2
+[Install]
+WantedBy=multi-user.target
+" > /etc/systemd/system/wso2.service
+fi
 }
 #!/bin/bash
 #
@@ -536,626 +2217,6 @@ git_exists()
 
 #!/bin/bash
 
-# Install grafana 
-# https://www.fosslinux.com/8328/how-to-install-and-configure-grafana-on-centos-7.htm
-
-# Reads arguments options
-function parse_grafana_arguments()
-{
-  # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
-    
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
-            --data) data=${2%"/"} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) version=${2:-"$version"}; shift 2 ;;
-            --port) port=${2:-"$port"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --port) port=${2:-"$port"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
-
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
-    
-  # fi
-}
-
-function grafana_install() 
-{
-    set -e
-      
-    if [ ! -f /etc/yum.repos.d/grafana.repo ]; then 
-        sudo cat > /etc/yum.repos.d/grafana.repo << EOF
-[grafana]
-name=grafana
-baseurl=https://packages.grafana.com/oss/rpm
-repo_gpgcheck=1
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.grafana.com/gpg.key
-sslverify=1
-sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-EOF
-    fi
-    
-    sudo yum -y install grafana
-    sudo yum install -y fontconfig freetype* urw-fonts
-
-    sudo systemctl enable grafana-server.service
-
-}
-
-
-#!/bin/bash
-
-
-httpd_install() {
-    
-    sudo yum install -y httpd mod_ssl mod_wsgi mod_fcgid
-
-    sudo mkdir -p /etc/httpd/sites-enabled
-    sudo mkdir -p /etc/httpd/sites-availables
-    sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
-    
-
-sudo cat > /etc/httpd/sites-availables/php-fcgi.conf << EOF
-# Configure multiple php version
-ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
-AddHandler php-fcgi .php
-#Action php55-fcgi /cgi-bin/php55.fcgi
-#Action php56-fcgi /cgi-bin/php56.fcgi
-#Action php71-fcgi /cgi-bin/php71.fcgi
-#Action php72-fcgi /cgi-bin/php72.fcgi
-#Action php73-fcgi /cgi-bin/php73.fcgi
-#Action php74-fcgi /cgi-bin/php74.fcgi
-EOF
-
-if [[ "$(rpm -E %{rhel})" == "6"  ]];
-then
-    sudo chkconfig httpd on
-else 
-    sudo systemctl enable httpd
-fi
-
-}
-
-
-## detect if a script is being sourced or not
-# if [[ $_ == $0 ]] 
-# then
-# 	httpd_install "$@"
-# fi
-
-#!/bin/bash
-
-function keycloak_install() 
-{
-    set -e
-
-    local version=8.0.1
-    local name=keycloak
-    local install_dir=/usr/share
-    local port_offset=100
-
-    local _parameters=
-    read_application_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-
-    local KEYCLOAK_HOME=${install_dir}/$name
-
-    # _PORT=${3:-"8088"}
-
-    ## Install keycloak
-    # https://blog.ineat-conseil.fr/2017/11/securisez-vos-apis-spring-avec-keycloak-1-installation-de-keycloak/
-    # https://medium.com/@hasnat.saeed/setup-keycloak-server-on-ubuntu-18-04-ed8c7c79a2d9
-    mkdir -p $KEYCLOAK_HOME;
-    curl -fSL https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz -o keycloak-${version}.tar.gz;
-    tar -xzf keycloak-${version}.tar.gz -C $KEYCLOAK_HOME --strip-components=1;
-
-    useradd -s /bin/false -r -d $KEYCLOAK_HOME keycloak;
-    chown -R keycloak:keycloak $KEYCLOAK_HOME;
-    chmod g+wr $KEYCLOAK_HOME
-    chmod o+x $KEYCLOAK_HOME/bin/
-
-    if [[ -n "$USER_ADMIN" ]]; then sudo usermod -aG keycloak $USER_ADMIN; fi
-
-    mkdir -p $KEYCLOAK_HOME/modules/org/postgresql/main
-    curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o $KEYCLOAK_HOME/modules/org/postgresql/main/postgresql-42.2.5.jar
-echo '<?xml version="1.0" ?>
-<module xmlns="urn:jboss:module:1.3" name="org.postgresql">
-    <resources>
-        <resource-root path="postgresql-42.2.5.jar"/>
-    </resources>
-    <dependencies>
-        <module name="javax.api"/>
-        <module name="javax.transaction.api"/>
-    </dependencies>
-</module>' > $KEYCLOAK_HOME/modules/org/postgresql/main/module.xml
-
-    # curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o $KEYCLOAK_HOME/postgresql-42.2.5.jar
-    # $KEYCLOAK_HOME/bin/jboss-cli.sh -c "module add --name=org.postgresql  --dependencies=javax.api,javax.transaction.api --resources=postgresql-42.2.5.jar"
-
-
-    curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/mysql-connector-java-5.1.47.tar.gz
-    tar -xzf /tmp/mysql-connector-java-5.1.47.tar.gz mysql-connector-java-5.1.47/mysql-connector-java-5.1.47.jar --strip-components=1
-    cp -f mysql-connector-java-5.1.47.jar $KEYCLOAK_HOME
-    # $KEYCLOAK_HOME/bin/jboss-cli.sh -c "module add --name=org.mysql  --dependencies=javax.api,javax.transaction.api --resources=mysql-connector-java-5.1.47.jar"
-
-
-    mkdir -p /etc/keycloak;
-    cp -f $KEYCLOAK_HOME/docs/contrib/scripts/systemd/wildfly.conf /etc/keycloak/keycloak.conf;
-    cp -f $KEYCLOAK_HOME/docs/contrib/scripts/systemd/launch.sh $KEYCLOAK_HOME/bin/
-    sed -i -e "s|/opt/wildfly|$KEYCLOAK_HOME|" $KEYCLOAK_HOME/bin/launch.sh;
-    sed -i -e "s|standalone.sh.*|standalone.sh -c \$2 -b \$3 -Djboss.socket.binding.port-offset=$port_offset |" $KEYCLOAK_HOME/bin/launch.sh;
-    chown -R keycloak:keycloak /etc/keycloak
-
-#  $WILDFLY_MODE $WILDFLY_CONFIG $WILDFLY_BIND
-# /usr/share/keycloak/bin/standalone.sh -c standalone.xml -b 0.0.0.0 -Djboss.socket.binding.port-offset=100
-
-if [[ ! -f /etc/systemd/system/keycloak.service ]]; then
-echo "
-[Unit]
-Description=The Keycloak Server
-After=syslog.target network.target tomcat.target
-Before=httpd.service
-
-[Service]
-Environment=LAUNCH_JBOSS_IN_BACKGROUND=1
-EnvironmentFile=/etc/keycloak/keycloak.conf
-User=keycloak
-LimitNOFILE=102642
-PIDFile=$KEYCLOAK_HOME/keycloak.pid
-ExecStart=$KEYCLOAK_HOME/bin/launch.sh \$WILDFLY_MODE \$WILDFLY_CONFIG \$WILDFLY_BIND
-StandardOutput=null
-
-[Install]
-WantedBy=multi-user.target
-" > /etc/systemd/system/keycloak.service
-fi
-
-    $KEYCLOAK_HOME/bin/add-user-keycloak.sh -u admin -p admin -r master
-}
-#!/bin/bash
-
-# https://www.thegeekstuff.com/2015/01/openldap-linux/
-# https://www.itzgeek.com/how-tos/linux/centos-how-tos/step-step-openldap-server-configuration-centos-7-rhel-7.html
-# https://community.cloudera.com/t5/Community-Articles/How-to-setup-OpenLDAP-2-4-on-CentOS-7/ta-p/249263
-# # https://www.tecmint.com/install-openldap-server-for-centralized-authentication/
-# https://linuxhostsupport.com/blog/how-to-install-ldap-on-centos-7/
-
-# centos 7
-
-
-
-ldap_install() {
-    _major_centos_version=$(rpm -E %{rhel})
-    if [[ "$_major_centos_version" == "7" ]];
-    then 
-        sudo yum -y install openldap compat-openldap openldap-clients openldap-servers openldap-servers-sql openldap-devel
-    fi
-
-    if [[ "$_major_centos_version" == "8" ]];
-    then 
-        # for centos 8 -> https://kifarunix.com/install-and-setup-openldap-on-centos-8/
-        # for centos 8 -> https://repo.symas.com/sofl/rhel8/
-        # yum config-manager --add-repo https://repo.symas.com/configs/SOFL/rhel8/sofl.repo
-        # yum update
-        sudo yum install -y symas-openldap-clients symas-openldap-servers
-    fi
-}
-
-## detect if a script is being sourced or not
-# if [[ $_ == $0 ]] 
-# then
-# 	ldap_install "$@"
-# fi
-#!/bin/bash
-
-# Install mariadb https://www.tecmint.com/install-mariadb-in-centos-6/
-
-function mariadb_install() 
-{
-    set -e
-    local _version="${1:-"5.7"}"
-	local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
-    
-	if [[ $_version =~ ^8.*$ ]];
-	then 
-		MYSQL_RPM=mysql80-community-release-el7-1.noarch.rpm
-	fi
-     
-	wget https://dev.mysql.com/get/$MYSQL_RPM
-	rpm -ivh "${MYSQL_RPM}" && \
-	yum -y install mysql-server &&
-	systemctl enable mysqld
-	
-	# mysqld --initialize-insecure --user=mysql; 
-}
-
-# ## detect if a script is being sourced or not
-# if [[ $_ == $0 ]] 
-# then
-# 	mariadb_install "$@"
-# fi
-#!/bin/bash
-
-mongodb_install() {
-    echo "[MongoDB]" > /etc/yum.repos.d/mongodb.repo; \
-    echo "name=MongoDB Repository" >> /etc/yum.repos.d/mongodb.repo; \
-    echo "baseurl=http://repo.mongodb.org/yum/redhat/7/mongodb-org/4.2/x86_64/" >> /etc/yum.repos.d/mongodb.repo; \
-    echo "gpgcheck=1" >> /etc/yum.repos.d/mongodb.repo; \
-    echo "enabled=1" >> /etc/yum.repos.d/mongodb.repo; \
-    echo "gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc" >> /etc/yum.repos.d/mongodb.repo;
-
-    yum install -y mongodb-org
-    systemctl unmask mongodb
-}
-#!/bin/bash
-
-# Install a httpd
-
-function mysql_install() 
-{
-    set -e
-	local _major_centos_version=$(rpm -E %{rhel})
-    local _version="${1:-"5.7"}"
-	local MYSQL_RPM="mysql57-community-release-el$_major_centos_version-9.noarch.rpm"
-    
-	
-	if [[ ! $_major_centos_version =~ 6 ]];
-	then
-		if [[ $_version =~ ^8.*$ ]];
-		then 
-			MYSQL_RPM=mysql80-community-release-el$_major_centos_version-1.noarch.rpm
-		fi
-		wget https://dev.mysql.com/get/$MYSQL_RPM
-		rpm -ivh "${MYSQL_RPM}"
-	fi
-     
-
-	yum -y install mysql-server &&
-	(if [[ $_major_centos_version =~ 6 ]]; then chkconfig --add mysqld ; else systemctl enable mysqld; fi)
-	
-	
-	# mysqld --initialize-insecure --user=mysql; 
-}
-
-
-mysql_init(){
-    local version=11
-    local data=
-    local user=
-    local password=
-
-
-    local _parameters=
-    read_application_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-
-	# mysqld --initialize-insecure --user=mysql;
-	# get temporary password
-	# grep 'temporary password' /var/log/mysqld.log
-	# How to remove root password
-	# mysqladmin -u root -p"temporary password" password ''
-	echo 'validate_password = OFF' >> /etc/my.cnf
-
-	service mysqld restart
-	if [ -f /var/log/mysqld.log ] ; then
-		tmp_pwd_line=$(grep 'temporary password' /var/log/mysqld.log)
-		tmp_pwd=${tmp_pwd_line##*root@localhost\:}
-		tmp_pwd=${tmp_pwd#"${tmp_pwd%%[![:space:]]*}"}
-		if [ -n "$tmp_pwd" ] ; then
-			echo "Trying to remove root@localhost password: $tmp_pwd"
-			mysqladmin -u root -p${tmp_pwd} password '' && \
-			sed -i -e "s/temporary password/temporary_password/" /var/log/mysqld.log
-		fi
-	fi
-
-	if [ -n "$user" ] ; then
-		EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$user')")"
-		if [ "$EXISTS_DB_USER" = 0 ]; then
-			mysql -u root --execute="CREATE USER '$user'@'%' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'%'; FLUSH PRIVILEGES; ";
-		fi
-	fi
-
-
-}
-
-
-mysql_createdb() {
-	db=${1}
-	mysql -u root --execute="DROP SCHEMA IF EXISTS $db;"
-	mysql -u root --execute="CREATE SCHEMA IF NOT EXISTS $db DEFAULT CHARACTER SET utf8;"
-}
-
-mysql_createuser() {
-    local user=
-    local host=localhost
-    local password=
-
-    local _parameters=
-    read_application_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-
-
-	EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$user'@'$host')")"
-	if [ "$EXISTS_DB_USER" = 0 ]; then
-		mysql -u root --execute="CREATE USER '$user'@'$host' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'$host'; FLUSH PRIVILEGES; ";
-	fi
-
-}
-
-#!/bin/bash
-
-
-nexcloud_install() {
-    _VERSION=${1:-"latest"}
-    _DESTINATION=${2:-"/var/www"}
-    # Download
-    cd $_DESTINATION && \
-    curl -fSL https://download.nextcloud.com/server/releases/$_VERSION.tar.bz2  -o nextcloud-$_VERSION.tar.bz2 && \
-    tar -jxf nextcloud-$_VERSION.tar.bz2  # Extract files
-
-    #  Create nextcloud data folder
-    mkdir $_DESTINATION/nextcloud/data
-    chown -R apache:apache $_DESTINATION/nextcloud/
-}
-#!/bin/bash
-
-
-node_install() {
-    rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
-
-    yum install -y mod_ssl nodejs npm yarn
-
-    if [[ -n "$http_proxy" ]]; then 
-        npm config set proxy $http_proxy -g; 
-    fi
-
-    npm install -g n && n stable
-}
-
-#!/bin/bash
-
-# Install a php
-
-# https://medium.com/@daniel.bui/multiple-php-version-with-apache-on-centos-7-17078c66692c
-
-# Reads arguments options
-function parse_php_arguments()
-{
-  # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
-    
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            # --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
-            # --data) data=${2%"/"} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) version=${2:-"$version"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
-
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
-    
-  # fi
-}
-
-function php_install()
-{
-    set -e
-    local version=
-    local phpversion=
-    local _parameters=
-    parse_php_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-
-	version=${version/./}
-	version=${version/-php/}
-	
-	if [ -n "$version" ];
-	then 
-		phpversion=${version}-php
-	fi
-
-    sudo yum -y install php$phpversion \
-		php$phpversion-devel \
-		php$phpversion-fpm \
-		php$phpversion-mysql \
-		php$phpversion-mssql \
-		php$phpversion-pgsql \
-		php$phpversion-odbc \
-		php$phpversion-gd \
-		php$phpversion-imap \
-		php$phpversion-interbase \
-		php$phpversion-intl \
-		php$phpversion-mbstring \
-		php$phpversion-mcrypt \
-		php$phpversion-ldap \
-		php$phpversion-xml \
-		php$phpversion-xmlrpc \
-		php$phpversion-soap \
-		php$phpversion-pear \
-		php$phpversion-process \
-		php$phpversion-opcache \
-		php$phpversion-pecl-geoip \
-		php$phpversion-pecl-memcache \
-		php$phpversion-pecl-memcached \
-		php$phpversion-pecl-apcu \
-		php$phpversion-pecl-apcu-devel \
-		php$phpversion-pecl-igbinary \
-		php$phpversion-pecl-mongodb \
-		php$phpversion-pecl-redis \
-		php$phpversion-pecl-xdebug \
-		php$phpversion-pecl-imagick \
-		php$phpversion-pecl-zip
-	
-	# Setting composer
-    if [ ! -f /usr/local/bin/composer ]
-    then 
-	    curl -sS https://getcomposer.org/installer | php$version && mv composer.phar /usr/local/bin/composer
-    fi
-
-	if [ -f /etc/httpd/conf.d/php$version-php.conf ]
-    then 
-	    sudo mv /etc/httpd/conf.d/php$version-php.conf /etc/httpd/conf.d/php$version-php.conf.bck
-    fi
-
-    local _BIN_="/bin"
-
-    if [[ "$(rpm -E %{rhel})" == "6"  ]];
-    then
-        _BIN_="/usr/bin"
-    fi
-
-	if [ ! -f /var/www/cgi-bin/php$version.fcgi  ]
-    then 
-		echo "#!/bin/bash \n exec $_BIN_/php$version-cgi"> /var/www/cgi-bin/php$version.fcgi
-    fi
-	
-	sudo chmod 755 /var/www/cgi-bin/*.fcgi
-}
-
-
-# ## detect if a script is being sourced or not
-# if [[ $_ == $0 ]] 
-# then
-# 	install_httpd "$@"
-# fi
-#!/bin/bash
-
-# Install prometheus
-# https://www.fosslinux.com/10398/how-to-install-and-configure-prometheus-on-centos-7.htm
-
-# Reads arguments options
-function parse_prometheus_arguments()
-{
-  # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
-    
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
-            --data) data=${2%"/"} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) version=${2:-"$version"}; shift 2 ;;
-            --port) port=${2:-"$port"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --port) port=${2:-"$port"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
-
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
-    
-  # fi
-}
-
-function prometheus_install() 
-{
-    set -e
-      cd /tmp
-    local version=2.24.1
-    local data=
-    local port=9099
-    # local prometheus_config=
-    # local file_config=
-    # local INSTALL_DIR=/usr/share
-    # echo $@
-    local _parameters=
-    parse_prometheus_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-
-    # data=${data:-"$1"}
-    # data=${data%"/"} 
-    # INSTALL_DIR=${INSTALL_DIR%"/"} 
-    useradd --no-create-home --shell /bin/false prometheus
-    mkdir /etc/prometheus /var/lib/prometheus
-    chown prometheus:prometheus /etc/prometheus /var/lib/prometheus
-    
-    curl -fSL  https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz -o prometheus-$version.tar.gz
-    tar -xvzf prometheus-$version.tar.gz
-    mv prometheus-$version.linux-amd64 prometheuspackage
-    #
-    cp prometheuspackage/prometheus /usr/local/bin/
-    cp prometheuspackage/promtool /usr/local/bin/
-    chown prometheus:prometheus /usr/local/bin/prometheus
-    chown prometheus:prometheus /usr/local/bin/promtool
-    #
-    cp -r prometheuspackage/consoles /etc/prometheus
-    cp -r prometheuspackage/console_libraries /etc/prometheus
-    chown -R prometheus:prometheus /etc/prometheus/consoles
-    chown -R prometheus:prometheus /etc/prometheus/console_libraries
-    #
-    vim /etc/prometheus/prometheus.yml
-
-echo "
-global:
-  scrape_interval: 10s
-
-scrape_configs:
-  - job_name: 'prometheus_master'
-    scrape_interval: 5s
-    static_configs:
-      - targets: ['localhost:$port']
-" > /etc/prometheus/prometheus.yml
-
-    chown prometheus:prometheus /etc/prometheus/prometheus.yml
-
-echo "
-[Unit]
-Description=Prometheus
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-#User=prometheus
-Group=prometheus
-Type=simple
-ExecStart=/usr/local/bin/prometheus \
---config.file /etc/prometheus/prometheus.yml \
---storage.tsdb.path /var/lib/prometheus/ \
---web.listen-address 0.0.0.0:$port \
---web.console.templates=/etc/prometheus/consoles \
---web.console.libraries=/etc/prometheus/console_libraries
-
-[Install]
-WantedBy=multi-user.target
-" > /etc/systemd/system/prometheus.service
-
-    systemctl daemon-reload
-    systemctl enable prometheus
-
-
-}
-
-
-#!/bin/bash
-
 function proxy_usage()
 {
     echo "Usage:"
@@ -1193,8 +2254,8 @@ function parse_proxy_arguments()
     # extract options and their arguments into variables.
     while true ; do
         case "$1" in
-            --http) http="-u ${2}" ; shift 2 ;;
-            --https) https="-g ${2}" ; shift 2 ;;
+            --http) http="${2//\//\/\//}" ; shift 2 ;;
+            --https) https="${2//\//\/\//}" ; shift 2 ;;
             --no-proxy) noproxy+="${2} "; shift 2 ;;
             --) shift ; break ;;
             *) echo "Internal error! $1" ; exit 1 ;;
@@ -1231,130 +2292,129 @@ function proxy_set_config()
     export https_proxy=$https
     export no_proxy=$noproxy
 
-    if [[ -f /etc/yum.conf ]]; then 
-        echo "proxy=$proxy" >> /etc/yum.conf;
-    fi
+    proxy_load_config
 }
 
-function proxy_unset() 
+# 
+function proxy_load_config() 
+{
+    set -e
+
+    case `plateform` in 
+        debian)
+            sudo rm /etc/apt/apt.conf.d/proxy.conf
+            sudo touch /etc/apt/apt.conf.d/proxy.conf
+            if [ -n "$http_proxy" ] ; then echo  "Acquire::http::Proxy \"$http_proxy/\"" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null; fi
+            if [ -n "$https_proxy" ] ; then echo  "Acquire::https::Proxy \"$https_proxy/\"" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null; fi
+            ;;
+        redhat)
+            local proxy=${https_proxy:-"$http_proxy"}
+            if [[ -n "$proxy" ]]; then
+                sudo sed -i -e "/^proxy=.*/d" /etc/yum.conf;
+                echo "proxy=$proxy" | sudo tee -a /etc/yum.conf;
+            fi
+        ;;
+    esac
+
+    if [ -n "$http_proxy" ] ;
+    then 
+        ## check if command exist before
+        # https://stackoverflow.com/questions/7522712/how-can-i-check-if-a-command-exists-in-a-shell-script/39983421
+        # npm
+        if _loc="$(type -p npm)" && [[ -n $_loc ]]; then sudo npm config -g set proxy $http_proxy; fi
+        # yarn
+        if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then sudo yarn config -g set proxy $http_proxy; fi
+        # git
+        if _loc="$(type -p git)" && [[ -n $_loc ]]; then sudo git config --global http.proxy $http_proxy; fi
+        
+    fi
+
+    if [ -n "$https_proxy" ] ;
+    then 
+        # npm
+        if _loc="$(type -p npm)" && [[ -n $_loc ]]; then sudo npm config -g set https-proxy $https_proxy; fi
+        # yarn
+        if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then sudo yarn config -g set https-proxy $https_proxy; fi
+        # git
+        if _loc="$(type -p git)" && [[ -n $_loc ]]; then sudo git config --global https.proxy $http_proxy; fi
+        
+    fi
+
+
+}
+
+proxy_unset() 
 {
     set -e
     unset http_proxy
     unset https_proxy
     unset no_proxy
 
-    if [[ -f /etc/yum.conf ]]; then 
-        sed -i '/^proxy=.*/d' /etc/yum.conf
-    fi
-}
-#!/bin/bash
-
-# Reads arguments options
-function parse_postgresql_arguments()
-{
-  # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+    case `plateform` in 
+        debian)
+            sudo rm /etc/apt/apt.conf.d/proxy.conf
+            ;;
+        redhat)
+            local proxy=${https_proxy:-"$http_proxy"}
+            if [[ -n "$proxy" ]]; then
+                sed -i -e "/^proxy=.*/d" /etc/yum.conf;
+            fi
+        ;;
+    esac
     
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --data) data=${2%"/"} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) _version=${2:-"$_version"}; shift 2 ;;
-            --port) port=${2:-"$port"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --port) port=${2:-"$port"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
-
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
-    
-  # fi
-}
-
-function psql_install() 
-{
-    set -e
-    local _version="${1:-"11"}"
-    local _parameters=
-    parse_postgresql_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-
-    # Install postgresql 11  https://www.postgresql.org/download/linux/redhat/
-    sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm 
-    yum install -y postgresql$_version  postgresql$_version-libs postgresql$_version-server postgresql$_version-devel postgis25_$_version 
-    systemctl enable postgresql-$_version 
-
-}
-
-psql_init(){
-    local version=11
-    local data=
-
-
-    local _parameters=
-    read_application_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-
-
-    local data=${data:-"/var/lib/pgsql/${version}/data"}
-
-    if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
-        echo "Init postgresql $version"
-        /usr/pgsql-${version}/bin/postgresql-${version}-setup initdb
-        # systemctl restart postgresql-${version} 
-        # systemctl restart postgresql-${version} 
-
-        if ! grep '0.0.0.0/0' $data/pg_hba.conf ; then
-            echo 'host      all     all     0.0.0.0/0 md5' >> $data/pg_hba.conf
-        fi
+    # npm
+    if _loc="$(type -p npm)" && [[ -n $_loc ]]; then 
+        sudo npm config -g rm proxy; 
+        sudo npm config -g rm https-proxy; 
     fi
+    # yarn
+    if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then 
+        sudo yarn config -g rm proxy; 
+        sudo yarn config -g rm https-proxy; 
+    fi
+    # 
+    if _loc="$(type -p git)" && [[ -n $_loc ]]; then 
+        sudo git config --global --unset https.proxy
+        sudo git config --global --unset http.proxy
+    fi
+        
 }
-
 #!/bin/bash
 
 # Install solr
 
 
-# Reads arguments options
-function parse_python_arguments()
-{
-  # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+# # Reads arguments options
+# function parse_python_arguments()
+# {
+#   # if [ $# -ne 0 ]; then
+#     local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
     
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
-            --data) data=${2%"/"} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) version=${2:-"$version"}; shift 2 ;;
-            --port) port=${2:-"$port"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --port) port=${2:-"$port"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
+# 	eval set -- "$TEMP"
+#     # extract options and their arguments into variables.
+#     while true ; do
+#         case "$1" in
+#             --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
+#             --data) data=${2%"/"} ; shift 2 ;;
+#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+#             --version) version=${2:-"$version"}; shift 2 ;;
+#             --port) port=${2:-"$port"}; shift 2 ;;
+#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+#             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+#             # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+#             # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+#             # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+#             # --port) port=${2:-"$port"}; shift 2 ;;
+#             --) shift ; break ;;
+#             *) echo "Internal error! $1" ; exit 1 ;;
+#         esac
+#     done
 
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
+#     shift $(expr $OPTIND - 1 )
+#     _parameters=$@
     
-  # fi
-}
+#   # fi
+# }
 
 function python_install_requirements() 
 {
@@ -1389,40 +2449,46 @@ function python_install()
 # fi
 #!/bin/bash
 
-redis_install() {
-    if [ ! -f /etc/yum.repos.d/remi.repo ]; then
-        sudo yum install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
-    fi
-    sudo yum-config-manager --enable remi 
-    sudo yum -y install redis
+function group_usage()
+{
+    echo "Usage:"
+    echo "    ${cmd//_/:} [options] <groupname>"
+    echo ""
+    echo "Arguments:"
+    echo "  groupname                 Group name"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help              Display this help message"
+    echo "      --gid               group ID"
+    echo "      --user              Add user to groups"
+    echo "  -f, --update            Update group if already exist"
+    echo ""
+    echo "Help:"
+    echo "  The ${cmd//_/:} Add or update group"
+    echo ""
+    echo "  $0 ${cmd//_/:} admin"
+    echo "  $0 ${cmd//_/:} admin --gid=2000 --user=userdemo --user=admindemo"
+    echo ""
 }
 
-#!/bin/bash
-
-# Install solr
-
-
 # Reads arguments options
-function parse_solr_arguments()
+function parse_group_arguments()
 {
   # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
+    local TEMP=`getopt -o p::,h,f --long help,force,gid::,group::,user:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
     while true ; do
         case "$1" in
-            --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
-            --data) data=${2%"/"} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) version=${2:-"$version"}; shift 2 ;;
-            --port) port=${2:-"$port"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --port) port=${2:-"$port"}; shift 2 ;;
+            -h|--help) HELP=1 ; shift 1 ;;
+            -f|--force) FORCE=1 ; shift 1 ;;
+            --uid) uid="-u ${2}" ; shift 2 ;;
+            --gid) gid="-g ${2}" ; shift 2 ;;
+            --home) home="-d ${2}" ; shift 2 ;;
+            --password) password="${2}" ; shift 2 ;;
+            --group) groups+="${2} "; shift 2 ;;
+            --user) users+="${2} "; shift 2 ;;
             --) shift ; break ;;
             *) echo "Internal error! $1" ; exit 1 ;;
         esac
@@ -1431,509 +2497,105 @@ function parse_solr_arguments()
     shift $(expr $OPTIND - 1 )
     _parameters=$@
     
-  # fi
-}
-
-function solr_install() 
-{
-    set -e
-      cd /tmp
-    # local name="solr"
-    local version=8.2.0
-    local data=
-    # local catalina_home=/usr/share/tomcat
-    # local DB_PASSWORD=
-    # local DB_HOST=localhost
-    local port=8983
-    local solr_config=
-    local file_config=
-    local INSTALL_DIR=/usr/share
-    # echo $@
-    local _parameters=
-    parse_solr_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-
-    # data=${data:-"$1"}
-    data=${data%"/"} 
-    INSTALL_DIR=${INSTALL_DIR%"/"}
-
-    case "$version" in
-        "8") version=8.2.0 ;;
-        "7") version=7.7.2 ;;
-        *)
-        ;;
-    esac
-
-    # Install Solr
-    # ARG version=7.4.0
-    # ARG SOLR_PORT=8983
-    # ENV SOLR_DIR=${APP_DIR}/solr
-
-    rm -rf solr-"$version".tgz install_solr_service.sh
-
-    # echo 2
-    curl -fSL https://archive.apache.org/dist/lucene/solr/$version/solr-$version.tgz -o solr-$version.tgz
-
-    #
-    mkdir -p ${data} $INSTALL_DIR \
-    && tar -xzf solr-"$version".tgz solr-"$version"/bin/install_solr_service.sh --strip-components=2
-
-    if [ -n "$data" ]; then 
-        ./install_solr_service.sh solr-"$version".tgz -i "${INSTALL_DIR}" -d "$data" -p "${port}" 
-    else
-        ./install_solr_service.sh solr-"$version".tgz -i "${INSTALL_DIR}" -p "${port}" 
-    fi
-      
-    # echo " ./install_solr_service.sh solr-$version.tgz -i ${INSTALL_DIR} -d $data -p ${port} "
-    
-    cd $INSTALL_DIR/solr/server/solr-webapp/webapp/WEB-INF/lib && \
-    wget https://github.com/locationtech/jts/releases/download/jts-1.16.1/jts-core-1.16.1.jar
-    # cd $INSTALL_DIR/solr/server/solr-webapp/webapp/WEB-INF/lib && \
-    # wget http://central.maven.org/maven2/org/locationtech/jts/jts-core/1.15.0/jts-core-1.15.0.jar
-
-    # && chown :"${GROUP_ADMIN}" -R /etc/default/ && chmod g+w -R /etc/default \
-    # && usermod solr -g "${GROUP_ADMIN}" \
-    # && systemctl enable solr 
-    rm -rf solr-"$version".tgz install_solr_service.sh && chown solr:solr -R "${INSTALL_DIR}/solr" ${data}
-
-
-    # if [[ -n "$GROUP_ADMIN" ]]; then
-    #     sudo usermod -g $GROUP_ADMIN solr;
-    # fi
-}
-
-
-# if [ ! $# -eq 0 ]; 
-# then
-#   install_solr $@
-# fi
-#!/bin/bash
-
-# Install tomcat
-
-
-# Reads arguments options
-function parse_tomcat_arguments()
-{
-    # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long tomcat-config::,users-config::,config-file:: -n "$0" -- "$@"`
-      
-    eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --data) data=${2%"/"} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
-
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
-    
-  # fi
-}
-
-function tomcat_install() 
-{
-	set -e
-	local users_config=
-	local file_config=
-    # echo $@
-    local _parameters=
-    parse_tomcat_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-    # data=${data:-"$1"}
-    # data=${data:-"."}
-    # data=${data%"/"} 
-
-	if [[ -n "$file_config" && ! -f $file_config ]]
-	then
-    echo "File not found $file_config" 
-    exit 1
-	fi
-
-	if [[ -n "$users_config" && ! -f $users_config ]]
-	then
-    echo "File not found $users_config" 
-    exit 1
-	fi
-
-    sudo yum install -y tomcat tomcat-webapps tomcat-admin-webapps
-  
-	if [[ -n "$file_config" ]]
-	then
-        sudo rm -f /etc/tomcat/tomcat.conf.old
-        sudo mv /etc/tomcat/tomcat.conf /etc/tomcat/tomcat.conf.old
-        sudo mv  $file_config /etc/tomcat/tomcat.conf
-	fi
-  
-	if [[ -n "$users_config" ]]
-	then
-        sudo rm -f /etc/tomcat/tomcat-users.xml.old
-        sudo mv /etc/tomcat/tomcat-users.xml /etc/tomcat/tomcat-users.xml.old
-        sudo mv  $users_config /etc/tomcat/tomcat-users.xml
-	fi
-    
-    echo "CATALINA_HOME=/usr/share/tomcat" >> /etc/profile.d/environnments.sh
-}
-
-
-function tomcat_make_install() 
-{
-    #https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
-    groupadd tomcat
-    mkdir /opt/tomcat
-    useradd -g tomcat -d /opt/tomcat -s /bin/nologin tomcat
-
-    cd /tmp
-    wget [link to the Tomcat 7.0.90 tar.gz file]
-    tar -zxvf apache-tomcat-7.0.90.tar.gz
-    mv apache-tomcat-7.0.90/* /opt/tomcat
-    chown -R tomcat:tomcat /opt/tomcat/
-    
-    echo "CATALINA_HOME=/opt/tomcat" >> /etc/profile.d/environnments.sh
-}
-
-# if [ ! $# -eq 0 ]; 
-# then
-#   install_tomcat $@
-# fi
-#!/bin/bash
-
-# Install a wordpress
-
-
-# Reads arguments options
-function parse_wp_arguments()
-{
-  # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long data::,name::,version::,db-name::,db-user::,db-password::,db-host::,config-file:: -n "$0" -- "$@"`
-    
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --data) data=${2%"/"} ; shift 2 ;;
-            --version) version=${2:-"$version"}; shift 2 ;;
-            --name) name=${2:-"$name"}; shift 2 ;;
-            --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
-            --config-file) config_file=${2:-"$config_file"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
-
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
-    
-  # fi
-}
-
-function wordpress_install() 
-{
-	set -e
-  local name="wordpress"
-	local version=
-	local DB_NAME=
-	local DB_USER=
-	local DB_PASSWORD=
-	local DB_HOST=localhost
-	local DB_PORT=3306
-	local data=
-	local config_file=
-    # echo $@
-    local _parameters=
-    parse_wp_arguments $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-    data=${data:-"$1"}
-    data=${data:-"."}
-    data=${data%"/"} 
-
-	local DIR_NAME=$data/$name
-	
-	wget http://wordpress.org/latest.zip
-	rm -rf $DIR_NAME
-	unzip -q latest.zip -d $data
-	rm -f latest.zip
-
-	if [ ! "$name" == "wordpress" ]
-	then
-		# echo mv $data/wordpress $data/$name
-		mv -f $data/wordpress $data/$name
-	fi
-
-	# mv $_INSTALL_DIR/wordpress $_INSTALL_DIR/$_SITE_NAME
-	# chown -R :$ $_INSTALL_DIR/$_SITE_NAME
-
-	chmod -R 775 $DIR_NAME
-	mkdir -p $DIR_NAME/wp-content/uploads
-	# chown -R :apache $DIR_NAME/wp-content/uploads
-	cp -f $DIR_NAME/wp-config-sample.php $DIR_NAME/wp-config.php
-
-	sed -i "s/database_name_here/$DB_NAME/" $DIR_NAME/wp-config.php
-	sed -i "s/username_here/$DB_USER/" $DIR_NAME/wp-config.php
-	sed -i "s/password_here/$DB_PASSWORD/" $DIR_NAME/wp-config.php
-	sed -i "s/localhost/$DB_HOST:$DB_PORT/" $DIR_NAME/wp-config.php
-}
-
-
-# if [ ! $# -eq 0 ]; 
-# then
-#   install_wordpress $@
-# fi
-#!/bin/bash
-
-
-wso2_install() {
-    _VERSION=${1:-"5.7.0"}
-    _INSTALL_DIR=${2:-"/usr/share"}
-
-    curl -fSL https://bintray.com/wso2/rpm/rpm -o /etc/yum.repos.d/bintray-wso2-rpm.repo
-    yum install -y wso2is-$_VERSION
-
-    _WSO2_DIR=/usr/lib64/wso2/wso2is/$_VERSION
-    _WSO2_HOME=/usr/lib64/wso2
-
-    if [[ -n "${_INSTALL_DIR}" && ! -d ${_INSTALL_DIR}/wso2 && ! -L ${_INSTALL_DIR}/wso2  ]]; then
-        ln -s $_WSO2_DIR ${_INSTALL_DIR}/wso2
-    fi
-
-    if ! getent passwd wso2 > /dev/null 2>&1; then
-        useradd -r -d ${_WSO2_HOME}/ wso2
-    fi
-
-    chown -R wso2:wso2 ${_WSO2_HOME}
-
-if [[ ! -f /etc/systemd/system/wso2.service ]]; then
-echo "
-[Unit]
-Description=WSO2 server identity provider
-After=syslog.target network.target
-
-[Service]
-Type=forking
-Environment=JAVA_HOME=/usr/lib/jvm/jre
-Environment=CARBON_HOME=${_WSO2_DIR}
-PermissionsStartOnly=true
-PIDFile=${_WSO2_DIR}/wso2carbon.pid
-
-ExecStart=${_WSO2_DIR}/bin/wso2server.sh start
-ExecStop=${_WSO2_DIR}/bin/wso2server.sh stop
-
-TimeoutStartSec=30s
-Restart=on-failure
-RestartSec=10s
-RemainAfterExit=yes
-
-User=wso2
-[Install]
-WantedBy=multi-user.target
-" > /etc/systemd/system/wso2.service
-fi
-}
-
-#!/bin/bash
-#
-
-
-function add_groups_usage()
-{
-    echo "Usage:"
-    echo "    ${cmd//_/:} [options] <console>"
-    echo ""
-    echo "Arguments:"
-    echo "  console                 The console: default=bin/console"
-    echo ""
-    echo "Options:"
-    echo "  -h, --help              Display this help message"
-    echo "      --users             The path where saved orm mapping information"
-    echo "      --groups            The path where saved orm mapping information"
-    echo ""
-    echo "Help:"
-    echo "  The ${cmd//_/:} Ajouter des usagers dans des groupes"
-    # echo ""
-    # echo "  You have to limit generation of schema:"
-    # echo ""
-    # echo "  * To a single entity"
-    # echo ""
-    # echo "  $0 ${cmd//_/:} --name=User"
-    # echo ""
-    # echo "  * To a set of entities"
-    # echo ""
-    # echo "  $0 ${cmd//_/:} --name=User --name=Role"
-    echo ""
-}
-
-# bin/cpm build:dal --orm-path=$APP_ORM_DIR --path=.
-function add_groups() 
-{
-    set -e
-    local _HELP=0
-    local _USER=
-    local _USERS=
-    local _GROUP=
-    local _GROUPS=
-    local _PATH=
-    local _ENV=
-
-    local _parameters=
-    users_arguments_parser $@ 
-    if [ -n "$_parameters" ]; then set $_parameters; fi
-
-    if [[ -z "$_GROUPS" ]]; 
+    if [[ "1" == $HELP ]]; 
     then
-        # echo "$_ORM_PATH:$_APP:$_entity_namespace!"
+        group_usage
+        exit 0
+    fi
+}
+
+# 
+function group_add() 
+{
+    set -e
+    local HELP=0
+    local FORCE=0
+    local uid=
+    local gid=
+    local users=
+    local groups=
+
+    local _parameters=
+    parse_group_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    groupname=$1
+
+
+    if [[ -z "$groupname" ]]; 
+    then
         echo "Commande invalide!"
-        echo "    Required --group:              Group's name"
-        echo "    Required --groups:             Groups's name"
-        add_groups_usage
+        echo "    Required a groupname"
+        user_usage
         exit 1
     fi
 
-    for group in $_GROUPS
+    
+    if [ ! $(getent group ${groupname}) ]; then 
+        sudo groupadd $gid ${groupname};
+    else 
+        if [[ "1" == "$FORCE" && -n "$gid" ]]; then sudo groupmod $gid ${groupname}; fi
+    fi
+
+    for user in $users
     do  
-        if ! grep -q "^${group}:" /etc/group
+        # checks if user exit
+        if  $(getent user ${user})
         then
-            groupadd $group
-            echo "Group '$group' does not exist: group will create!"
+            usermod -aG $groupname ${user}
+        else
+            echo "Not found user '$user'"
         fi
-        
-        for user in $_USERS
-        do  
-            # checks if user exit
-            if grep -q "^${user}:" /etc/passwd
-            then
-                usermod -aG $group ${user}
-            else
-                echo "User '$user' does not exist"
-            fi
-        done
     done
 
 }
-    
-    
-#!/bin/bash
-#
 
-
-function add_users_usage()
-{
-    echo "Usage:"
-    echo "    ${cmd//_/:} [options] <console>"
-    echo ""
-    echo "Arguments:"
-    echo "  console                 The console: default=bin/console"
-    echo ""
-    echo "Options:"
-    echo "  -h, --help              Display this help message"
-    echo "      --users             The path where saved orm mapping information"
-    echo "      --groups            The path where saved orm mapping information"
-    echo ""
-    echo "Help:"
-    echo "  The ${cmd//_/:} Ajouter des usagers dans des groupes"
-    # echo ""
-    # echo "  You have to limit generation of schema:"
-    # echo ""
-    # echo "  * To a single entity"
-    # echo ""
-    # echo "  $0 ${cmd//_/:} --name=User"
-    # echo ""
-    # echo "  * To a set of entities"
-    # echo ""
-    # echo "  $0 ${cmd//_/:} --name=User --name=Role"
-    echo ""
-}
-
-# bin/cpm build:dal --orm-path=$APP_ORM_DIR --path=.
-function add_users() 
+# 
+function group_update() 
 {
     set -e
-    local _HELP=0
-    local _USER=
-    local _USERS=
-    local _GROUP=
-    local _GROUPS=
-    local _PATH=
-    local _ENV=
+    local HELP=0
+    local FORCE=0
+    local uid=
+    local gid=
+    local users=
+    local groups=
 
     local _parameters=
-    users_arguments_parser $@ 
+    parse_group_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    if [[ -z "$_USERS" ]]; 
+    groupname=$1
+
+
+    if [[ -z "$groupname" ]]; 
     then
-        # echo "$_ORM_PATH:$_APP:$_entity_namespace!"
         echo "Commande invalide!"
-        echo "    Required --user:              Group's name"
-        echo "    Required --users:             Groups's name"
-        add_users_usage
+        echo "    Required a groupname"
+        user_usage
         exit 1
     fi
 
-    for user in $_USERS
-    do  
-        if ! grep -q "^${user}:" /etc/passwd
-        then
-            useradd $group
-            echo "User '$user' does not exist,  user created!"
-        fi
-        
-        for group in $_GROUPS
-        do  
-            # checks if user exit
-            if ! grep -q "^${group}:" /etc/group
-            then
-                groupadd $group
-                echo "Group '$group' does not exist: group created!"                 
-            fi
-            usermod -aG $group ${user}
-        done
-    done
+    
+    if [ ! $(getent group ${groupname}) ]; then 
+        if [ "1" == "$FORCE" ]; then sudo groupadd $gid ${groupname}; else echo "Group '$groupname' not found! "; exit 1; fi
+    else 
+        if [ -n "$gid" ]; then sudo groupadd $gid ${groupname}; fi
+    fi
 
+    for user in $users
+    do  
+        # checks if user exit
+        if  $(getent user ${user})
+        then
+            usermod -aG $groupname ${user}
+        else
+            echo "  >> Not found user '$user'"
+        fi
+    done
 }
     
     #!/bin/bash
-
-# Reads arguments options
-function users_arguments_parser()
-{
-  # if [ $# -ne 0 ]; then
-    TEMP=`getopt -o e::p::u::g:: --long env::,path::,user::,users::,group::groups:: -n "$0" -- "$@"`
-    eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            -h|--help) _HELP=1 ; shift 1 ;;
-            -u|--user) _USER=${2:-"$_USER"}; _USERS+="${_USER} ";  shift 2 ;;
-            --users) _USERS+="${2} ";  shift 2 ;;
-            -g|--group) _GROUP=${2:-"$_GROUP"}; _GROUPS+="${_GROUP} ";  shift 2 ;;
-            --groups) _GROUPS+="${2} ";  shift 2 ;;
-            -p|--path) _PATH=${2:-"$_PATH"} ;  shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
-
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
-    
-  # fi
-}
-#!/bin/bash
 
 function user_usage()
 {
@@ -1949,7 +2611,7 @@ function user_usage()
     echo "      --gid               User's group ID"
     echo "      --home              User's home "
     echo "      --password          User's password"
-    echo "      --group            Sets groups to user"
+    echo "      --group             Sets groups to user"
     echo "  -f, --update            Update user if already exist"
     echo ""
     echo "Help:"
@@ -1964,17 +2626,19 @@ function user_usage()
 function parse_user_arguments()
 {
   # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long help::,uid::,gid::,home::,group::,password -n "$0" -- "$@"`
+    local TEMP=`getopt -o p::,h --long help,uid::,gid::,home::,group::,password,user:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
     while true ; do
         case "$1" in
+            -h|--help) HELP=1 ; shift 1 ;;
             --uid) uid="-u ${2}" ; shift 2 ;;
             --gid) gid="-g ${2}" ; shift 2 ;;
             --home) home="-d ${2}" ; shift 2 ;;
             --password) password="${2}" ; shift 2 ;;
             --group) groups+="${2} "; shift 2 ;;
+            --user) users+="${2} "; shift 2 ;;
             --) shift ; break ;;
             *) echo "Internal error! $1" ; exit 1 ;;
         esac
@@ -1982,13 +2646,19 @@ function parse_user_arguments()
 
     shift $(expr $OPTIND - 1 )
     _parameters=$@
+    
+    if [[ "1" == $HELP ]]; 
+    then
+        user_usage
+        exit 0
+    fi
 }
 
 # 
 function user_add() 
 {
     set -e
-    local help=0
+    local HELP=0
     local home=
     local uid=
     local gid=
@@ -2000,6 +2670,7 @@ function user_add()
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     username=$1
+
 
     if [[ -z "$username" ]]; 
     then
@@ -2185,6 +2856,8 @@ function user_update()
 
 
 # Stop on first error [duplicate]
+OS_NAME=$(plateform_name)
+OS_VERSION=$(plateform_version)
 
 _home() {
     echo ${0/cpm/..}

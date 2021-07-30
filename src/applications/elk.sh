@@ -28,10 +28,22 @@ function parse_elk_arguments()
   # fi
 }
 
-elk_import_rpm() {
-    local version=$1
-    if [ ! -f /etc/yum.repos.d/elasticsearch-${version}.x.repo ]; then
-        sudo cat > /etc/yum.repos.d/elasticsearch-${version}.x.repo << EOF
+elk_import_repolist() {
+    cd /tmp
+    # echo $(plateform)
+    case `plateform` in 
+        debian)
+            # echo "debian"
+            if [[ ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]]; then
+                wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+                # echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
+                sudo apt-get -y update
+            fi
+            ;;
+        redhat)
+            # echo "redhat"
+            if [[ ! -f /etc/yum.repos.d/elasticsearch-${version}.x.repo ]]; then
+                sudo cat > /etc/yum.repos.d/elasticsearch-${version}.x.repo << EOF
 [elasticsearch-${version}.x]
 name=Elasticsearch repository for ${version}.x packages
 baseurl=https://artifacts.elastic.co/packages/${version}.x/yum
@@ -41,20 +53,63 @@ enabled=1
 autorefresh=1
 type=rpm-md
 EOF
-        # sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
-    fi
+            # sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        fi
+        ;;
+    esac
+
+    # # if [[ is_debian && ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]]; then
+    # #     wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+    # #     echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
+    # #     sudo apt-get -y update
+    # # fi
+    # # snake_to_camel test
+    # if [[  `is_redhat`  ]]; then
+    #     # echo $(is_debian)
+    #     echo $(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
+    # # fi
+    # fi
 }
 
+# elk_import_deb() {
+#     if [ ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]
+#     then 
+#         wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+#         echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
+#         sudo apt-get -y update
+#     fi
+# }
+
 elk_install_beats() {
-    sudo yum install -y filebeat auditbeat metricbeat packetbeat heartbeat-elastic
+    elk_import_repolist
+    install -y filebeat auditbeat metricbeat packetbeat heartbeat-elastic
 }
 
 elk_install() {
     local version=7
     local _parameters=
     parse_elk_arguments $@ 
-    elk_import_rpm $version
-    sudo yum -y install elasticsearch logstash kibana
+    
+    elk_import_repolist
+    install -y elasticsearch kibana
+}
+
+elasticsearch_install() {
+    local version=7
+    local _parameters=
+    parse_elk_arguments $@ 
+    
+    elk_import_repolist
+    install -y elasticsearch
+}
+
+kibana_install() {
+    local version=7
+    local _parameters=
+    parse_elk_arguments $@ 
+    
+    elk_import_repolist
+    install -y kibana
 }
 
 ## detect if a script is being sourced or not

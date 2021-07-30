@@ -33,3 +33,93 @@ function camel_to_snake()
     echo $(echo $1 | sed 's/\(.\)\([A-Z]\)/\1_\2/g' | tr '[:upper:]' '[:lower:]')
 }
 
+# get plateform
+function plateform() 
+{
+    local value="debian"
+    case `plateform_name` in
+        centos|rhel|fedora)
+            value="redhat";
+            ;;
+        *)
+            value="debian"
+        ;;
+    esac
+
+    echo $value
+}
+
+# get plateform name
+function plateform_name() 
+{
+    local value=$(awk -F= '/^ID=/{print $2}' /etc/os-release)
+    echo ${value//\"/}
+}
+
+# get plateform version
+function plateform_version() 
+{
+    local value=$(awk -F= '/^VERSION_ID=/{print $2}' /etc/os-release)
+    echo ${value//\"/}
+}
+
+
+# get plateform version
+function os_type() 
+{
+    local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
+    value=${value//\"/}
+    regex="^(debian|ubuntu)$"
+    if [[ $value =~ $regex ]]
+    then 
+        true
+    else
+        false
+    fi
+}
+function is_debian() 
+{
+    local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
+    value=${value//\"/}
+    regex="^(debian|ubuntu)$"
+    if [[ $value =~ $regex ]]
+    then 
+        true
+    else
+        false
+    fi
+}
+
+function is_redhat() 
+{    
+    local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
+    value=${value//\"/}
+    regex="^(rhel|centos|fedora)$"
+
+
+    # echo $value
+    if [[ $value =~ $regex ]]
+    then 
+        true
+    else
+        false
+    fi
+}
+
+function install() 
+{
+    # echo "sudo yum install $@"
+    case `plateform` in 
+        debian)
+            echo "sudo apt-get install $@"
+            sudo apt-get install $@
+            ;;
+            
+        redhat)
+            echo "sudo yum install $@"
+            sudo yum install $@
+        ;;
+    esac
+
+}
+

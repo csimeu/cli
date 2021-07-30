@@ -14,7 +14,7 @@ function user_usage()
     echo "      --gid               User's group ID"
     echo "      --home              User's home "
     echo "      --password          User's password"
-    echo "      --group            Sets groups to user"
+    echo "      --group             Sets groups to user"
     echo "  -f, --update            Update user if already exist"
     echo ""
     echo "Help:"
@@ -29,17 +29,19 @@ function user_usage()
 function parse_user_arguments()
 {
   # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p:: --long help::,uid::,gid::,home::,group::,password -n "$0" -- "$@"`
+    local TEMP=`getopt -o p::,h --long help,uid::,gid::,home::,group::,password,user:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
     while true ; do
         case "$1" in
+            -h|--help) HELP=1 ; shift 1 ;;
             --uid) uid="-u ${2}" ; shift 2 ;;
             --gid) gid="-g ${2}" ; shift 2 ;;
             --home) home="-d ${2}" ; shift 2 ;;
             --password) password="${2}" ; shift 2 ;;
             --group) groups+="${2} "; shift 2 ;;
+            --user) users+="${2} "; shift 2 ;;
             --) shift ; break ;;
             *) echo "Internal error! $1" ; exit 1 ;;
         esac
@@ -47,13 +49,19 @@ function parse_user_arguments()
 
     shift $(expr $OPTIND - 1 )
     _parameters=$@
+    
+    if [[ "1" == $HELP ]]; 
+    then
+        user_usage
+        exit 0
+    fi
 }
 
 # 
 function user_add() 
 {
     set -e
-    local help=0
+    local HELP=0
     local home=
     local uid=
     local gid=
@@ -65,6 +73,7 @@ function user_add()
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     username=$1
+
 
     if [[ -z "$username" ]]; 
     then

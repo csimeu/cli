@@ -3,20 +3,24 @@
 # Reads arguments options
 function read_application_arguments()
 {
-    local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home::install-dir::,port-offset::,password::,user::,host:: -n "$0" -- "$@"`
+    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::"
+    local TEMP=`getopt -o p::,f,h --long $long,password::,user::,host::,port:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
     while true ; do
         case "$1" in
+            -f|--force) FORCE=1 ; shift 1 ;;
+            --default) IS_DEFAULT=1 ; shift 1 ;;
             --data) data=${2%"/"} ; shift 2 ;;
             --name) name=${2} ; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
             --version) version=${2:-"$version"}; shift 2 ;;
             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            --install-dir) install_dir=${2:-"$install_dir"}; shift 2 ;;
+            --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"}; shift 2 ;;
             --port-offset) port_offset=${2:-"$port_offset"}; shift 2 ;;
+            --port) port=${2:-"$port"}; shift 2 ;;
             --user) user=${2:-"$user"}; shift 2 ;;
             --host) host=${2:-"$host"}; shift 2 ;;
             --password) password=${2:-"$password"}; shift 2 ;;

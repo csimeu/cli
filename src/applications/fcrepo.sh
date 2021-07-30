@@ -3,50 +3,16 @@
 # Install fedora commons repository
 
 
-# # Reads arguments options
-# function parse_fcrepo_arguments()
-# {
-#   # if [ $# -ne 0 ]; then
-#     local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file:: -n "$0" -- "$@"`
-#     local TEMP=`getopt -o p:: --long data::,name::,version::,users-config::,config-file::,catalina-home:: -n "$0" -- "$@"`
-    
-# 	eval set -- "$TEMP"
-#     # extract options and their arguments into variables.
-#     while true ; do
-#         case "$1" in
-#             --data) data=${2%"/"} ; shift 2 ;;
-#             --name) name=${2} ; shift 2 ;;
-#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-#             --version) version=${2:-"$version"}; shift 2 ;;
-#             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
-#             # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
-#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-#             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-#             # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-#             # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-#             # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-#             # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
-#             --) shift ; break ;;
-#             *) echo "Internal error! $1" ; exit 1 ;;
-#         esac
-#     done
-
-#     shift $(expr $OPTIND - 1 )
-#     _parameters=$@
-    
-#   # fi
-# }
 
 function fcrepo_install() 
 {
     set -e
-    local version=4.7.5
-    local data=/var/lib/fcrepo
-    local name=fcrepo
-    local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
-    # local DB_PASSWORD=
-    # local DB_HOST=localhost
-    # local DB_PORT=3306
+    local FORCE=0
+    local IS_DEFAULT=0
+    local version=$FCREPO_DEFAULT_VERSION
+    local data=/var/lib
+    local name=
+    local catalina_home=
     local fcrepo_config=
     local file_config=
     # echo $@
@@ -55,43 +21,65 @@ function fcrepo_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    # name=${name:-"fcrepo-$version"}
-    # # data=${data:-"$1"}
-    # data=${data:-"/var/lib/$name"}
-    # data=${data%"/"} 
+    name=${name:-"fcrepo$version"}
+    name=${name//./-/}
 
-    if ! getent passwd tomcat > /dev/null 2>&1; then
-        tomcat_install
+    if [ '1' == $IS_DEFAULT ]; then 
+        catalina_home=/usr/share/tomcat; 
+        name=fcrepo
     fi
 
-    # ENV PATH $CATALINA_HOME/bin:$PATH
+    if [ -z $catalina_home ]; then
+        echo "If not --default, --catalina_home value is required"
+        exit 1
+    fi
 
-    # https://github.com/fcrepo4/fcrepo4/releases/download/fcrepo-5.1.0/fcrepo-webapp-5.1.0.war
+    if [ '1' == $FORCE ]; then 
+        sudo rm -f ${catalina_home}/webapps/${name}.war
+    fi
+
+    if [ -f ${catalina_home}/webapps/${name}.war ]
+    then 
+        echo "Current file already exist: ${catalina_home}/webapps/${name}.war"
+        exit 0
+    fi
+
+
+    # https://github.com/fcrepo/fcrepo/releases/download/fcrepo-5.1.0/fcrepo-webapp-5.1.0.war
+    # 
     # https://github.com/fcrepo4/fcrepo4/releases/download/fcrepo-4.7.5/fcrepo-webapp-4.7.5.war
 
     case "$version" in
 
         "4") version=4.7.5;;
 
-        "5") version=5.1.0;;
+        "5") version=5.1.1;;
         *)
         ;;
     esac
     
-    # ARG FCREPO_VERSION=4.7.5
-    # ARG FCREPO_TAG=4.7.5
-    # ARG FcrepoConfig=
-    curl -fSL https://github.com/fcrepo4-exts/fcrepo-webapp-plus/releases/download/fcrepo-webapp-plus-$version/fcrepo-webapp-plus-$fcrepo_config$version.war -o ${catalina_home}/webapps/${name}.war
+    
+    if [ ! -f /tmp/fcrepo-webapp-$version.war ];
+    then 
+        curl -fSL https://github.com/fcrepo/fcrepo/releases/download/fcrepo-$version/fcrepo-webapp-$version.war -o /tmp/fcrepo-webapp-$version.war
+    fi
+
+    sudo cp -f /tmp/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
+
+    # sudo curl -fSL https://github.com/fcrepo4-exts/fcrepo-webapp-plus/releases/download/fcrepo-webapp-plus-$version/fcrepo-webapp-plus-$fcrepo_config$version.war -o ${catalina_home}/webapps/${name}.war
     #
     local ModeshapeConfig=file-simple
     local JDBCConfig=
   # ARG FCREPO_DIR=${APP_DIR}/fcrepo
-    sudo mkdir -p "${data}" && sudo chown tomcat:tomcat -R ${data} 
-    sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}' -Dfcrepo.audit.container=/audit"' >> /etc/tomcat/tomcat.conf \
+    sudo mkdir -p "${data}/${name}" && sudo chown tomcat:tomcat -R ${data}/${name}
+    sudo sed -ie "/JAVA_OPTS=\"-Dfcrepo.*/d" $catalina_home/conf/tomcat.conf
+    sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}/${name}' -Dfcrepo.audit.container=/audit"' >> $catalina_home/conf/tomcat.conf \
     # sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 
-    sudo mkdir -p /etc/$name
-    sudo chown tomcat:tomcat /etc/$name
+    sudo mkdir -p /etc/${name}
+    sudo chown tomcat:tomcat /etc/${name}
+
+    echo ">> Installed application '$name' (version = $version) in ${catalina_home}/webapps/${name}.war"
 }
 
 ## detect if a script is being sourced or not

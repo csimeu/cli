@@ -5,25 +5,41 @@
 function mysql_install() 
 {
     set -e
-	local _major_centos_version=$(rpm -E %{rhel})
-    local _version="${1:-"5.7"}"
-	local MYSQL_RPM="mysql57-community-release-el$_major_centos_version-9.noarch.rpm"
-    
-	
-	if [[ ! $_major_centos_version =~ 6 ]];
-	then
-		if [[ $_version =~ ^8.*$ ]];
-		then 
-			MYSQL_RPM=mysql80-community-release-el$_major_centos_version-1.noarch.rpm
-		fi
-		wget https://dev.mysql.com/get/$MYSQL_RPM
-		rpm -ivh "${MYSQL_RPM}"
-	fi
-     
+    local appName=mysql
 
-	yum -y install mysql-server &&
-	(if [[ $_major_centos_version =~ 6 ]]; then chkconfig --add mysqld ; else systemctl enable mysqld; fi)
+    local FORCE=0
+    local IS_DEFAULT=0
+    local version=$MYSQL_DEFAULT_VERSION
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+	local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
+
+    case `plateform` in 
+        redhat)
+			if [[ $_version =~ ^8.*$ ]];
+			then 
+				MYSQL_RPM=mysql80-community-release-el$OS_VERSION-1.noarch.rpm
+			fi
+			wget https://dev.mysql.com/get/$MYSQL_RPM
+			sudo rpm -ivh "${MYSQL_RPM}"
+            ;;
+        debian)
+			if [[ $_version =~ ^8.*$ ]];
+			then 
+				wget https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb
+				apt-get install -y ./mysql-apt-config_0.8.16-1_all.deb
+			fi
+        ;;
+    esac
 	
+	install -y mysql-server
+
+	
+
+	if [[ $OS_VERSION =~ 6 ]]; then chkconfig --add mysqld ; else systemctl enable mysqld; fi
 	
 	# mysqld --initialize-insecure --user=mysql; 
 }

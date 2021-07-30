@@ -2,14 +2,23 @@
 
 
 node_install() {
-    rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
+    local appName="nodejs npm yarn"
+    
+    case `plateform` in 
+        redhat)
+            if [ ! -f /etc/yum.repos.d/yarn.repo ]
+            then
+                curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
+                rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
+            fi
+            ;;
+        # debian)
+        # ;;
+    esac
 
-    yum install -y mod_ssl nodejs npm yarn
-
-    if [[ -n "$http_proxy" ]]; then 
-        npm config set proxy $http_proxy -g; 
-    fi
-
+    install -y nodejs npm yarn
     npm install -g n && n stable
+    
+    echo ">> Installed applications '$appName' "
 }
 
