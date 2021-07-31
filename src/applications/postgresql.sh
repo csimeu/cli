@@ -75,9 +75,11 @@ function postgis_install()
         redhat)
             if [ '8' == "$OS_VERSION" ]; then 
                 # https://serverfault.com/questions/1049330/error-conflicting-requests-in-centos-8-package-installation
-                sudo dnf -qy module disable postgresql
-                install -y dnf-plugins-core
-                install -y gdal-devel
+                # sudo dnf -qy module disable postgresql
+                echo ">> dnf config-manager --set-enabled powertools"
+                if [ "$EUID" -eq 0 ]; then dnf config-manager --set-enabled powertools; else sudo dnf config-manager --set-enabled powertools; fi
+                echo ">> install -y dnf-plugins-core gdal-devel "
+                install -y dnf-plugins-core gdal-devel 
             fi
             install -y postgis${_postgis_version//./}_$_postgresql_version # postgis24_11
         ;;
@@ -102,9 +104,13 @@ function postgresql_install()
             ;;
         redhat)
             if [ '8' == "$OS_VERSION" ]; then 
-                # sudo dnf config-manager --set-enabled PowerTools
-                # sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-                sudo dnf -qy module disable postgresql
+                # https://serverfault.com/questions/1049330/error-conflicting-requests-in-centos-8-package-installation
+                echo ">> dnf -qy module disable postgresql"
+                if [ "$EUID" -eq 0 ]; then
+                    dnf -qy module disable postgresql; 
+                else 
+                    sudo dnf -qy module disable postgresql; 
+                fi
             fi
             install -y postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server
             

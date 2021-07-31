@@ -162,3 +162,17 @@ proxy_unset()
     fi
         
 }
+
+yum_set_proxy() 
+{
+    case `plateform` in 
+        redhat)
+            local proxy=${1:-$https_proxy}
+            proxy=${proxy:-$http_proxy}
+            if [[ -n "$proxy" ]]; then
+                sudo sed -i -e "/^proxy=.*/d" /etc/yum.conf;
+                echo "proxy=$proxy" | sudo tee -a /etc/yum.conf;
+            fi
+        ::
+    esac
+}
