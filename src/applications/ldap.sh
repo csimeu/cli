@@ -14,7 +14,7 @@ ldap_install() {
     _major_centos_version=$(rpm -E %{rhel})
     if [[ "$_major_centos_version" == "7" ]];
     then 
-        sudo yum -y install openldap compat-openldap openldap-clients openldap-servers openldap-servers-sql openldap-devel
+        install -y openldap compat-openldap openldap-clients openldap-servers openldap-servers-sql openldap-devel
     fi
 
     if [[ "$_major_centos_version" == "8" ]];
@@ -23,7 +23,7 @@ ldap_install() {
         # for centos 8 -> https://repo.symas.com/sofl/rhel8/
         # yum config-manager --add-repo https://repo.symas.com/configs/SOFL/rhel8/sofl.repo
         # yum update
-        sudo yum install -y symas-openldap-clients symas-openldap-servers
+        install -y symas-openldap-clients symas-openldap-servers
     fi
 }
 

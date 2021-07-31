@@ -709,10 +709,10 @@ sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 EOF
     fi
     
-    sudo yum -y install grafana
-    sudo yum install -y fontconfig freetype* urw-fonts
+    install -y grafana
+    install -y fontconfig freetype* urw-fonts
 
-    sudo systemctl enable grafana-server.service
+    # sudo systemctl enable grafana-server.service
 
 }
 
@@ -904,7 +904,7 @@ ldap_install() {
     _major_centos_version=$(rpm -E %{rhel})
     if [[ "$_major_centos_version" == "7" ]];
     then 
-        sudo yum -y install openldap compat-openldap openldap-clients openldap-servers openldap-servers-sql openldap-devel
+        install -y openldap compat-openldap openldap-clients openldap-servers openldap-servers-sql openldap-devel
     fi
 
     if [[ "$_major_centos_version" == "8" ]];
@@ -913,7 +913,7 @@ ldap_install() {
         # for centos 8 -> https://repo.symas.com/sofl/rhel8/
         # yum config-manager --add-repo https://repo.symas.com/configs/SOFL/rhel8/sofl.repo
         # yum update
-        sudo yum install -y symas-openldap-clients symas-openldap-servers
+        install -y symas-openldap-clients symas-openldap-servers
     fi
 }
 
@@ -1322,13 +1322,13 @@ postgresql_add_repolist() {
             if [[ ! -f /etc/apt/sources.list.d/pgdg.list ]]; then
                 cd /tmp
                 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-                echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" |sudo tee  /etc/apt/sources.list.d/pgdg.list
+                echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | sudo tee  /etc/apt/sources.list.d/pgdg.list
                 sudo apt -y update
             fi
             ;;
         redhat)
             if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
-                sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+                install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
             fi
         ;;
     esac
@@ -1553,7 +1553,7 @@ redis_install() {
     case `plateform` in 
         redhat)
             if [ ! -f /etc/yum.repos.d/remi.repo ]; then
-                sudo yum install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+                install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
             fi
             sudo yum-config-manager --enable remi 
         ;;
@@ -2391,8 +2391,8 @@ proxy_unset()
     fi
     # yarn
     if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then 
-        sudo yarn config -g rm proxy; 
-        sudo yarn config -g rm https-proxy; 
+        sudo yarn config delete proxy -g; 
+        sudo yarn config delete https-proxy -g; 
     fi
     # 
     if _loc="$(type -p git)" && [[ -n $_loc ]]; then 

@@ -44,13 +44,13 @@ postgresql_add_repolist() {
             if [[ ! -f /etc/apt/sources.list.d/pgdg.list ]]; then
                 cd /tmp
                 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-                echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" |sudo tee  /etc/apt/sources.list.d/pgdg.list
+                echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | sudo tee  /etc/apt/sources.list.d/pgdg.list
                 sudo apt -y update
             fi
             ;;
         redhat)
             if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
-                sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+                install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
             fi
         ;;
     esac

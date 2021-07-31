@@ -152,8 +152,8 @@ proxy_unset()
     fi
     # yarn
     if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then 
-        sudo yarn config -g rm proxy; 
-        sudo yarn config -g rm https-proxy; 
+        sudo yarn config delete proxy -g; 
+        sudo yarn config delete https-proxy -g; 
     fi
     # 
     if _loc="$(type -p git)" && [[ -n $_loc ]]; then 

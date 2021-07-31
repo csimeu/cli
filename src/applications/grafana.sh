@@ -53,10 +53,10 @@ sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 EOF
     fi
     
-    sudo yum -y install grafana
-    sudo yum install -y fontconfig freetype* urw-fonts
+    install -y grafana
+    install -y fontconfig freetype* urw-fonts
 
-    sudo systemctl enable grafana-server.service
+    # sudo systemctl enable grafana-server.service
 
 }
 
