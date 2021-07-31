@@ -1166,7 +1166,7 @@ function php_install()
 				echo "PHP_DEFAULT_VERSION=$PHP_DEFAULT_VERSION"
 				case $OS_VERSION in 
 					8)
-						if [ "$EUID" -ne 0 ]; then sudo yum module install php:remi-$PHP_DEFAULT_VERSION; else yum module install php:remi-$PHP_DEFAULT_VERSION; fi
+						if [ "$EUID" -ne 0 ]; then sudo yum module install -y php:remi-$PHP_DEFAULT_VERSION; else yum module install -y php:remi-$PHP_DEFAULT_VERSION; fi
 						# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
 						# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
 					;;
