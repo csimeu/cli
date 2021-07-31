@@ -2420,9 +2420,11 @@ yum_set_proxy()
                 sudo sed -i -e "/^proxy=.*/d" /etc/yum.conf;
                 echo "proxy=$proxy" | sudo tee -a /etc/yum.conf;
             fi
-        ::
+        ;;
     esac
-}#!/bin/bash
+}
+
+#!/bin/bash
 
 # Install solr
 
