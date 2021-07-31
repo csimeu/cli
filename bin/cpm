@@ -386,7 +386,7 @@ elk_import_repolist() {
             # echo "debian"
             if [[ ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]]; then
                 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-                # echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
+                echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
                 sudo apt-get -y update
             fi
             ;;
@@ -1005,10 +1005,15 @@ function mysql_install()
 	install -y mysql-server
 
 	
-
-	if [[ $OS_VERSION =~ 6 ]]; then chkconfig --add mysqld ; else systemctl enable mysqld; fi
-	
-	# mysqld --initialize-insecure --user=mysql; 
+    case `plateform` in 
+        redhat)
+			if [[ $OS_VERSION =~ 6 ]]; then chkconfig --add mysqld ; else systemctl enable mysqld; fi
+			# mysqld --initialize-insecure --user=mysql; 
+            ;;
+        debian)
+			systemctl enable mysql;
+        ;;
+    esac
 }
 
 
@@ -2332,10 +2337,10 @@ function proxy_load_config()
 
     case `plateform` in 
         debian)
-            sudo rm /etc/apt/apt.conf.d/proxy.conf
+            sudo rm -f /etc/apt/apt.conf.d/proxy.conf
             sudo touch /etc/apt/apt.conf.d/proxy.conf
-            if [ -n "$http_proxy" ] ; then echo  "Acquire::http::Proxy \"$http_proxy/\"" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null; fi
-            if [ -n "$https_proxy" ] ; then echo  "Acquire::https::Proxy \"$https_proxy/\"" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null; fi
+            if [ -n "$http_proxy" ] ; then echo  "Acquire::http::Proxy \"$http_proxy/\";" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null; fi
+            if [ -n "$https_proxy" ] ; then echo  "Acquire::https::Proxy \"$https_proxy/\";" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null; fi
             ;;
         redhat)
             local proxy=${https_proxy:-"$http_proxy"}

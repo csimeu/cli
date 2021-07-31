@@ -35,7 +35,7 @@ elk_import_repolist() {
             # echo "debian"
             if [[ ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]]; then
                 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-                # echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
+                echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
                 sudo apt-get -y update
             fi
             ;;

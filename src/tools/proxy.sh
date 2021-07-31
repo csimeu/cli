@@ -85,10 +85,10 @@ function proxy_load_config()
 
     case `plateform` in 
         debian)
-            sudo rm /etc/apt/apt.conf.d/proxy.conf
+            sudo rm -f /etc/apt/apt.conf.d/proxy.conf
             sudo touch /etc/apt/apt.conf.d/proxy.conf
-            if [ -n "$http_proxy" ] ; then echo  "Acquire::http::Proxy \"$http_proxy/\"" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null; fi
-            if [ -n "$https_proxy" ] ; then echo  "Acquire::https::Proxy \"$https_proxy/\"" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null; fi
+            if [ -n "$http_proxy" ] ; then echo  "Acquire::http::Proxy \"$http_proxy/\";" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null; fi
+            if [ -n "$https_proxy" ] ; then echo  "Acquire::https::Proxy \"$https_proxy/\";" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null; fi
             ;;
         redhat)
             local proxy=${https_proxy:-"$http_proxy"}

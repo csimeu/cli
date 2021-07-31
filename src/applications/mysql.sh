@@ -38,10 +38,15 @@ function mysql_install()
 	install -y mysql-server
 
 	
-
-	if [[ $OS_VERSION =~ 6 ]]; then chkconfig --add mysqld ; else systemctl enable mysqld; fi
-	
-	# mysqld --initialize-insecure --user=mysql; 
+    case `plateform` in 
+        redhat)
+			if [[ $OS_VERSION =~ 6 ]]; then chkconfig --add mysqld ; else systemctl enable mysqld; fi
+			# mysqld --initialize-insecure --user=mysql; 
+            ;;
+        debian)
+			systemctl enable mysql;
+        ;;
+    esac
 }
 
 
