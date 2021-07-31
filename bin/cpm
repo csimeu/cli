@@ -152,19 +152,21 @@ function install()
     # echo "sudo yum install $@"
     case `plateform` in 
         debian)
-            echo "sudo apt-get install $@"
             if [ "$EUID" -ne 0 ]; then 
+                echo "sudo apt-get install $@"
                 sudo apt-get install $@
             else
+             echo "apt-get install $@"
                 apt-get install $@
             fi
             ;;
             
         redhat)
-            echo "sudo yum install $@"
-            if [ "$EUID" -ne 0 ]; then 
+            if [ "$EUID" -ne 0 ]; then
+                echo "sudo yum install $@"
                 sudo yum install $@
             else
+                echo "yum install $@"
                 yum install $@
             fi
         ;;
