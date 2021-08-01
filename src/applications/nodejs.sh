@@ -18,8 +18,8 @@ nodejs_install() {
 
     install -y nodejs npm
     npm install -g n && n stable
-    echo "---> npm install npm@latest"
-    npm install -g npm@latest
+    # echo "---> npm install -g npm@latest"
+    # # npm install -g npm@latest
     echo "---> npm install --global yarn"
     npm install --global yarn
     # npm install --global @angular/cli@latest
