@@ -1127,7 +1127,8 @@ node_install() {
 
     install -y nodejs npm
     npm install -g n && n stable
-    npm install --global npm@latest yarn
+    npm install npm@latest
+    npm install --global yarn
     # npm install --global @angular/cli@latest
     
     echo ">> Installed applications '$appName' "
