@@ -799,8 +799,10 @@ function keycloak_install()
     mkdir -p $KEYCLOAK_HOME/modules/org/postgresql/main
     if [ ! -f $KEYCLOAK_HOME/modules/org/postgresql/main/postgresql-42.2.5.jar ]
     then
-        curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o /tmp/releases/postgresql-42.2.5.jar
-        mv /tmp/releases/postgresql-42.2.5.jar $KEYCLOAK_HOME/modules/org/postgresql/main/
+        if [ ! -f /tmp/releases/postgresql-42.2.5.jar ]; then
+            curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o /tmp/releases/postgresql-42.2.5.jar
+        fi
+        sudo cp /tmp/releases/postgresql-42.2.5.jar $KEYCLOAK_HOME/modules/org/postgresql/main/
     fi
 
     if [ ! -f $KEYCLOAK_HOME/modules/org/postgresql/main/module.xml ]
@@ -825,7 +827,9 @@ EOF
     mkdir -p $KEYCLOAK_HOME/modules/org/mysql/main
     if [ ! -f $KEYCLOAK_HOME/modules/org/mysql/main/mysql-connector-java-5.1.47.jar ]
     then
-        curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/releases/mysql-connector-java-5.1.47.tar.gz
+        if [ ! -f /tmp/releases/mysql-connector-java-5.1.47.tar.gz ]; then
+            curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/releases/mysql-connector-java-5.1.47.tar.gz
+        fi
         tar -xzf /tmp/releases/mysql-connector-java-5.1.47.tar.gz mysql-connector-java-5.1.47/mysql-connector-java-5.1.47.jar --strip-components=1
         sudo mv mysql-connector-java-5.1.47.jar $KEYCLOAK_HOME/modules/org/mysql/main/
     fi
@@ -1099,6 +1103,13 @@ nexcloud_install() {
 #!/bin/bash
 
 
+nginx_install() {
+    install -y nginx
+}
+
+#!/bin/bash
+
+
 node_install() {
     local appName="nodejs npm yarn"
     
@@ -1114,8 +1125,10 @@ node_install() {
         # ;;
     esac
 
-    install -y nodejs npm yarn
+    install -y nodejs npm
     npm install -g n && n stable
+    npm install --global npm@latest yarn
+    # npm install --global @angular/cli@latest
     
     echo ">> Installed applications '$appName' "
 }
@@ -1680,8 +1693,12 @@ function solr_install()
       
     # echo " ./install_solr_service.sh solr-$version.tgz -i ${INSTALL_DIR} -d $data -p ${port} "
     
-    cd $INSTALL_DIR/solr-$version/server/solr-webapp/webapp/WEB-INF/lib && \
-    wget https://github.com/locationtech/jts/releases/download/jts-1.16.1/jts-core-1.16.1.jar
+    if [ ! -f /tmp/releases/jts-core-1.16.1.jar ]; then 
+        wget https://github.com/locationtech/jts/releases/download/jts-1.16.1/jts-core-1.16.1.jar
+    fi
+
+    cp -f /tmp/releases/jts-core-1.16.1.jar $INSTALL_DIR/solr-$version/server/solr-webapp/webapp/WEB-INF/lib/
+    
     # cd $INSTALL_DIR/solr/server/solr-webapp/webapp/WEB-INF/lib && \
     # wget http://central.maven.org/maven2/org/locationtech/jts/jts-core/1.15.0/jts-core-1.15.0.jar
 
@@ -1742,6 +1759,7 @@ function parse_tomcat_arguments()
 function tomcat_install() 
 {
 	set -e
+    local appName=tomcat
 	local users_config=
 	local file_config=
 	# local INSTALL_DIR=/usr/share
@@ -1841,6 +1859,7 @@ EOF
     fi
 
     # echo "CATALINA_HOME=/usr/share/tomcat" >> /etc/profile.d/environnments.sh
+    echo ">> Installed application '$name' (version = $version) in $INSTALL_DIR/tomcat-$version"
 }
 
 

@@ -78,8 +78,10 @@ function keycloak_install()
     mkdir -p $KEYCLOAK_HOME/modules/org/postgresql/main
     if [ ! -f $KEYCLOAK_HOME/modules/org/postgresql/main/postgresql-42.2.5.jar ]
     then
-        curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o /tmp/releases/postgresql-42.2.5.jar
-        mv /tmp/releases/postgresql-42.2.5.jar $KEYCLOAK_HOME/modules/org/postgresql/main/
+        if [ ! -f /tmp/releases/postgresql-42.2.5.jar ]; then
+            curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o /tmp/releases/postgresql-42.2.5.jar
+        fi
+        sudo cp /tmp/releases/postgresql-42.2.5.jar $KEYCLOAK_HOME/modules/org/postgresql/main/
     fi
 
     if [ ! -f $KEYCLOAK_HOME/modules/org/postgresql/main/module.xml ]
@@ -104,7 +106,9 @@ EOF
     mkdir -p $KEYCLOAK_HOME/modules/org/mysql/main
     if [ ! -f $KEYCLOAK_HOME/modules/org/mysql/main/mysql-connector-java-5.1.47.jar ]
     then
-        curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/releases/mysql-connector-java-5.1.47.tar.gz
+        if [ ! -f /tmp/releases/mysql-connector-java-5.1.47.tar.gz ]; then
+            curl -fSL https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.47.tar.gz -o /tmp/releases/mysql-connector-java-5.1.47.tar.gz
+        fi
         tar -xzf /tmp/releases/mysql-connector-java-5.1.47.tar.gz mysql-connector-java-5.1.47/mysql-connector-java-5.1.47.jar --strip-components=1
         sudo mv mysql-connector-java-5.1.47.jar $KEYCLOAK_HOME/modules/org/mysql/main/
     fi

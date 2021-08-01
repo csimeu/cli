@@ -38,6 +38,7 @@ function parse_tomcat_arguments()
 function tomcat_install() 
 {
 	set -e
+    local appName=tomcat
 	local users_config=
 	local file_config=
 	# local INSTALL_DIR=/usr/share
@@ -137,6 +138,7 @@ EOF
     fi
 
     # echo "CATALINA_HOME=/usr/share/tomcat" >> /etc/profile.d/environnments.sh
+    echo ">> Installed application '$name' (version = $version) in $INSTALL_DIR/tomcat-$version"
 }
 
 

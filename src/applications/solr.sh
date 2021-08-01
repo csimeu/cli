@@ -101,8 +101,12 @@ function solr_install()
       
     # echo " ./install_solr_service.sh solr-$version.tgz -i ${INSTALL_DIR} -d $data -p ${port} "
     
-    cd $INSTALL_DIR/solr-$version/server/solr-webapp/webapp/WEB-INF/lib && \
-    wget https://github.com/locationtech/jts/releases/download/jts-1.16.1/jts-core-1.16.1.jar
+    if [ ! -f /tmp/releases/jts-core-1.16.1.jar ]; then 
+        wget https://github.com/locationtech/jts/releases/download/jts-1.16.1/jts-core-1.16.1.jar
+    fi
+
+    cp -f /tmp/releases/jts-core-1.16.1.jar $INSTALL_DIR/solr-$version/server/solr-webapp/webapp/WEB-INF/lib/
+    
     # cd $INSTALL_DIR/solr/server/solr-webapp/webapp/WEB-INF/lib && \
     # wget http://central.maven.org/maven2/org/locationtech/jts/jts-core/1.15.0/jts-core-1.15.0.jar
 
