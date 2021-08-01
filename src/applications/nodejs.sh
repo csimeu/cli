@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-node_install() {
+nodejs_install() {
     local appName="nodejs npm yarn"
     
     case `plateform` in 
@@ -18,7 +18,9 @@ node_install() {
 
     install -y nodejs npm
     npm install -g n && n stable
-    npm install npm@latest
+    echo "---> npm install npm@latest"
+    npm install -g npm@latest
+    echo "---> npm install --global yarn"
     npm install --global yarn
     # npm install --global @angular/cli@latest
     
