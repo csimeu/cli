@@ -2423,7 +2423,7 @@ proxy_unset()
         sudo npm config -g rm https-proxy; 
     fi
     # yarn
-    yarm_unset_proxy
+    #yarm_unset_proxy
     # 
     if _loc="$(type -p git)" && [[ -n $_loc ]]; then 
         sudo git config --global --unset https.proxy
