@@ -106,7 +106,7 @@ function proxy_load_config()
         # npm
         if _loc="$(type -p npm)" && [[ -n $_loc ]]; then sudo npm config -g set proxy $http_proxy; fi
         # yarn
-        if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then sudo yarn config set proxy $http_proxy; fi
+        if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then sudo yarn config -g set proxy $http_proxy; fi
         # git
         if _loc="$(type -p git)" && [[ -n $_loc ]]; then sudo git config --global http.proxy $http_proxy; fi
         
@@ -138,10 +138,7 @@ proxy_unset()
             sudo rm /etc/apt/apt.conf.d/proxy.conf
             ;;
         redhat)
-            local proxy=${https_proxy:-"$http_proxy"}
-            if [[ -n "$proxy" ]]; then
-                sed -i -e "/^proxy=.*/d" /etc/yum.conf;
-            fi
+            sed -i -e "/^proxy=.*/d" /etc/yum.conf;
         ;;
     esac
     
@@ -151,10 +148,7 @@ proxy_unset()
         sudo npm config -g rm https-proxy; 
     fi
     # yarn
-    if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then 
-        sudo yarn config delete proxy ; 
-        sudo yarn config delete https-proxy ; 
-    fi
+    yarm_unset_proxy
     # 
     if _loc="$(type -p git)" && [[ -n $_loc ]]; then 
         sudo git config --global --unset https.proxy
@@ -175,5 +169,28 @@ yum_set_proxy()
             fi
         ;;
     esac
+}
+yum_unset_proxy() 
+{
+    case `plateform` in 
+        redhat)
+            sudo sed -i -e "/^proxy=.*/d" /etc/yum.conf;
+        ;;
+    esac
+}
+
+yarm_set_proxy() 
+{ 
+    local proxy=${1:-$https_proxy}
+    proxy=${proxy:-$http_proxy}
+    if _loc="$(type -p yarn)" && [[ -n $_loc && -n $proxy ]]; then sudo yarn config -g set proxy $http_proxy; fi
+}
+yarm_unset_proxy() 
+{
+    # yarn
+    if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then 
+        sudo yarn config delete proxy -g; 
+        sudo yarn config delete https-proxy -g; 
+    fi
 }
 
