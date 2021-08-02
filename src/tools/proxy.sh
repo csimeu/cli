@@ -106,7 +106,7 @@ function proxy_load_config()
         # npm
         if _loc="$(type -p npm)" && [[ -n $_loc ]]; then sudo npm config -g set proxy $http_proxy; fi
         # yarn
-        if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then sudo yarn config -g set proxy $http_proxy; fi
+        if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then sudo yarn config set proxy $http_proxy; fi
         # git
         if _loc="$(type -p git)" && [[ -n $_loc ]]; then sudo git config --global http.proxy $http_proxy; fi
         
@@ -152,8 +152,8 @@ proxy_unset()
     fi
     # yarn
     if _loc="$(type -p yarn)" && [[ -n $_loc ]]; then 
-        sudo yarn config delete proxy -g; 
-        sudo yarn config delete https-proxy -g; 
+        sudo yarn config delete proxy ; 
+        sudo yarn config delete https-proxy ; 
     fi
     # 
     if _loc="$(type -p git)" && [[ -n $_loc ]]; then 

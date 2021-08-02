@@ -16,14 +16,13 @@ nodejs_install() {
         # ;;
     esac
 
-    install -y nodejs npm
+    install -y nodejs npm yarn
     npm install -g n && n stable
 
     # echo "---> npm install -g npm@latest"
     # # npm install -g npm@latest
-    
-    echo "---> npm install --global yarn"
-    npm install --global yarn
+
+    # echo "---> npm install --global 
     # npm install --global @angular/cli@latest
     
     echo ">> Installed applications '$appName' "
