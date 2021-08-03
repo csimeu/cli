@@ -236,7 +236,8 @@ apache_install() {
 # Reads arguments options
 function read_application_arguments()
 {
-    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::"
+    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::"
+    long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,host::,port:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
@@ -257,11 +258,11 @@ function read_application_arguments()
             --user) user=${2:-"$user"}; shift 2 ;;
             --host) host=${2:-"$host"}; shift 2 ;;
             --password) password=${2:-"$password"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
+            --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+            --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+            --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+            --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+            --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
             --) shift ; break ;;
             *) echo "Internal error! $1" ; exit 1 ;;
         esac
@@ -1008,7 +1009,6 @@ function mysql_install()
 	
 	install -y mysql-server
 
-	
     case `plateform` in 
         redhat)
 			if [[ $OS_VERSION =~ 6 ]]; then chkconfig --add mysqld ; else systemctl enable mysqld; fi
@@ -1021,12 +1021,9 @@ function mysql_install()
 }
 
 
-mysql_init(){
+mysql_setup(){
     local version=11
     local data=
-    local user=
-    local password=
-
 
     local _parameters=
     read_application_arguments $@ 
@@ -1039,51 +1036,133 @@ mysql_init(){
 	# mysqladmin -u root -p"temporary password" password ''
 	echo 'validate_password = OFF' >> /etc/my.cnf
 
-	service mysqld restart
-	if [ -f /var/log/mysqld.log ] ; then
-		tmp_pwd_line=$(grep 'temporary password' /var/log/mysqld.log)
+	# systemctl enable mysqld --now
+	mysql_service restart
+	local log_file=/var/log/mysqld.log
+
+	if [ -f $log_file ] ; then
+		tmp_pwd_line=$(grep 'temporary password' $log_file)
 		tmp_pwd=${tmp_pwd_line##*root@localhost\:}
 		tmp_pwd=${tmp_pwd#"${tmp_pwd%%[![:space:]]*}"}
 		if [ -n "$tmp_pwd" ] ; then
 			echo "Trying to remove root@localhost password: $tmp_pwd"
 			mysqladmin -u root -p${tmp_pwd} password '' && \
-			sed -i -e "s/temporary password/temporary_password/" /var/log/mysqld.log
+			sed -i -e "s/temporary password/temporary_password/" $log_file
 		fi
 	fi
+ 	
+	mysql_createuser >> /log.txt
+	MYSQL_DATABASES=${MYSQL_DATABASES:-$DATABASES}
+	for database in $MYSQL_DATABASES; do
+		echo "create database: cpm mysql:createdb --db-name=$database --db-user=$database --db-password=$database.123 "
+		mysql_createdb --db-name=$database --db-user=$database --db-password=$database.123 >> /log.txt
+	done
 
-	if [ -n "$user" ] ; then
-		EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$user')")"
-		if [ "$EXISTS_DB_USER" = 0 ]; then
-			mysql -u root --execute="CREATE USER '$user'@'%' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'%'; FLUSH PRIVILEGES; ";
-		fi
+	local install_file=mysql-install-database.sql
+	if [[ -f $APP_DIR/dist/$install_file && -n $DB_NAME ]]; then
+		echo "running $APP_DIR/dist/$install_file"
+		sudo mysql $DB_NAME < $APP_DIR/dist/$install_file  >> /log.txt
 	fi
 
-
+	for directory in $APPS_DIR/ ; do
+		if [[ -f $directory/dist/$install_file && -n $DB_NAME ]]; then
+			echo "running $directory/dist/$install_file"
+			sudo mysql $directory < $directory/dist/$install_file  >> /log.txt
+		fi
+	done
 }
 
 
 mysql_createdb() {
-	db=${1}
-	mysql -u root --execute="DROP SCHEMA IF EXISTS $db;"
-	mysql -u root --execute="CREATE SCHEMA IF NOT EXISTS $db DEFAULT CHARACTER SET utf8;"
+	local FORCE=0
+	local DB_HOST='%'
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+	
+    if [[ -z "$DB_NAME" ]]; then
+        echo "===>> ERROR: --db-name={DB_NAME} required"
+        exit 0;
+    fi
+	
+	if [ "$FORCE" == "1" ]; then sudo mysql --execute="DROP SCHEMA IF EXISTS $DB_NAME;" ; fi
+	
+	sudo mysql --execute="CREATE SCHEMA IF NOT EXISTS $DB_NAME DEFAULT CHARACTER SET utf8;"
+
+	if [[ -n "$DB_USER" ]] ; then
+		EXISTS_DB_USER="$(mysql_existuser $DB_USER ${DB_HOST:-localhost})"
+		if [ "$EXISTS_DB_USER" = 0 ]; then
+			sudo mysql --execute="CREATE USER '$DB_USER'@'${DB_HOST:-localhost}';";
+			echo "CREATE USER '$DB_USER'@'${DB_HOST:-localhost}';"
+		fi
+		if [[ -n "$DB_PASSWORD" ]]; then
+			# echo "ALTER USER '$DB_USER'@'${DB_HOST:-localhost}' IDENTIFIED BY '$DB_PASSWORD'"
+			sudo mysql --execute="ALTER USER '$DB_USER'@'${DB_HOST:-localhost}' IDENTIFIED BY '$DB_PASSWORD'; FLUSH PRIVILEGES;";
+			echo "SET PASSWORD '$DB_USER'@'${DB_HOST:-localhost}'"
+		fi
+
+		sudo mysql --execute="GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'${DB_HOST:-localhost}'; FLUSH PRIVILEGES;";
+	fi
+}
+
+mysql_existuser() {
+	local username=$1
+	local hostname=${2:-localhost}
+	# local DB_HOST='%'
+	# echo "sudo mysql -sse \"SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$DB_USER@${DB_HOST:-localhost}')\""
+	EXISTS_DB_USER="$(sudo mysql -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$username' AND host = '${hostname:-localhost}');")"
+	echo $EXISTS_DB_USER;
 }
 
 mysql_createuser() {
-    local user=
-    local host=localhost
-    local password=
+    local _parameters=
+	local DB_HOST='%'
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
 
+	if [[ -n "$DB_USER" ]] ; then
+		EXISTS_DB_USER="$(mysql_existuser $DB_USER ${DB_HOST:-localhost})"
+		if [ "$EXISTS_DB_USER" = 0 ]; then
+			sudo mysql --execute="CREATE USER '$DB_USER'@'${DB_HOST:-localhost}';";
+			echo "CREATE USER '$DB_USER'@'${DB_HOST:-localhost}';"
+		fi
+
+		# Change user password if user already exist
+		if [[ -n "$DB_PASSWORD" ]]; then
+			# echo "ALTER USER '$DB_USER'@'${DB_HOST:-localhost}' IDENTIFIED BY '$DB_PASSWORD'"
+			sudo mysql --execute="ALTER USER '$DB_USER'@'${DB_HOST:-localhost}' IDENTIFIED BY '$DB_PASSWORD'; FLUSH PRIVILEGES;";
+			echo "SET PASSWORD '$DB_USER'@'${DB_HOST:-localhost}'"
+		fi
+
+		# Create database
+		if [[ -n "$DB_NAME" ]]; then
+			sudo mysql --execute="CREATE SCHEMA IF NOT EXISTS $DB_NAME DEFAULT CHARACTER SET utf8;";
+			sudo mysql --execute="GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'${DB_HOST:-localhost}'; FLUSH PRIVILEGES;";
+			echo "CREATE DATABASE $DB_NAME and grant all privileges to '$DB_USER'@'${DB_HOST:-localhost}'"
+		fi
+	fi
+}
+
+mysql_update_password() {
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
+	if [[ -n "$DB_USER" ]] ; then
+		EXISTS_DB_USER="$(mysql_existuser $DB_USER ${DB_HOST:-localhost})"
+		if [ "$EXISTS_DB_USER" = 0 ]; then
+			echo "ERROR:  user '$DB_USER'@'${DB_HOST:-localhost}' not found !";
+			exit 1;
+		fi
 
-	EXISTS_DB_USER="$(mysql -u root -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$user'@'$host')")"
-	if [ "$EXISTS_DB_USER" = 0 ]; then
-		mysql -u root --execute="CREATE USER '$user'@'$host' IDENTIFIED BY '$password'; GRANT ALL PRIVILEGES ON *.* TO '$user'@'$host'; FLUSH PRIVILEGES; ";
+		# Change user password 
+		if [[ -n "$DB_PASSWORD" ]]; then
+			sudo mysql --execute="ALTER USER '$DB_USER'@'${DB_HOST:-localhost}' IDENTIFIED BY '$DB_PASSWORD'; FLUSH PRIVILEGES;";
+		fi
 	fi
-
 }
+
+
 
 #!/bin/bash
 
@@ -1426,28 +1505,114 @@ function postgresql_install()
     fi
 }
 
-postgresql_init(){
+postgresql_createuser(){
     local version=11
     local data=
-
 
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
+    cd /tmp
+	if [[ -n "$DB_USER" ]] ; then
+		EXISTS_USER="$(sudo -u postgres psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")"
+		if [[ -z "$EXISTS_USER" ]]; then
+			sudo -u postgres psql --command "CREATE USER $DB_USER WITH SUPERUSER ;"
+		fi
+		# TODO: Change user password if user already exist
+		if [[ -n "$DB_PASSWORD" ]]; then
+			sudo -u postgres psql --command "ALTER USER $DB_USER with PASSWORD '$DB_PASSWORD';"
+		fi
+	fi
+}
+
+postgresql_createdb(){
+    # local version=11
+    # local data=
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+    
+    cd /tmp
+    
+    if [[ -z "$DB_NAME" ]]; then
+        echo "===>> ERROR: --db-name={DB_NAME} required"
+        exit 0;
+    fi
+    if [[ -z "$DB_USER" ]]; then
+        echo "===>> ERROR: --db-user={DB_OWNER} required"
+        exit 0;
+    fi
+
+	EXISTS_DB="$(sudo -u postgres psql -tAc "SELECT datname FROM pg_catalog.pg_database WHERE datname='$DB_NAME'")"
+	if [[ -z "$EXISTS_DB" ]]; then
+		sudo -u postgres createdb -O $DB_USER $DB_NAME
+	fi
+	sudo -u postgres psql $DB_NAME --command "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+}
+
+postgresql_setup(){
+    local version=11
+    local data=
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
 
     local data=${data:-"/var/lib/pgsql/${version}/data"}
 
     if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
         echo "Init postgresql $version"
         /usr/pgsql-${version}/bin/postgresql-${version}-setup initdb
-        # systemctl restart postgresql-${version} 
-        # systemctl restart postgresql-${version} 
-
-        if ! grep '0.0.0.0/0' $data/pg_hba.conf ; then
-            echo 'host      all     all     0.0.0.0/0 md5' >> $data/pg_hba.conf
-        fi
     fi
+
+    if ! grep '0.0.0.0/0' $data/pg_hba.conf ; then
+        echo 'host      all     all     0.0.0.0/0 md5' >> $data/pg_hba.conf
+    fi
+    sed -i -e 's/ident$/md5/g' $data/pg_hba.conf
+
+	systemctl enable postgresql-${version} --now
+	systemctl restart postgresql-${version}
+	sleep 2
+	# cd /tmp
+
+	# echo "DB_USER=$DB_USER DB_PASSWORD=$DB_PASSWORD DB_NAME=$DB_NAME" 
+	# if [[ -n "$DB_USER" ]] ; then
+	# 	EXISTS_USER="$(sudo -u postgres psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")"
+	# 	if [[ -z "$EXISTS_USER" ]]; then
+	# 		sudo -u postgres psql --command "CREATE USER $DB_USER WITH SUPERUSER ;"
+	# 	fi
+	# 	# TODO: Change user password if user already exist
+	# 	if [[ -n "$DB_PASSWORD" ]]; then
+	# 		sudo -u postgres psql --command "ALTER USER $DB_USER with PASSWORD '$DB_PASSWORD';"
+	# 	fi
+	# fi
+	# EXISTS_DB="$(sudo -u postgres psql -tAc "SELECT datname FROM pg_catalog.pg_database WHERE datname='$DB_NAME'")"
+	# if [[ -z "$EXISTS_DB" ]]; then
+	# 	sudo -u postgres createdb -O $DB_USER $DB_NAME
+	# fi
+	# sudo -u postgres psql $DB_NAME --command "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+}
+
+
+postgresql_execfile()
+{
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+	local file=$1
+    if [[ -n "$file" ]]; then
+        echo "===>> ERROR: SQL's file is required as first argument"
+        exit 0;
+    fi
+
+    if [[ -z "$DB_NAME" ]]; then
+        echo "===>> ERROR: --db-name={DB_NAME} required"
+        exit 0;
+    fi
+    cat $file | psql "postgresql://$DB_USER:$DB_PASSWORD@${DB_HOST:-localhost}/$DB_NAME"
 }
 
 #!/bin/bash
@@ -2530,6 +2695,38 @@ function python_install()
     fi
 
     pip3 install ${PIP_USE_PROXY} $@
+}
+
+
+# if [ ! $# -eq 0 ]; 
+# then
+#   install_solr $@
+# fi
+#!/bin/bash
+
+# service
+
+
+
+
+function mysql_service() 
+{
+    set -e
+    # local serviceName= $1
+    local cmd=$1
+    
+    case `plateform` in 
+        redhat)
+			if [[ $OS_VERSION =~ 6 ]]; then 
+                /etc/init.d/mysqld $cmd; 
+            else 
+                systemctl $cmd mysqld; 
+            fi
+            ;;
+        debian)
+			systemctl $cmd mysql;
+        ;;
+    esac
 }
 
 

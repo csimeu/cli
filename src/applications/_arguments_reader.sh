@@ -3,7 +3,8 @@
 # Reads arguments options
 function read_application_arguments()
 {
-    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::"
+    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::"
+    long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,host::,port:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
@@ -24,11 +25,11 @@ function read_application_arguments()
             --user) user=${2:-"$user"}; shift 2 ;;
             --host) host=${2:-"$host"}; shift 2 ;;
             --password) password=${2:-"$password"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
+            --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
+            --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
+            --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
+            --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
+            --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
             --) shift ; break ;;
             *) echo "Internal error! $1" ; exit 1 ;;
         esac
