@@ -106,6 +106,7 @@ function tomcat_install()
         sudo rm -rf /usr/share/tomcat etc/tomcat
         sudo ln -s $INSTALL_DIR/tomcat-$version /usr/share/tomcat
         sudo ln -s /usr/share/tomcat/conf /etc/tomcat
+        if [ -f /etc/tomcat/tomcat.conf ]; then touch /etc/tomcat/tomcat.conf; fi
         sudo chown -R tomcat:tomcat /usr/share/tomcat /etc/tomcat
 
         if [[ "6" != $OS_VERSION ]]; then
@@ -120,6 +121,7 @@ Type=forking
 User=tomcat
 Group=tomcat
 
+EnvironmentFile=/etc/tomcat/tomcat.conf
 Environment=JAVA_HOME=$(readlink -f $(which java) | sed -e "s/\/bin\/java//")
 Environment='JAVA_OPTS=-Djava.awt.headless=true'
 Environment=CATALINA_HOME=/usr/share/tomcat

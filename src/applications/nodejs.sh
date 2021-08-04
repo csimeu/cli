@@ -11,12 +11,13 @@ nodejs_install() {
                 curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
                 rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
             fi
+            install -y nodejs npm yarn
             ;;
-        # debian)
-        # ;;
+        debian)
+            install -y nodejs npm node-gyp nodejs-dev libssl1.0-dev yarn
+        ;;
     esac
 
-    install -y nodejs npm yarn
     npm install -g n && n stable
 
     # echo "---> npm install -g npm@latest"

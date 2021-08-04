@@ -1299,12 +1299,13 @@ nodejs_install() {
                 curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
                 rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
             fi
+            install -y nodejs npm yarn
             ;;
-        # debian)
-        # ;;
+        debian)
+            install -y nodejs npm node-gyp nodejs-dev libssl1.0-dev yarn
+        ;;
     esac
 
-    install -y nodejs npm yarn
     npm install -g n && n stable
 
     # echo "---> npm install -g npm@latest"
@@ -2096,6 +2097,7 @@ function tomcat_install()
         sudo rm -rf /usr/share/tomcat etc/tomcat
         sudo ln -s $INSTALL_DIR/tomcat-$version /usr/share/tomcat
         sudo ln -s /usr/share/tomcat/conf /etc/tomcat
+        if [ -f /etc/tomcat/tomcat.conf ]; then touch /etc/tomcat/tomcat.conf; fi
         sudo chown -R tomcat:tomcat /usr/share/tomcat /etc/tomcat
 
         if [[ "6" != $OS_VERSION ]]; then
@@ -2110,6 +2112,7 @@ Type=forking
 User=tomcat
 Group=tomcat
 
+EnvironmentFile=/etc/tomcat/tomcat.conf
 Environment=JAVA_HOME=$(readlink -f $(which java) | sed -e "s/\/bin\/java//")
 Environment='JAVA_OPTS=-Djava.awt.headless=true'
 Environment=CATALINA_HOME=/usr/share/tomcat
