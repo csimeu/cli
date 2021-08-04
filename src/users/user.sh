@@ -29,7 +29,7 @@ function user_usage()
 function parse_user_arguments()
 {
   # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p::,h --long help,uid::,gid::,home::,group::,password,user:: -n "$0" -- "$@"`
+    local TEMP=`getopt -o p::,h --long help,uid::,gid::,home::,group::,password::,user:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
@@ -109,7 +109,14 @@ function user_add()
     done
 
     if [ -n "$password" ]; then
-        echo "${password}" | passwd $username --stdin 
+        case `plateform` in 
+            redhat)
+                echo "${password}" | passwd $username --stdin
+                ;;
+            debian)
+                echo -e "${password}" | passwd $username
+            ;;
+        esac
     fi
 #     for user in $_USERS
 #     do  

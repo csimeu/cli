@@ -236,9 +236,10 @@ apache_install() {
 # Reads arguments options
 function read_application_arguments()
 {
-    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::"
+    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
-    local TEMP=`getopt -o p::,f,h --long $long,password::,user::,host::,port:: -n "$0" -- "$@"`
+    long+=",realm::,url::,client::,audience::,secret::,login-theme::"
+    local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
@@ -247,6 +248,7 @@ function read_application_arguments()
             -f|--force) FORCE=1 ; shift 1 ;;
             --default) IS_DEFAULT=1 ; shift 1 ;;
             --data) data=${2%"/"} ; shift 2 ;;
+            --home-dir) home_dir=${2%"/"} ; shift 2 ;;
             --name) name=${2} ; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
             --version) version=${2:-"$version"}; shift 2 ;;
@@ -263,6 +265,13 @@ function read_application_arguments()
             --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
             --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
             --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
+            --realm) realm=${2:-"$realm"}; shift 2 ;;
+            --email) email=${2:-"$email"}; shift 2 ;;
+            --url) url=${2:-"$url"}; shift 2 ;;
+            --client) client=${2:-"$client"}; shift 2 ;;
+            --audience) audience=${2:-"$audience"}; shift 2 ;;
+            --secret) secret=${2:-"$secret"}; shift 2 ;;
+            --login-theme) loginTheme=${2:-"$loginTheme"}; shift 2 ;;
             --) shift ; break ;;
             *) echo "Internal error! $1" ; exit 1 ;;
         esac
@@ -762,7 +771,7 @@ function keycloak_install()
 
 
     
-    if [ -d $INSTALL_DIR/$name ]
+    if [ -d $KEYCLOAK_HOME ]
     then 
         if [ '0' == $FORCE ]; then 
             # sudo rm -rf $INSTALL_DIR/$name
@@ -890,10 +899,101 @@ EOF
         sudo ln -s $KEYCLOAK_HOME /usr/share/$appName
     fi
 
-    sudo rm -f $KEYCLOAK_HOME/standalone/configuration/keycloak-add-user.json
-    $KEYCLOAK_HOME/bin/add-user-keycloak.sh -u admin -p admin -r master
+    # sudo rm -f $KEYCLOAK_HOME/standalone/configuration/keycloak-add-user.json
+    # $KEYCLOAK_HOME/bin/add-user-keycloak.sh -u admin -p admin -r master
     
     echo ">> Installed application '$appName' (version = $version) in $INSTALL_DIR/${name}"
+}
+
+keycloak_connect()
+{
+    local home_dir=${KEYCLOAK_HOME:-"$INSTALL_DIR/keycloak"}
+    local url='http://localhost:8180/auth'
+    local user=${KEYCLOAK_ADMIN_USER:-admin}
+    local password=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    if [ -f $home_dir/bin/kcadm.sh ]; then
+        $home_dir/bin/kcadm.sh config credentials --server $url --realm master --user $user --password $password
+    else
+        echo "ERROR: not found kcadm.sh in $home_dir/bin/"
+        exit 1
+    fi
+}
+
+keycloak_add_realm()
+{
+    local home_dir=${KEYCLOAK_HOME:-"$INSTALL_DIR/keycloak"}
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    keycloak_connect
+
+    kcadm=$home_dir/bin/kcadm.sh
+    if [ ! -f $home_dir/bin/kcadm.sh ]; then
+        echo "ERROR: not found kcadm.sh in $home_dir/bin/"
+        exit 1
+    fi
+
+	_REALM_NAME=${realm:-"$name"}
+	_REALM_ADMIN_USER=${user:-"$_REALM_NAME"}
+	_REALM_ADMIN_PASSWORD=${password:-${_REALM_NAME}123}
+	_REALM_CLIENT=${client:-"$_REALM_NAME-auth"}
+	_REALM_CLIENT_AUDIENCE=${audience:-'audience'}
+	_REALM_CLIENT_SECRET=${secret:-'597eefcc-d46e-4d30-8a37-7f6d2e85c233'}
+	# _REALM_ROLES=${REALM_ROLES}
+
+    local args=''
+    if [ -n "$loginTheme" ]; then args+=" -s loginTheme=$loginTheme"; fi
+
+	# Now let's create a Realm named "wildfly-realm":
+	$kcadm create realms -s realm=$_REALM_NAME -s enabled=true $args
+
+	# add a role for our user, that will match with the Role in the APP
+	# for role in $_REALM_ROLES ; do $kcadm create roles -r $_REALM_NAME -s name=$role; done
+
+	$kcadm create roles -r $_REALM_NAME -s name=maintainer;
+	$kcadm add-roles -r $_REALM_NAME  \
+		--rname maintainer \
+		--cclientid realm-management \
+		--rolename manage-authorization \
+		--rolename manage-users \
+		--rolename view-users
+
+	# Realm's client
+	CID=$($kcadm create clients \
+		-r $_REALM_NAME \
+		-s clientId=$_REALM_CLIENT \
+		-s publicClient="true" \
+		-s enabled=true \
+		-s clientAuthenticatorType=client-secret \
+		-s secret=$_REALM_CLIENT_SECRET \
+		-s 'redirectUris=["*"]'  \
+		-s 'directAccessGrantsEnabled=true'  \
+		-i
+	)
+
+	# audience
+	$kcadm create clients/$CID/protocol-mappers/models -r $_REALM_NAME \
+		-s name=$_REALM_CLIENT_AUDIENCE \
+		-s protocol=openid-connect \
+		-s protocolMapper=oidc-audience-mapper \
+		-s 'config."included.client.audience"="'$_REALM_CLIENT'"' \
+		-s 'config."id.token.claim"="true"' \
+		-s 'config."access.token.claim"="true"'
+
+	## Then we add an admin user for this realm:
+	$kcadm create users -r $_REALM_NAME \
+		-s username="$_REALM_ADMIN_USER" \
+		-s email="${email:-"$_REALM_ADMIN_USER@$_REALM_NAME.org"}" \
+		-s enabled=true
+	$kcadm set-password -r $_REALM_NAME --username $_REALM_ADMIN_USER --new-password "$_REALM_ADMIN_PASSWORD"
+	$kcadm add-roles -r $_REALM_NAME --uusername $_REALM_ADMIN_USER --rolename maintainer
+
+    echo "===>> Realm's clientID: $CID"
 }
 #!/bin/bash
 
@@ -1051,25 +1151,25 @@ mysql_setup(){
 		fi
 	fi
  	
-	mysql_createuser >> /log.txt
-	MYSQL_DATABASES=${MYSQL_DATABASES:-$DATABASES}
-	for database in $MYSQL_DATABASES; do
-		echo "create database: cpm mysql:createdb --db-name=$database --db-user=$database --db-password=$database.123 "
-		mysql_createdb --db-name=$database --db-user=$database --db-password=$database.123 >> /log.txt
-	done
+	# mysql_createuser >> /log.txt
+	# MYSQL_DATABASES=${MYSQL_DATABASES:-$DATABASES}
+	# for database in $MYSQL_DATABASES; do
+	# 	echo "create database: cpm mysql:createdb --db-name=$database --db-user=$database --db-password=$database.123 "
+	# 	mysql_createdb --db-name=$database --db-user=$database --db-password=$database.123 >> /log.txt
+	# done
 
-	local install_file=mysql-install-database.sql
-	if [[ -f $APP_DIR/dist/$install_file && -n $DB_NAME ]]; then
-		echo "running $APP_DIR/dist/$install_file"
-		sudo mysql $DB_NAME < $APP_DIR/dist/$install_file  >> /log.txt
-	fi
+	# local install_file=mysql-install-database.sql
+	# if [[ -f $APP_DIR/dist/$install_file && -n $DB_NAME ]]; then
+	# 	echo "running $APP_DIR/dist/$install_file"
+	# 	sudo mysql $DB_NAME < $APP_DIR/dist/$install_file  >> /log.txt
+	# fi
 
-	for directory in $APPS_DIR/ ; do
-		if [[ -f $directory/dist/$install_file && -n $DB_NAME ]]; then
-			echo "running $directory/dist/$install_file"
-			sudo mysql $directory < $directory/dist/$install_file  >> /log.txt
-		fi
-	done
+	# for directory in $APPS_DIR/ ; do
+	# 	if [[ -f $directory/dist/$install_file && -n $DB_NAME ]]; then
+	# 		echo "running $directory/dist/$install_file"
+	# 		sudo mysql $directory < $directory/dist/$install_file  >> /log.txt
+	# 	fi
+	# done
 }
 
 
@@ -2913,7 +3013,7 @@ function user_usage()
 function parse_user_arguments()
 {
   # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p::,h --long help,uid::,gid::,home::,group::,password,user:: -n "$0" -- "$@"`
+    local TEMP=`getopt -o p::,h --long help,uid::,gid::,home::,group::,password::,user:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
@@ -2993,7 +3093,14 @@ function user_add()
     done
 
     if [ -n "$password" ]; then
-        echo "${password}" | passwd $username --stdin 
+        case `plateform` in 
+            redhat)
+                echo "${password}" | passwd $username --stdin
+                ;;
+            debian)
+                echo -e "${password}" | passwd $username
+            ;;
+        esac
     fi
 #     for user in $_USERS
 #     do  

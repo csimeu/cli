@@ -40,7 +40,7 @@ function keycloak_install()
 
 
     
-    if [ -d $INSTALL_DIR/$name ]
+    if [ -d $KEYCLOAK_HOME ]
     then 
         if [ '0' == $FORCE ]; then 
             # sudo rm -rf $INSTALL_DIR/$name
@@ -168,8 +168,99 @@ EOF
         sudo ln -s $KEYCLOAK_HOME /usr/share/$appName
     fi
 
-    sudo rm -f $KEYCLOAK_HOME/standalone/configuration/keycloak-add-user.json
-    $KEYCLOAK_HOME/bin/add-user-keycloak.sh -u admin -p admin -r master
+    # sudo rm -f $KEYCLOAK_HOME/standalone/configuration/keycloak-add-user.json
+    # $KEYCLOAK_HOME/bin/add-user-keycloak.sh -u admin -p admin -r master
     
     echo ">> Installed application '$appName' (version = $version) in $INSTALL_DIR/${name}"
+}
+
+keycloak_connect()
+{
+    local home_dir=${KEYCLOAK_HOME:-"$INSTALL_DIR/keycloak"}
+    local url='http://localhost:8180/auth'
+    local user=${KEYCLOAK_ADMIN_USER:-admin}
+    local password=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    if [ -f $home_dir/bin/kcadm.sh ]; then
+        $home_dir/bin/kcadm.sh config credentials --server $url --realm master --user $user --password $password
+    else
+        echo "ERROR: not found kcadm.sh in $home_dir/bin/"
+        exit 1
+    fi
+}
+
+keycloak_add_realm()
+{
+    local home_dir=${KEYCLOAK_HOME:-"$INSTALL_DIR/keycloak"}
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    keycloak_connect
+
+    kcadm=$home_dir/bin/kcadm.sh
+    if [ ! -f $home_dir/bin/kcadm.sh ]; then
+        echo "ERROR: not found kcadm.sh in $home_dir/bin/"
+        exit 1
+    fi
+
+	_REALM_NAME=${realm:-"$name"}
+	_REALM_ADMIN_USER=${user:-"$_REALM_NAME"}
+	_REALM_ADMIN_PASSWORD=${password:-${_REALM_NAME}123}
+	_REALM_CLIENT=${client:-"$_REALM_NAME-auth"}
+	_REALM_CLIENT_AUDIENCE=${audience:-'audience'}
+	_REALM_CLIENT_SECRET=${secret:-'597eefcc-d46e-4d30-8a37-7f6d2e85c233'}
+	# _REALM_ROLES=${REALM_ROLES}
+
+    local args=''
+    if [ -n "$loginTheme" ]; then args+=" -s loginTheme=$loginTheme"; fi
+
+	# Now let's create a Realm named "wildfly-realm":
+	$kcadm create realms -s realm=$_REALM_NAME -s enabled=true $args
+
+	# add a role for our user, that will match with the Role in the APP
+	# for role in $_REALM_ROLES ; do $kcadm create roles -r $_REALM_NAME -s name=$role; done
+
+	$kcadm create roles -r $_REALM_NAME -s name=maintainer;
+	$kcadm add-roles -r $_REALM_NAME  \
+		--rname maintainer \
+		--cclientid realm-management \
+		--rolename manage-authorization \
+		--rolename manage-users \
+		--rolename view-users
+
+	# Realm's client
+	CID=$($kcadm create clients \
+		-r $_REALM_NAME \
+		-s clientId=$_REALM_CLIENT \
+		-s publicClient="true" \
+		-s enabled=true \
+		-s clientAuthenticatorType=client-secret \
+		-s secret=$_REALM_CLIENT_SECRET \
+		-s 'redirectUris=["*"]'  \
+		-s 'directAccessGrantsEnabled=true'  \
+		-i
+	)
+
+	# audience
+	$kcadm create clients/$CID/protocol-mappers/models -r $_REALM_NAME \
+		-s name=$_REALM_CLIENT_AUDIENCE \
+		-s protocol=openid-connect \
+		-s protocolMapper=oidc-audience-mapper \
+		-s 'config."included.client.audience"="'$_REALM_CLIENT'"' \
+		-s 'config."id.token.claim"="true"' \
+		-s 'config."access.token.claim"="true"'
+
+	## Then we add an admin user for this realm:
+	$kcadm create users -r $_REALM_NAME \
+		-s username="$_REALM_ADMIN_USER" \
+		-s email="${email:-"$_REALM_ADMIN_USER@$_REALM_NAME.org"}" \
+		-s enabled=true
+	$kcadm set-password -r $_REALM_NAME --username $_REALM_ADMIN_USER --new-password "$_REALM_ADMIN_PASSWORD"
+	$kcadm add-roles -r $_REALM_NAME --uusername $_REALM_ADMIN_USER --rolename maintainer
+
+    echo "===>> Realm's clientID: $CID"
 }

@@ -3,9 +3,10 @@
 # Reads arguments options
 function read_application_arguments()
 {
-    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::"
+    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
-    local TEMP=`getopt -o p::,f,h --long $long,password::,user::,host::,port:: -n "$0" -- "$@"`
+    long+=",realm::,url::,client::,audience::,secret::,login-theme::"
+    local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
     
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
@@ -14,6 +15,7 @@ function read_application_arguments()
             -f|--force) FORCE=1 ; shift 1 ;;
             --default) IS_DEFAULT=1 ; shift 1 ;;
             --data) data=${2%"/"} ; shift 2 ;;
+            --home-dir) home_dir=${2%"/"} ; shift 2 ;;
             --name) name=${2} ; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
             --version) version=${2:-"$version"}; shift 2 ;;
@@ -30,6 +32,13 @@ function read_application_arguments()
             --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
             --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
             --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
+            --realm) realm=${2:-"$realm"}; shift 2 ;;
+            --email) email=${2:-"$email"}; shift 2 ;;
+            --url) url=${2:-"$url"}; shift 2 ;;
+            --client) client=${2:-"$client"}; shift 2 ;;
+            --audience) audience=${2:-"$audience"}; shift 2 ;;
+            --secret) secret=${2:-"$secret"}; shift 2 ;;
+            --login-theme) loginTheme=${2:-"$loginTheme"}; shift 2 ;;
             --) shift ; break ;;
             *) echo "Internal error! $1" ; exit 1 ;;
         esac

@@ -79,25 +79,25 @@ mysql_setup(){
 		fi
 	fi
  	
-	mysql_createuser >> /log.txt
-	MYSQL_DATABASES=${MYSQL_DATABASES:-$DATABASES}
-	for database in $MYSQL_DATABASES; do
-		echo "create database: cpm mysql:createdb --db-name=$database --db-user=$database --db-password=$database.123 "
-		mysql_createdb --db-name=$database --db-user=$database --db-password=$database.123 >> /log.txt
-	done
+	# mysql_createuser >> /log.txt
+	# MYSQL_DATABASES=${MYSQL_DATABASES:-$DATABASES}
+	# for database in $MYSQL_DATABASES; do
+	# 	echo "create database: cpm mysql:createdb --db-name=$database --db-user=$database --db-password=$database.123 "
+	# 	mysql_createdb --db-name=$database --db-user=$database --db-password=$database.123 >> /log.txt
+	# done
 
-	local install_file=mysql-install-database.sql
-	if [[ -f $APP_DIR/dist/$install_file && -n $DB_NAME ]]; then
-		echo "running $APP_DIR/dist/$install_file"
-		sudo mysql $DB_NAME < $APP_DIR/dist/$install_file  >> /log.txt
-	fi
+	# local install_file=mysql-install-database.sql
+	# if [[ -f $APP_DIR/dist/$install_file && -n $DB_NAME ]]; then
+	# 	echo "running $APP_DIR/dist/$install_file"
+	# 	sudo mysql $DB_NAME < $APP_DIR/dist/$install_file  >> /log.txt
+	# fi
 
-	for directory in $APPS_DIR/ ; do
-		if [[ -f $directory/dist/$install_file && -n $DB_NAME ]]; then
-			echo "running $directory/dist/$install_file"
-			sudo mysql $directory < $directory/dist/$install_file  >> /log.txt
-		fi
-	done
+	# for directory in $APPS_DIR/ ; do
+	# 	if [[ -f $directory/dist/$install_file && -n $DB_NAME ]]; then
+	# 		echo "running $directory/dist/$install_file"
+	# 		sudo mysql $directory < $directory/dist/$install_file  >> /log.txt
+	# 	fi
+	# done
 }
 
 
