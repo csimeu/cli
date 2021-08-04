@@ -100,6 +100,9 @@ elasticsearch_install() {
     
     elk_import_repolist
     install -y elasticsearch
+    
+    sed -i -e "s/^\#\# -Xms.*$/-Xms128m/" /etc/elasticsearch/jvm.options
+    sed -i -e "s/^## -Xmx.*$/-Xmx128m/" /etc/elasticsearch/jvm.options
 }
 
 kibana_install() {
