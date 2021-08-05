@@ -70,7 +70,7 @@ function postgis_install()
 
     case `plateform` in 
         debian)
-            install -y  postgis postgresql-$_postgresql_version-postgis-$_postgis_version
+            install -y postgresql-$_postgresql_version-postgis-$_postgis_version
             ;;
         redhat)
             if [ '8' == "$OS_VERSION" ]; then 
