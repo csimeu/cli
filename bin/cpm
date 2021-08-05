@@ -3082,9 +3082,9 @@ function user_add()
 
 
     if ! getent passwd ${username} > /dev/null 2>&1; then
-        useradd $uid -g ${username} $home ${username};
+        useradd --shell /bin/bash $uid -g ${username} $home ${username};
     else
-        usermod $uid -g ${username} ${username};
+        usermod --shell /bin/bash $uid -g ${username} ${username};
     fi
     
     for group in $groups
