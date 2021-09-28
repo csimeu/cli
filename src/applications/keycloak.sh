@@ -96,8 +96,9 @@ function keycloak_install()
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
     </dependencies>
-</module>'
+</module>
 EOF
+        $KEYCLOAK_HOME/bin/jboss-cli.sh 'embed-server,/subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql,driver-module-name=org.postgresql,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)'
     fi
 
     # curl -fSL https://jdbc.postgresql.org/download/postgresql-42.2.5.jar -o $KEYCLOAK_HOME/postgresql-42.2.5.jar

@@ -18,7 +18,7 @@ nodejs_install() {
         ;;
     esac
 
-    npm install -g n && n stable
+    npm install -g n && n lts
 
     # echo "---> npm install -g npm@latest"
     # # npm install -g npm@latest
