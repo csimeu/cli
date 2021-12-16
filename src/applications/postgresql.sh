@@ -2,41 +2,41 @@
 
 
 # Reads arguments options
-function parse_postgresql_arguments()
-{
-  # if [ $# -ne 0 ]; then
-    local long="data::,version::,postgis-version::,postgresql-version::,port::,config-file::"
-    # echo "long = $long"
-    local TEMP=`getopt -o p:: --long $long -n "$0" -- "$@"`
+# function parse_postgresql_arguments()
+# {
+#   # if [ $# -ne 0 ]; then
+#     local long="data::,version::,postgis-version::,postgresql-version::,port::,config-file::,db-user::,db-password::,db-name::,host::"
+#     # echo "long = $long"
+#     local TEMP=`getopt -o p:: --long $long -n "$0" -- "$@"`
     
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --data) data=${2%"/"} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) _version=${2:-"$_version"}; shift 2 ;;
-            --postgis-version) _postgis_version=${2}; shift 2 ;;
-            --postgis) _postgis_version=${2}; shift 2 ;;
-            --postgresql-version) _postgresql_version=${2:-$_postgresql_version}; shift 2 ;;
-            --postgresql) _postgresql_version=${2}; shift 2 ;;
-            --port) port=${2:-"$port"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --port) port=${2:-"$port"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
+# 	eval set -- "$TEMP"
+#     # extract options and their arguments into variables.
+#     while true ; do
+#         case "$1" in
+#             --data) data=${2%"/"} ; shift 2 ;;
+#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+#             --version) _version=${2:-"$_version"}; shift 2 ;;
+#             --postgis-version) _postgis_version=${2}; shift 2 ;;
+#             --postgis) _postgis_version=${2}; shift 2 ;;
+#             --postgresql-version) _postgresql_version=${2:-$_postgresql_version}; shift 2 ;;
+#             --postgresql) _postgresql_version=${2}; shift 2 ;;
+#             --port) port=${2:-"$port"}; shift 2 ;;
+#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+#             --db-user) DB_USER=${2}; shift 2 ;;
+#             --db-password) DB_PASSWORD=${2}; shift 2 ;;
+#             --db-name) DB_NAME=${2}; shift 2 ;;
+#             --host) _host=${2}; shift 2 ;;
+#             # --port) port=${2:-"$port"}; shift 2 ;;
+#             --) shift ; break ;;
+#             *) echo "Internal error! $1" ; exit 1 ;;
+#         esac
+#     done
 
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
+#     shift $(expr $OPTIND - 1 )
+#     _parameters=$@
     
-  # fi
-}
+#   # fi
+# }
 
 postgresql_add_repolist() {
     case `plateform` in 
@@ -160,7 +160,7 @@ postgresql_createdb(){
         exit 0;
     fi
     if [[ -z "$DB_USER" ]]; then
-        echo "===>> ERROR: --db-user={DB_OWNER} required"
+        echo "===>> ERROR: --db-user={DB_USER} required"
         exit 0;
     fi
 
@@ -231,6 +231,13 @@ postgresql_execfile()
         echo "===>> ERROR: --db-name={DB_NAME} required"
         exit 0;
     fi
-    cat $file | psql "postgresql://$DB_USER:$DB_PASSWORD@${DB_HOST:-localhost}/$DB_NAME"
+
+    DB_USER=${DB_USER:-'postgres'}
+
+    if [[ -z "$DB_PASSWORD" ]]; then
+        cat $file | psql "postgresql://$DB_USER@${DB_HOST:-localhost}/$DB_NAME";
+    else
+        cat $file | psql "postgresql://$DB_USER:$DB_PASSWORD@${DB_HOST:-localhost}/$DB_NAME"
+    fi
 }
 

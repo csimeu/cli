@@ -3,7 +3,8 @@
 # Reads arguments options
 function read_application_arguments()
 {
-    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
+    IS_SUPERUSER=0
+    local long="help,force,default,superuser,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,url::,client::,audience::,secret::,login-theme::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
@@ -27,6 +28,7 @@ function read_application_arguments()
             --user) user=${2:-"$user"}; shift 2 ;;
             --host) host=${2:-"$host"}; shift 2 ;;
             --password) password=${2:-"$password"}; shift 2 ;;
+            --superuser) IS_SUPERUSER=1 ; shift 1 ;;
             --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
             --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
             --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;

@@ -3,7 +3,7 @@
 # Install tomcat
 FORCE=0
 IS_DEFAULT=0
-INSTALL_DIR=/usr/share
+INSTALL_DIR=$INSTALL_DIR
 
 # Reads arguments options
 function parse_tomcat_arguments()
@@ -41,7 +41,7 @@ function tomcat_install()
     local appName=tomcat
 	local users_config=
 	local file_config=
-	# local INSTALL_DIR=/usr/share
+	# local INSTALL_DIR=$INSTALL_DIR
 	local version=$TOMCAT_DEFAULT_VERSION
     # echo $@
     local _parameters=
@@ -66,7 +66,7 @@ function tomcat_install()
     # https://computingforgeeks.com/install-apache-tomcat-9-on-linux-rhel-centos/
     if ! getent passwd tomcat > /dev/null 2>&1; then
         sudo groupadd --system tomcat
-        sudo useradd -d /usr/share/tomcat -r -s /bin/false -g tomcat tomcat
+        sudo useradd -d $INSTALL_DIR/tomcat -r -s /bin/false -g tomcat tomcat
     fi
     
     
@@ -103,11 +103,11 @@ function tomcat_install()
     if [ "1" == "$IS_DEFAULT" ]
     then
         if [ -L /etc/tomcat ]; then unlink /etc/tomcat; fi
-        sudo rm -rf /usr/share/tomcat etc/tomcat
-        sudo ln -s $INSTALL_DIR/tomcat-$version /usr/share/tomcat
-        sudo ln -s /usr/share/tomcat/conf /etc/tomcat
+        sudo rm -rf $INSTALL_DIR/tomcat etc/tomcat
+        sudo ln -s $INSTALL_DIR/tomcat-$version $INSTALL_DIR/tomcat
+        sudo ln -s $INSTALL_DIR/tomcat/conf /etc/tomcat
         if [ -f /etc/tomcat/tomcat.conf ]; then touch /etc/tomcat/tomcat.conf; fi
-        sudo chown -R tomcat:tomcat /usr/share/tomcat /etc/tomcat
+        sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat /etc/tomcat
 
         if [[ "6" != $OS_VERSION ]]; then
 
@@ -123,14 +123,14 @@ Group=tomcat
 
 EnvironmentFile=/etc/tomcat/tomcat.conf
 Environment=JAVA_HOME=$(readlink -f $(which java) | sed -e "s/\/bin\/java//")
-Environment='JAVA_OPTS=-Djava.awt.headless=true'
-Environment=CATALINA_HOME=/usr/share/tomcat
-Environment=CATALINA_BASE=/usr/share/tomcat
-Environment=CATALINA_PID=/usr/share/tomcat/temp/tomcat.pid
+Environment='JAVA_OPTS=-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true'
+Environment=CATALINA_HOME=$INSTALL_DIR/tomcat
+Environment=CATALINA_BASE=$INSTALL_DIR/tomcat
+Environment=CATALINA_PID=$INSTALL_DIR/tomcat/temp/tomcat.pid
 Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'
 
-ExecStart=/usr/share/tomcat/bin/startup.sh
-ExecStop=/usr/share/tomcat/bin/shutdown.sh 
+ExecStart=$INSTALL_DIR/tomcat/bin/startup.sh
+ExecStop=$INSTALL_DIR/tomcat/bin/shutdown.sh 
 
 [Install]
 WantedBy=multi-user.target
@@ -139,7 +139,7 @@ EOF
         fi
     fi
 
-    # echo "CATALINA_HOME=/usr/share/tomcat" >> /etc/profile.d/environnments.sh
+    # echo "CATALINA_HOME=$INSTALL_DIR/tomcat" >> /etc/profile.d/environnments.sh
     echo ">> Installed application '$name' (version = $version) in $INSTALL_DIR/tomcat-$version"
 }
 

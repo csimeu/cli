@@ -236,7 +236,8 @@ apache_install() {
 # Reads arguments options
 function read_application_arguments()
 {
-    local long="help,force,default,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
+    IS_SUPERUSER=0
+    local long="help,force,default,superuser,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,url::,client::,audience::,secret::,login-theme::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
@@ -260,6 +261,7 @@ function read_application_arguments()
             --user) user=${2:-"$user"}; shift 2 ;;
             --host) host=${2:-"$host"}; shift 2 ;;
             --password) password=${2:-"$password"}; shift 2 ;;
+            --superuser) IS_SUPERUSER=1 ; shift 1 ;;
             --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
             --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
             --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
@@ -1488,41 +1490,41 @@ EOF
 
 
 # Reads arguments options
-function parse_postgresql_arguments()
-{
-  # if [ $# -ne 0 ]; then
-    local long="data::,version::,postgis-version::,postgresql-version::,port::,config-file::"
-    # echo "long = $long"
-    local TEMP=`getopt -o p:: --long $long -n "$0" -- "$@"`
+# function parse_postgresql_arguments()
+# {
+#   # if [ $# -ne 0 ]; then
+#     local long="data::,version::,postgis-version::,postgresql-version::,port::,config-file::,db-user::,db-password::,db-name::,host::"
+#     # echo "long = $long"
+#     local TEMP=`getopt -o p:: --long $long -n "$0" -- "$@"`
     
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --data) data=${2%"/"} ; shift 2 ;;
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) _version=${2:-"$_version"}; shift 2 ;;
-            --postgis-version) _postgis_version=${2}; shift 2 ;;
-            --postgis) _postgis_version=${2}; shift 2 ;;
-            --postgresql-version) _postgresql_version=${2:-$_postgresql_version}; shift 2 ;;
-            --postgresql) _postgresql_version=${2}; shift 2 ;;
-            --port) port=${2:-"$port"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --port) port=${2:-"$port"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
+# 	eval set -- "$TEMP"
+#     # extract options and their arguments into variables.
+#     while true ; do
+#         case "$1" in
+#             --data) data=${2%"/"} ; shift 2 ;;
+#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+#             --version) _version=${2:-"$_version"}; shift 2 ;;
+#             --postgis-version) _postgis_version=${2}; shift 2 ;;
+#             --postgis) _postgis_version=${2}; shift 2 ;;
+#             --postgresql-version) _postgresql_version=${2:-$_postgresql_version}; shift 2 ;;
+#             --postgresql) _postgresql_version=${2}; shift 2 ;;
+#             --port) port=${2:-"$port"}; shift 2 ;;
+#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+#             --db-user) DB_USER=${2}; shift 2 ;;
+#             --db-password) DB_PASSWORD=${2}; shift 2 ;;
+#             --db-name) DB_NAME=${2}; shift 2 ;;
+#             --host) _host=${2}; shift 2 ;;
+#             # --port) port=${2:-"$port"}; shift 2 ;;
+#             --) shift ; break ;;
+#             *) echo "Internal error! $1" ; exit 1 ;;
+#         esac
+#     done
 
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
+#     shift $(expr $OPTIND - 1 )
+#     _parameters=$@
     
-  # fi
-}
+#   # fi
+# }
 
 postgresql_add_repolist() {
     case `plateform` in 
@@ -1646,7 +1648,7 @@ postgresql_createdb(){
         exit 0;
     fi
     if [[ -z "$DB_USER" ]]; then
-        echo "===>> ERROR: --db-user={DB_OWNER} required"
+        echo "===>> ERROR: --db-user={DB_USER} required"
         exit 0;
     fi
 
@@ -1717,7 +1719,14 @@ postgresql_execfile()
         echo "===>> ERROR: --db-name={DB_NAME} required"
         exit 0;
     fi
-    cat $file | psql "postgresql://$DB_USER:$DB_PASSWORD@${DB_HOST:-localhost}/$DB_NAME"
+
+    DB_USER=${DB_USER:-'postgres'}
+
+    if [[ -z "$DB_PASSWORD" ]]; then
+        cat $file | psql "postgresql://$DB_USER@${DB_HOST:-localhost}/$DB_NAME";
+    else
+        cat $file | psql "postgresql://$DB_USER:$DB_PASSWORD@${DB_HOST:-localhost}/$DB_NAME"
+    fi
 }
 
 #!/bin/bash
@@ -1998,7 +2007,7 @@ function solr_install()
 # Install tomcat
 FORCE=0
 IS_DEFAULT=0
-INSTALL_DIR=/usr/share
+INSTALL_DIR=$INSTALL_DIR
 
 # Reads arguments options
 function parse_tomcat_arguments()
@@ -2036,7 +2045,7 @@ function tomcat_install()
     local appName=tomcat
 	local users_config=
 	local file_config=
-	# local INSTALL_DIR=/usr/share
+	# local INSTALL_DIR=$INSTALL_DIR
 	local version=$TOMCAT_DEFAULT_VERSION
     # echo $@
     local _parameters=
@@ -2061,7 +2070,7 @@ function tomcat_install()
     # https://computingforgeeks.com/install-apache-tomcat-9-on-linux-rhel-centos/
     if ! getent passwd tomcat > /dev/null 2>&1; then
         sudo groupadd --system tomcat
-        sudo useradd -d /usr/share/tomcat -r -s /bin/false -g tomcat tomcat
+        sudo useradd -d $INSTALL_DIR/tomcat -r -s /bin/false -g tomcat tomcat
     fi
     
     
@@ -2098,11 +2107,11 @@ function tomcat_install()
     if [ "1" == "$IS_DEFAULT" ]
     then
         if [ -L /etc/tomcat ]; then unlink /etc/tomcat; fi
-        sudo rm -rf /usr/share/tomcat etc/tomcat
-        sudo ln -s $INSTALL_DIR/tomcat-$version /usr/share/tomcat
-        sudo ln -s /usr/share/tomcat/conf /etc/tomcat
+        sudo rm -rf $INSTALL_DIR/tomcat etc/tomcat
+        sudo ln -s $INSTALL_DIR/tomcat-$version $INSTALL_DIR/tomcat
+        sudo ln -s $INSTALL_DIR/tomcat/conf /etc/tomcat
         if [ -f /etc/tomcat/tomcat.conf ]; then touch /etc/tomcat/tomcat.conf; fi
-        sudo chown -R tomcat:tomcat /usr/share/tomcat /etc/tomcat
+        sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat /etc/tomcat
 
         if [[ "6" != $OS_VERSION ]]; then
 
@@ -2118,14 +2127,14 @@ Group=tomcat
 
 EnvironmentFile=/etc/tomcat/tomcat.conf
 Environment=JAVA_HOME=$(readlink -f $(which java) | sed -e "s/\/bin\/java//")
-Environment='JAVA_OPTS=-Djava.awt.headless=true'
-Environment=CATALINA_HOME=/usr/share/tomcat
-Environment=CATALINA_BASE=/usr/share/tomcat
-Environment=CATALINA_PID=/usr/share/tomcat/temp/tomcat.pid
+Environment='JAVA_OPTS=-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true'
+Environment=CATALINA_HOME=$INSTALL_DIR/tomcat
+Environment=CATALINA_BASE=$INSTALL_DIR/tomcat
+Environment=CATALINA_PID=$INSTALL_DIR/tomcat/temp/tomcat.pid
 Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'
 
-ExecStart=/usr/share/tomcat/bin/startup.sh
-ExecStop=/usr/share/tomcat/bin/shutdown.sh 
+ExecStart=$INSTALL_DIR/tomcat/bin/startup.sh
+ExecStop=$INSTALL_DIR/tomcat/bin/shutdown.sh 
 
 [Install]
 WantedBy=multi-user.target
@@ -2134,7 +2143,7 @@ EOF
         fi
     fi
 
-    # echo "CATALINA_HOME=/usr/share/tomcat" >> /etc/profile.d/environnments.sh
+    # echo "CATALINA_HOME=$INSTALL_DIR/tomcat" >> /etc/profile.d/environnments.sh
     echo ">> Installed application '$name' (version = $version) in $INSTALL_DIR/tomcat-$version"
 }
 
