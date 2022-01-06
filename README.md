@@ -84,9 +84,16 @@ cpm php:install 56-php
 cpm mysql:init --user=$DB_USER --password=$DB_PASSWORD
 ```
 
-### 
+### Postgresql
 
 ```bash
+# Setup the database
+cpm postgresql:setup
+
+# Create user
+cpm postgresql:createuser --db-user=gitlab --db-password=gitlab123
+cpm postgresql:createdb --db-name=gitlab --db-user=gitlab
+
 ```
 
 ### 

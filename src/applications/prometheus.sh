@@ -95,7 +95,7 @@ scrape_configs:
       - targets: ['localhost:$port']
 EOF
     chown prometheus:prometheus /etc/prometheus/prometheus.yml
-
+    touch /etc/systemd/system/prometheus.service
     cat /etc/systemd/system/prometheus.service << EOF
 [Unit]
 Description=Prometheus
