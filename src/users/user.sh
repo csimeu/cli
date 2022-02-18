@@ -103,7 +103,7 @@ function user_add()
         if ! $(getent group ${group})
         then
             groupadd $group
-            # echo "Group '$group' does not exist: group created!"                 
+            # echo "Group '$group' does not exist: group created!"
         fi
         usermod -aG $group ${username}
     done

@@ -59,8 +59,8 @@ function keycloak_install()
     
     if [ ! -f /tmp/releases/keycloak-${version}.tar.gz ];
     then
-        echo "https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz"
-        curl -fSL https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz -o /tmp/releases/keycloak-${version}.tar.gz;
+        echo "https://github.com/keycloak/keycloak/releases/download/${version}/keycloak-${version}.tar.gz"
+        curl -fSL https://github.com/keycloak/keycloak/releases/download/${version}/keycloak-${version}.tar.gz -o /tmp/releases/keycloak-${version}.tar.gz;
     fi
     
     tar -xzf /tmp/releases/keycloak-${version}.tar.gz -C $KEYCLOAK_HOME --strip-components=1;

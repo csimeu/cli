@@ -77,6 +77,17 @@ function os_type()
         false
     fi
 }
+function is_alpine() 
+{
+    local value=$(plateform_name)
+    regex="^(alpine)$"
+    if [[ $value =~ $regex ]]
+    then 
+        true
+    else
+        false
+    fi
+}
 function is_debian() 
 {
     local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
@@ -95,7 +106,6 @@ function is_redhat()
     local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
     value=${value//\"/}
     regex="^(rhel|centos|fedora)$"
-
 
     # echo $value
     if [[ $value =~ $regex ]]
@@ -127,6 +137,16 @@ function install()
             else
                 echo ">> yum install $@"
                 yum install $@
+            fi
+            ;;
+            
+        alpine)
+            if [ "$EUID" -ne 0 ]; then
+                echo ">> sudo apk install $@"
+                sudo apk install $@
+            else
+                echo ">> apk install $@"
+                apk install $@
             fi
         ;;
     esac

@@ -118,6 +118,17 @@ function os_type()
         false
     fi
 }
+function is_alpine() 
+{
+    local value=$(plateform_name)
+    regex="^(alpine)$"
+    if [[ $value =~ $regex ]]
+    then 
+        true
+    else
+        false
+    fi
+}
 function is_debian() 
 {
     local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
@@ -136,7 +147,6 @@ function is_redhat()
     local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
     value=${value//\"/}
     regex="^(rhel|centos|fedora)$"
-
 
     # echo $value
     if [[ $value =~ $regex ]]
@@ -168,6 +178,16 @@ function install()
             else
                 echo ">> yum install $@"
                 yum install $@
+            fi
+            ;;
+            
+        alpine)
+            if [ "$EUID" -ne 0 ]; then
+                echo ">> sudo apk install $@"
+                sudo apk install $@
+            else
+                echo ">> apk install $@"
+                apk install $@
             fi
         ;;
     esac
@@ -795,8 +815,8 @@ function keycloak_install()
     
     if [ ! -f /tmp/releases/keycloak-${version}.tar.gz ];
     then
-        echo "https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz"
-        curl -fSL https://downloads.jboss.org/keycloak/${version}/keycloak-${version}.tar.gz -o /tmp/releases/keycloak-${version}.tar.gz;
+        echo "https://github.com/keycloak/keycloak/releases/download/${version}/keycloak-${version}.tar.gz"
+        curl -fSL https://github.com/keycloak/keycloak/releases/download/${version}/keycloak-${version}.tar.gz -o /tmp/releases/keycloak-${version}.tar.gz;
     fi
     
     tar -xzf /tmp/releases/keycloak-${version}.tar.gz -C $KEYCLOAK_HOME --strip-components=1;
@@ -3103,7 +3123,7 @@ function user_add()
         if ! $(getent group ${group})
         then
             groupadd $group
-            # echo "Group '$group' does not exist: group created!"                 
+            # echo "Group '$group' does not exist: group created!"
         fi
         usermod -aG $group ${username}
     done
