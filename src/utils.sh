@@ -153,3 +153,40 @@ function install()
 
 }
 
+
+function execute() 
+{
+    if [ "$EUID" -ne 0 ]; then sudo $@; else $@; fi
+}
+
+function servicectl() 
+{
+    local cmd=$1
+    local svc=$2
+
+    #https://www.cyberciti.biz/faq/centos-stop-start-restart-sshd-command/
+
+    # echo "sudo yum install $@"
+    case $cmd in 
+        enable)
+            case `plateform` in 
+                alpine) rc-update add $svc;;
+                redhat) if [ "$(plateform_version)" == "6" ]; then execute chkconfig $svc on; else execute systemctl enable $svc; fi ;;
+            esac
+            ;;
+        disable)
+            case `plateform` in 
+                alpine) rc-update add $svc;;
+                redhat) if [ "$(plateform_version)" == "6" ]; then execute chkconfig $svc off; else execute systemctl disable $svc; fi ;;
+            esac
+            ;;
+        *)
+            case `plateform` in 
+                redhat) if [ "$(plateform_version)" == "6" ]; then execute /etc/init.d/$svc $cmd; else  execute service $svc $cmd; fi ;;
+                *) execute service $svc $cmd ;;
+            esac
+            ;;
+    esac
+
+}
+
