@@ -77,14 +77,14 @@ function camel_to_snake()
 # get plateform
 function plateform() 
 {
-    local value="debian"
-    case `plateform_name` in
+    local value=`plateform_name`
+    case $value in
         centos|rhel|fedora)
             value="redhat";
-            ;;
-        *)
-            value="debian"
         ;;
+        # *)
+        #     value="debian"
+        # ;;
     esac
 
     echo $value
@@ -162,33 +162,15 @@ function install()
     # echo "sudo yum install $@"
     case `plateform` in 
         debian)
-            if [ "$EUID" -ne 0 ]; then 
-                echo ">> sudo apt-get install $@"
-                sudo apt-get install $@
-            else
-                echo ">> apt-get install $@"
-                apt-get install $@
-            fi
-            ;;
+            execute apt-get install $@
+        ;;
             
         redhat)
-            if [ "$EUID" -ne 0 ]; then
-                echo ">> sudo yum install $@"
-                sudo yum install $@
-            else
-                echo ">> yum install $@"
-                yum install $@
-            fi
-            ;;
+            execute yum install $@
+        ;;
             
         alpine)
-            if [ "$EUID" -ne 0 ]; then
-                echo ">> sudo apk install $@"
-                sudo apk install $@
-            else
-                echo ">> apk install $@"
-                apk install $@
-            fi
+            execute apk install $@
         ;;
     esac
 
@@ -217,7 +199,7 @@ function servicectl()
             ;;
         disable)
             case `plateform` in 
-                alpine) rc-update add $svc;;
+                alpine) rc-update remove $svc;;
                 redhat) if [ "$(plateform_version)" == "6" ]; then execute chkconfig $svc off; else execute systemctl disable $svc; fi ;;
             esac
             ;;
