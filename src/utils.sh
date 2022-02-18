@@ -129,7 +129,7 @@ function install()
         ;;
             
         alpine)
-            execute apk install $@
+            execute apk add $@
         ;;
     esac
 
