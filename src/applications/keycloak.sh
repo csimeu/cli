@@ -30,7 +30,7 @@ function keycloak_install()
 
     case "$version" in
         "8") version=8.0.2;;
-        14|13|12|11|10) version=$version.0.0;;
+        17|16|15|14|13|12|11|10) version=$version.0.0;;
         *)
         ;;
     esac
@@ -38,8 +38,6 @@ function keycloak_install()
     name="$appName-$version"
     local KEYCLOAK_HOME=${INSTALL_DIR}/$name
 
-
-    
     if [ -d $KEYCLOAK_HOME ]
     then 
         if [ '0' == $FORCE ]; then 
