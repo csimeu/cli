@@ -1169,25 +1169,34 @@ function mysql_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-	local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
+	
+	cd /tmp/releases
 
     case `plateform` in 
         redhat)
+			local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
 			if [[ $_version =~ ^8.*$ ]];
 			then 
 				MYSQL_RPM=mysql80-community-release-el$OS_VERSION-1.noarch.rpm
 			fi
-			
-			install -y https://dev.mysql.com/get/$MYSQL_RPM 
-			# curl -fSL wget https://dev.mysql.com/get/$MYSQL_RPM -o $MYSQL_RPM
-			# wget https://dev.mysql.com/get/$MYSQL_RPM
-			# sudo rpm -ivh "${MYSQL_RPM}"
+
+			# if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
+			if [[ ! -f /tmp/releases/$MYSQL_RPM ]]; then
+				curl -fSL wget https://dev.mysql.com/get/$MYSQL_RPM -o /tmp/releases/$MYSQL_RPM
+				# wget https://dev.mysql.com/get/$MYSQL_RPM
+			fi
+			execute rpm -ivh "/tmp/releases/${MYSQL_RPM}"
             ;;
         debian)
+			local MYSQL_DEB="mysql-apt-config_0.8.16-1_all.deb"
 			if [[ $_version =~ ^8.*$ ]];
 			then 
-				wget https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb
-				apt-get install -y ./mysql-apt-config_0.8.16-1_all.deb
+				# wget https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb
+				if [[ ! -f /tmp/releases/$MYSQL_DEB ]]; then
+					curl -fSL wget https://dev.mysql.com/get/$MYSQL_DEB -o /tmp/releases/$MYSQL_DEB
+				fi
+				
+				apt-get install -y /tmp/releases/$MYSQL_DEB
 			fi
         ;;
     esac
@@ -1196,11 +1205,11 @@ function mysql_install()
 
     case `plateform` in 
         redhat)
-			if [[ $OS_VERSION =~ 6 ]]; then chkconfig --add mysqld ; else systemctl enable mysqld; fi
+			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
 			# mysqld --initialize-insecure --user=mysql; 
             ;;
         debian)
-			systemctl enable mysql;
+			execute systemctl enable mysql;
         ;;
     esac
 }
