@@ -21,6 +21,10 @@ function mysql_install()
     case `plateform` in
         redhat)
 			local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
+
+			# fixed Public key for mysql-community-xxx.rpm is not installed https://segmentfault.com/a/1190000041433962
+			rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+
 			if [[ $_version =~ ^8.*$ ]];
 			then 
 				MYSQL_RPM=mysql80-community-release-el$OS_VERSION-1.noarch.rpm
