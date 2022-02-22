@@ -50,7 +50,7 @@ function python_install_requirements()
 }
 
 
-function python_install() 
+function pip_install() 
 {
     set -e
     local _USE_PROXY

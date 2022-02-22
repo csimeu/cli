@@ -20,7 +20,7 @@ function java_install()
 
     case $plateform in 
         redhat)
-			if [[ $OS_VERSION =~ 6 ]]; then 
+			if [[ `plateform_version` =~ 6 ]]; then 
                 install -y java-1.8.0-openjdk-devel; 
             else 
                 install -y java-11-openjdk-devel; 

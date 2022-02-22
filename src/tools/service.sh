@@ -13,7 +13,7 @@ function mysql_service()
     
     case `plateform` in 
         redhat)
-			if [[ $OS_VERSION =~ 6 ]]; then 
+			if [[ `plateform_version` =~ 6 ]]; then 
                 /etc/init.d/mysqld $cmd; 
             else 
                 systemctl $cmd mysqld; 
