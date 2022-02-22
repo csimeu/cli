@@ -2221,7 +2221,7 @@ function tomcat_install()
     local major=`echo $version | cut -d. -f1`
     if [ ! -f apache-tomcat-${version}.tar.gz ]
     then
-        curl -fSL wget https://archive.apache.org/dist/tomcat/tomcat-$major/v${version}/bin/apache-tomcat-${version}.tar.gz -o apache-tomcat-${version}.tar.gz
+        curl -fSL https://archive.apache.org/dist/tomcat/tomcat-$major/v${version}/bin/apache-tomcat-${version}.tar.gz -o apache-tomcat-${version}.tar.gz
         # wget https://archive.apache.org/dist/tomcat/tomcat-$major/v${version}/bin/apache-tomcat-${version}.tar.gz
     fi
 
@@ -2350,7 +2350,8 @@ function wordpress_install()
 
 	local DIR_NAME=$data/$name
 	
-	wget http://wordpress.org/latest.zip
+	curl -fSL  http://wordpress.org/latest.zip -o latest.zip
+	# wget http://wordpress.org/latest.zip
 	rm -rf $DIR_NAME
 	unzip -q latest.zip -d $data
 	rm -f latest.zip
