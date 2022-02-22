@@ -63,7 +63,7 @@ function postgis_install()
     local _postgresql_version=
     local _postgis_version=$POSTGIS_DEFAULT_VERSION
     local _parameters=
-    parse_postgresql_arguments $@ 
+    read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     postgresql_add_repolist
@@ -93,7 +93,7 @@ function postgresql_install()
     local _postgresql_version=$POSTGRESQL_DEFAULT_VERSION
     local _postgis_version=
     local _parameters=
-    parse_postgresql_arguments $@ 
+    read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     postgresql_add_repolist
