@@ -1172,13 +1172,12 @@ function mysql_install()
 	
 	cd /tmp/releases
 
-    case `plateform` in 
+    case `plateform` in
         redhat)
-			local MYSQL_RPM="mysql-community-server-5.7.36-1.el7.x86_64.rpm"
+			local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
 			if [[ $_version =~ ^8.*$ ]];
 			then 
-				MYSQL_RPM=mysql80-community-release-el8-1.noarch.rpm
-				MYSQL_RPM=mysql-community-server-8.0.27-1.el8.x86_64.rpm
+				MYSQL_RPM=mysql80-community-release-el$OS_VERSION-1.noarch.rpm
 			fi
 
 			# if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
