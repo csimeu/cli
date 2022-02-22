@@ -28,7 +28,7 @@ function mysql_install()
 
 			# if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
 			if [[ ! -f /tmp/releases/$MYSQL_RPM ]]; then
-				curl -fSL wget https://dev.mysql.com/get/$MYSQL_RPM -o /tmp/releases/$MYSQL_RPM
+				curl -fSL https://dev.mysql.com/get/$MYSQL_RPM -o /tmp/releases/$MYSQL_RPM
 				# wget https://dev.mysql.com/get/$MYSQL_RPM
 			fi
 			execute rpm -ivh "/tmp/releases/${MYSQL_RPM}"
@@ -39,7 +39,7 @@ function mysql_install()
 			then 
 				# wget https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb
 				if [[ ! -f /tmp/releases/$MYSQL_DEB ]]; then
-					curl -fSL wget https://dev.mysql.com/get/$MYSQL_DEB -o /tmp/releases/$MYSQL_DEB
+					curl -fSL https://dev.mysql.com/get/$MYSQL_DEB -o /tmp/releases/$MYSQL_DEB
 				fi
 				
 				apt-get install -y /tmp/releases/$MYSQL_DEB

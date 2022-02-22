@@ -55,7 +55,7 @@ function wordpress_install()
 
 	local DIR_NAME=$data/$name
 	
-	curl -fSL  http://wordpress.org/latest.zip -o latest.zip
+	curl -fSL http://wordpress.org/latest.zip -o latest.zip
 	# wget http://wordpress.org/latest.zip
 	rm -rf $DIR_NAME
 	unzip -q latest.zip -d $data
