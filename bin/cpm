@@ -843,7 +843,7 @@ function keycloak_install()
 
     case "$version" in
         "8") version=8.0.2;;
-        14|13|12|11|10) version=$version.0.0;;
+        17|16|15|14|13|12|11|10) version=$version.0.0;;
         *)
         ;;
     esac
@@ -851,8 +851,6 @@ function keycloak_install()
     name="$appName-$version"
     local KEYCLOAK_HOME=${INSTALL_DIR}/$name
 
-
-    
     if [ -d $KEYCLOAK_HOME ]
     then 
         if [ '0' == $FORCE ]; then 
@@ -1127,8 +1125,9 @@ function mariadb_install()
 		MYSQL_RPM=mysql80-community-release-el7-1.noarch.rpm
 	fi
      
-	wget https://dev.mysql.com/get/$MYSQL_RPM
-	rpm -ivh "${MYSQL_RPM}" && \
+	install -y https://dev.mysql.com/get/$MYSQL_RPM 
+	# wget https://dev.mysql.com/get/$MYSQL_RPM
+	# rpm -ivh "${MYSQL_RPM}" && \
 	yum -y install mysql-server &&
 	systemctl enable mysqld
 	
@@ -1178,8 +1177,11 @@ function mysql_install()
 			then 
 				MYSQL_RPM=mysql80-community-release-el$OS_VERSION-1.noarch.rpm
 			fi
-			wget https://dev.mysql.com/get/$MYSQL_RPM
-			sudo rpm -ivh "${MYSQL_RPM}"
+			
+			install -y https://dev.mysql.com/get/$MYSQL_RPM 
+			# curl -fSL wget https://dev.mysql.com/get/$MYSQL_RPM -o $MYSQL_RPM
+			# wget https://dev.mysql.com/get/$MYSQL_RPM
+			# sudo rpm -ivh "${MYSQL_RPM}"
             ;;
         debian)
 			if [[ $_version =~ ^8.*$ ]];
@@ -1628,7 +1630,7 @@ function postgis_install()
     local _postgresql_version=
     local _postgis_version=$POSTGIS_DEFAULT_VERSION
     local _parameters=
-    parse_postgresql_arguments $@ 
+    read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     postgresql_add_repolist
@@ -1658,7 +1660,7 @@ function postgresql_install()
     local _postgresql_version=$POSTGRESQL_DEFAULT_VERSION
     local _postgis_version=
     local _parameters=
-    parse_postgresql_arguments $@ 
+    read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     postgresql_add_repolist
@@ -2098,7 +2100,8 @@ function solr_install()
     # echo " ./install_solr_service.sh solr-$version.tgz -i ${INSTALL_DIR} -d $data -p ${port} "
     
     if [ ! -f /tmp/releases/jts-core-1.16.1.jar ]; then 
-        wget https://github.com/locationtech/jts/releases/download/jts-1.16.1/jts-core-1.16.1.jar
+        curl -fSL https://github.com/locationtech/jts/releases/download/jts-1.16.1/jts-core-1.16.1.jar -o /tmp/releases/jts-core-1.16.1.jar
+        # wget https://github.com/locationtech/jts/releases/download/jts-1.16.1/jts-core-1.16.1.jar
     fi
 
     cp -f /tmp/releases/jts-core-1.16.1.jar $INSTALL_DIR/solr-$version/server/solr-webapp/webapp/WEB-INF/lib/
@@ -2218,7 +2221,8 @@ function tomcat_install()
     local major=`echo $version | cut -d. -f1`
     if [ ! -f apache-tomcat-${version}.tar.gz ]
     then
-        wget https://archive.apache.org/dist/tomcat/tomcat-$major/v${version}/bin/apache-tomcat-${version}.tar.gz
+        curl -fSL wget https://archive.apache.org/dist/tomcat/tomcat-$major/v${version}/bin/apache-tomcat-${version}.tar.gz -o apache-tomcat-${version}.tar.gz
+        # wget https://archive.apache.org/dist/tomcat/tomcat-$major/v${version}/bin/apache-tomcat-${version}.tar.gz
     fi
 
     sudo tar xf apache-tomcat-${version}.tar.gz -C $INSTALL_DIR

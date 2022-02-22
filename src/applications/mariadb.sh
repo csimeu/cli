@@ -13,8 +13,9 @@ function mariadb_install()
 		MYSQL_RPM=mysql80-community-release-el7-1.noarch.rpm
 	fi
      
-	wget https://dev.mysql.com/get/$MYSQL_RPM
-	rpm -ivh "${MYSQL_RPM}" && \
+	install -y https://dev.mysql.com/get/$MYSQL_RPM 
+	# wget https://dev.mysql.com/get/$MYSQL_RPM
+	# rpm -ivh "${MYSQL_RPM}" && \
 	yum -y install mysql-server &&
 	systemctl enable mysqld
 	

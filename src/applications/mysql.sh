@@ -23,8 +23,11 @@ function mysql_install()
 			then 
 				MYSQL_RPM=mysql80-community-release-el$OS_VERSION-1.noarch.rpm
 			fi
-			wget https://dev.mysql.com/get/$MYSQL_RPM
-			sudo rpm -ivh "${MYSQL_RPM}"
+			
+			install -y https://dev.mysql.com/get/$MYSQL_RPM 
+			# curl -fSL wget https://dev.mysql.com/get/$MYSQL_RPM -o $MYSQL_RPM
+			# wget https://dev.mysql.com/get/$MYSQL_RPM
+			# sudo rpm -ivh "${MYSQL_RPM}"
             ;;
         debian)
 			if [[ $_version =~ ^8.*$ ]];

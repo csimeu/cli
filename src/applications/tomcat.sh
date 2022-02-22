@@ -93,7 +93,8 @@ function tomcat_install()
     local major=`echo $version | cut -d. -f1`
     if [ ! -f apache-tomcat-${version}.tar.gz ]
     then
-        wget https://archive.apache.org/dist/tomcat/tomcat-$major/v${version}/bin/apache-tomcat-${version}.tar.gz
+        curl -fSL wget https://archive.apache.org/dist/tomcat/tomcat-$major/v${version}/bin/apache-tomcat-${version}.tar.gz -o apache-tomcat-${version}.tar.gz
+        # wget https://archive.apache.org/dist/tomcat/tomcat-$major/v${version}/bin/apache-tomcat-${version}.tar.gz
     fi
 
     sudo tar xf apache-tomcat-${version}.tar.gz -C $INSTALL_DIR
