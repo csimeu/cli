@@ -8,7 +8,8 @@ function read_application_arguments()
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,url::,client::,audience::,secret::,login-theme::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
-    
+
+    OS_VERSION=`plateform_version`
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
     while true ; do

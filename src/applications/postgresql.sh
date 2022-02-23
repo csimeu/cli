@@ -122,6 +122,8 @@ function postgresql_install()
         # echo "postgis_install --postgresql-version=$_postgresql_version --postgis-version=$_postgis_version"
         postgis_install --postgresql-version=$_postgresql_version --postgis-version=$_postgis_version
     fi
+    
+    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG postgres $ADMIN_USER; fi
 }
 
 postgresql_createuser(){

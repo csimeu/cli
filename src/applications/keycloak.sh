@@ -133,6 +133,8 @@ EOF
         
     fi
     sudo chown -R keycloak:keycloak /etc/keycloak
+    
+    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG keycloak $ADMIN_USER; fi
 
 
     if [[ "6" != $OS_VERSION ]]; then

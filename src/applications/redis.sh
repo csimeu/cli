@@ -11,8 +11,9 @@ redis_install() {
         ;;
     esac
 
-    install -y  redis
+    install -y redis
     
+    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG redis $ADMIN_USER; fi
     echo ">> Installed applications '$appName' "
 }
 

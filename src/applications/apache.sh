@@ -20,7 +20,7 @@ apache_install() {
             # a2enconf mod-wsgi
             if ! getent passwd apache > /dev/null 2>&1; then
                 sudo groupadd --system apache
-                sudo useradd -d /var/www -r -s /bin/false -g apache apache
+                sudo useradd -d /var/apache2 -r -s /bin/false -g apache apache
             fi
             sudo chown apache:apache -R /etc/apache2
             sudo chmod -R g+w /etc/apache2
@@ -32,6 +32,10 @@ apache_install() {
     sudo chown apache:apache -R /var/www
     sudo chmod -R g+w /var/www
 
+    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]];
+    then
+        sudo usermod -aG apache $ADMIN_USER;
+    fi
     
 
 # sudo cat > /etc/httpd/sites-availables/php-fcgi.conf << EOF

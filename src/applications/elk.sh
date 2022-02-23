@@ -100,6 +100,8 @@ elasticsearch_install() {
     
     elk_import_repolist
     install -y elasticsearch
+
+    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG elasticsearch $ADMIN_USER; fi
     
     sed -i -e "s/^\#\# -Xms.*$/-Xms128m/" /etc/elasticsearch/jvm.options
     sed -i -e "s/^## -Xmx.*$/-Xmx128m/" /etc/elasticsearch/jvm.options

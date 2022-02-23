@@ -116,6 +116,7 @@ function solr_install()
     # && systemctl enable solr 
     sudo chown solr:solr -R "${INSTALL_DIR}/solr-$version" ${data}
 
+    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG solr $ADMIN_USER; fi
 
     # if [[ -n "$GROUP_ADMIN" ]]; then
     #     sudo usermod -g $GROUP_ADMIN solr;

@@ -52,6 +52,8 @@ function mysql_install()
     esac
 	
 	install -y mysql-server
+	
+    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG mysql $ADMIN_USER; fi
 
     case `plateform` in 
         redhat)
