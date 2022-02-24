@@ -20,7 +20,7 @@ wso2_install() {
     fi
 
     chown -R wso2:wso2 ${_WSO2_HOME}
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG wso2 $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG wso2 $ADMIN_USER; fi
 
 if [[ ! -f /etc/systemd/system/wso2.service ]]; then
 echo "

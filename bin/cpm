@@ -273,7 +273,7 @@ apache_install() {
     sudo chown apache:apache -R /var/www
     sudo chmod -R g+w /var/www
 
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]];
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]];
     then
         sudo usermod -aG apache $ADMIN_USER;
     fi
@@ -534,7 +534,7 @@ elasticsearch_install() {
     elk_import_repolist
     install -y elasticsearch
 
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG elasticsearch $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG elasticsearch $ADMIN_USER; fi
     
     sed -i -e "s/^\#\# -Xms.*$/-Xms128m/" /etc/elasticsearch/jvm.options
     sed -i -e "s/^## -Xmx.*$/-Xmx128m/" /etc/elasticsearch/jvm.options
@@ -980,7 +980,7 @@ EOF
     fi
     sudo chown -R keycloak:keycloak /etc/keycloak
     
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG keycloak $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG keycloak $ADMIN_USER; fi
 
 
     if [[ "6" != $OS_VERSION ]]; then
@@ -1242,7 +1242,7 @@ function mysql_install()
 	
 	install -y mysql-server
 	
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG mysql $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG mysql $ADMIN_USER; fi
 
     case `plateform` in 
         redhat)
@@ -1420,7 +1420,7 @@ nexcloud_install() {
 nginx_install() {
     install -y nginx
     
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG nginx $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG nginx $ADMIN_USER; fi
 }
 
 #!/bin/bash
@@ -1742,7 +1742,7 @@ function postgresql_install()
         postgis_install --postgresql-version=$_postgresql_version --postgis-version=$_postgis_version
     fi
     
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG postgres $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG postgres $ADMIN_USER; fi
 }
 
 postgresql_createuser(){
@@ -2047,7 +2047,7 @@ redis_install() {
 
     install -y redis
     
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG redis $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG redis $ADMIN_USER; fi
     echo ">> Installed applications '$appName' "
 }
 
@@ -2169,7 +2169,7 @@ function solr_install()
     # && systemctl enable solr 
     sudo chown solr:solr -R "${INSTALL_DIR}/solr-$version" ${data}
 
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG solr $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG solr $ADMIN_USER; fi
 
     # if [[ -n "$GROUP_ADMIN" ]]; then
     #     sudo usermod -g $GROUP_ADMIN solr;
@@ -2284,7 +2284,7 @@ function tomcat_install()
     sudo tar xf apache-tomcat-${version}.tar.gz -C $INSTALL_DIR
     sudo mv $INSTALL_DIR/apache-tomcat-$version $INSTALL_DIR/tomcat-$version
     sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat-$version
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG tomcat $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG tomcat $ADMIN_USER; fi
 
     if [ "1" == "$IS_DEFAULT" ]
     then
@@ -2460,7 +2460,7 @@ wso2_install() {
     fi
 
     chown -R wso2:wso2 ${_WSO2_HOME}
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG wso2 $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG wso2 $ADMIN_USER; fi
 
 if [[ ! -f /etc/systemd/system/wso2.service ]]; then
 echo "

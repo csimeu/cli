@@ -100,7 +100,7 @@ function tomcat_install()
     sudo tar xf apache-tomcat-${version}.tar.gz -C $INSTALL_DIR
     sudo mv $INSTALL_DIR/apache-tomcat-$version $INSTALL_DIR/tomcat-$version
     sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat-$version
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG tomcat $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG tomcat $ADMIN_USER; fi
 
     if [ "1" == "$IS_DEFAULT" ]
     then

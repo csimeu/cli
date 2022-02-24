@@ -13,7 +13,7 @@ redis_install() {
 
     install -y redis
     
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]]; then sudo usermod -aG redis $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG redis $ADMIN_USER; fi
     echo ">> Installed applications '$appName' "
 }
 

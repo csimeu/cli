@@ -32,7 +32,7 @@ apache_install() {
     sudo chown apache:apache -R /var/www
     sudo chmod -R g+w /var/www
 
-    if [[ -n "$ADMIN_USER" && $(getent $ADMIN_USER)  ]];
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]];
     then
         sudo usermod -aG apache $ADMIN_USER;
     fi
