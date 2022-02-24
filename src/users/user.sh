@@ -85,16 +85,25 @@ function user_add()
 
     
     if [ ! $(getent group ${username}) ]; then 
-        groupadd $gid ${username};
+        case `plateform` in 
+            alpine) addgroup $gid ${username};;
+            *) groupadd $gid ${username};;
+        esac
     # else
     #     groupmod -g $USER_UID ${username};
     fi
 
 
     if ! getent passwd ${username} > /dev/null 2>&1; then
-        useradd --shell /bin/bash $uid -g ${username} $home ${username};
+        case `plateform` in 
+            alpine) adduser --shell /bin/bash $uid -g ${username} $home ${username};;
+            *) useradd --shell /bin/bash $uid -g ${username} $home ${username};;
+        esac
     else
-        usermod --shell /bin/bash $uid -g ${username} ${username};
+        case `plateform` in 
+            alpine) moduser --shell /bin/bash $uid -g ${username} ${username};;
+            *) usermod --shell /bin/bash $uid -g ${username} ${username};;
+        esac
     fi
     
     for group in $groups
@@ -102,20 +111,26 @@ function user_add()
         # checks if user exit
         if ! $(getent group ${group})
         then
-            groupadd $group
+            case `plateform` in 
+                alpine) addgroup $group;;
+                *) groupadd $group;;
+            esac
+            
             # echo "Group '$group' does not exist: group created!"
         fi
-        usermod -aG $group ${username}
+        
+        
+        case `plateform` in 
+            alpine) usermod -aG $group ${username};;
+            *) usermod -aG $group ${username};;
+        esac
     done
 
     if [ -n "$password" ]; then
         case `plateform` in 
-            redhat)
-                echo "${password}" | passwd $username --stdin
-                ;;
-            debian)
-                echo -e "${password}" | passwd $username
-            ;;
+            redhat) echo "${password}" | passwd $username --stdin ;;
+            debian) echo -e "${password}" | passwd $username ;;
+            *) echo -e "${password}" | passwd $username ;;
         esac
     fi
 #     for user in $_USERS
@@ -156,6 +171,11 @@ function user_update()
     fi
 
     if [ -n "$uid" ] ; then
+        case `plateform` in 
+            redhat) echo "${password}" | passwd $username --stdin ;;
+            debian) echo -e "${password}" | passwd $username ;;
+            *) echo -e "${password}" | passwd $username ;;
+        esac
         usermod $uid ${username};
     fi
     if [ -n "$gid" ] ; then

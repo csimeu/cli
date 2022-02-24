@@ -148,6 +148,10 @@ git_clone()
             _pathname=./$(git_repo_name $repository)
         fi
         
+        if [ -f $_pathname/.env ]; then
+          localenv --file=$_pathname/.env
+        fi
+
         if [[ $_composer == 1 ]] ; then  
             echo "update composer $_pathname ...";
             composer_update $_pathname $_params ;

@@ -3,8 +3,8 @@
 
 # check to see if this file is being run or sourced from another script
 is_sourced () {
-  [[ "${FUNCNAME[1]}" == "source" ]]  && return 0
-  return 1
+    [[ "${FUNCNAME[1]}" == "source" ]]  && return 0
+    return 1
 }
 
 # Checks if given string is an valid url
@@ -32,6 +32,20 @@ function camel_to_snake()
 {
     echo $(echo $1 | sed 's/\(.\)\([A-Z]\)/\1_\2/g' | tr '[:upper:]' '[:lower:]')
 }
+
+function is_alphanum() 
+{    
+    value=${value//\"/}
+    regex="^[a-zA-Z0-9_]+$"
+
+    if [[ $1 =~ $regex ]]
+    then 
+        true
+    else
+        false
+    fi
+}
+
 
 # get plateform
 function plateform() 
@@ -139,6 +153,18 @@ function install()
 function execute() 
 {
     if [ "$EUID" -ne 0 ]; then sudo $@; else $@; fi
+}
+
+function command_resolver() 
+{ 
+    cmd=$1
+    
+    case $cmd in 
+        useradd) echo "${password}" | passwd $username --stdin ;;
+        usermod) if [ "$(plateform)" == "alpine" ]; then echo 'moduser'; fi;;
+        *) echo $cmd ;;
+    esac
+    # name="INFRA_ADMIN_GROUP_UID LOGNAME INFRA_ADMIN_PASSWORD"
 }
 
 function servicectl() 

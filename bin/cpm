@@ -44,8 +44,8 @@ PHP_DEFAULT_VERSION=${PHP_DEFAULT_VERSION:-7.3}
 
 # check to see if this file is being run or sourced from another script
 is_sourced () {
-  [[ "${FUNCNAME[1]}" == "source" ]]  && return 0
-  return 1
+    [[ "${FUNCNAME[1]}" == "source" ]]  && return 0
+    return 1
 }
 
 # Checks if given string is an valid url
@@ -73,6 +73,20 @@ function camel_to_snake()
 {
     echo $(echo $1 | sed 's/\(.\)\([A-Z]\)/\1_\2/g' | tr '[:upper:]' '[:lower:]')
 }
+
+function is_alphanum() 
+{    
+    value=${value//\"/}
+    regex="^[a-zA-Z0-9_]+$"
+
+    if [[ $1 =~ $regex ]]
+    then 
+        true
+    else
+        false
+    fi
+}
+
 
 # get plateform
 function plateform() 
@@ -182,6 +196,18 @@ function execute()
     if [ "$EUID" -ne 0 ]; then sudo $@; else $@; fi
 }
 
+function command_resolver() 
+{ 
+    cmd=$1
+    
+    case $cmd in 
+        useradd) echo "${password}" | passwd $username --stdin ;;
+        usermod) if [ "$(plateform)" == "alpine" ]; then echo 'moduser'; fi;;
+        *) echo $cmd ;;
+    esac
+    # name="INFRA_ADMIN_GROUP_UID LOGNAME INFRA_ADMIN_PASSWORD"
+}
+
 function servicectl() 
 {
     local cmd=$1
@@ -280,12 +306,11 @@ apache_install() {
 function read_application_arguments()
 {
     IS_SUPERUSER=0
-    local long="help,force,default,superuser,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
+    local long="help,force,default,superuser,data::,name::,version::,file::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,url::,client::,audience::,secret::,login-theme::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
 
-    OS_VERSION=`plateform_version`
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
     while true ; do
@@ -295,6 +320,7 @@ function read_application_arguments()
             --data) data=${2%"/"} ; shift 2 ;;
             --home-dir) home_dir=${2%"/"} ; shift 2 ;;
             --name) name=${2} ; shift 2 ;;
+            --file) file=${2}; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
             --version) version=${2:-"$version"}; shift 2 ;;
             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
@@ -2463,6 +2489,61 @@ WantedBy=multi-user.target
 " > /etc/systemd/system/wso2.service
 fi
 }
+
+
+# Reads arguments options
+function read_arguments()
+{
+    local TEMP=`getopt -o p::,f::,h,v,${SHORT:-'s'} --long ${lONG:-'long'},help,debug,verbose,force,default,name::,version::,filename::,file::,path::,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
+
+	eval set -- "$TEMP"
+    # extract options and their arguments into variables.
+    while true ; do
+        case "$1" in
+            -h|--help) HELP=1 ; shift 1 ;;
+            --debug) DEBUG=1 ; shift 1 ;;
+            --verbose) VERBOSE=1 ; shift 1 ;;
+            --force) FORCE=1 ; shift 1 ;;
+            --default) IS_DEFAULT=1 ; shift 1 ;;
+            --superuser) IS_SUPERUSER=1 ; shift 1 ;;
+            --name) name=${2}; names+="${2} ";shift 2 ;;
+            --user) user=${2}; users+="${2} "; shift 2 ;;
+            -f|--filename) filename=${2}; shift 2 ;;
+            --file) file=${2}; shift 2 ;;
+            -p|--path) path=${2%"/"} ; shift 2 ;;
+            --data) data=${2%"/"} ; shift 2 ;;
+            --version) version=${2}; shift 2 ;;
+            --install-dir) install_dir=${2%"/"}; shift 2 ;;
+            --home-dir) home_dir=${2%"/"} ; shift 2 ;;
+            --file-config) config_file=${2}; shift 2 ;;
+            --catalina-home) catalina_home=${2}; shift 2 ;;
+            # --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+            --offset) offset=${2:-"$port_offset"}; shift 2 ;;
+            --port) port=${2}; shift 2 ;;
+            --host) host=${2}; shift 2 ;;
+            --password) password=${2}; shift 2 ;;
+            --db-name) db_name=${2}; shift 2 ;;
+            --db-user) db_user=${2}; shift 2 ;;
+            --db-password) dp_password=${2}; shift 2 ;;
+            --db-host) db_host=${2}; shift 2 ;;
+            --db-port) db_port=${2}; shift 2 ;;
+            --realm) realm=${2}; shift 2 ;;
+            --email) email=${2}; shift 2 ;;
+            --url) url=${2//\//\/\//}; shift 2 ;;
+            --client) client=${2}; shift 2 ;;
+            --audience) audience=${2}; shift 2 ;;
+            --secret) secret=${2}; shift 2 ;;
+            --theme) theme=${2}; shift 2 ;;
+            --) shift ; break ;;
+            *) echo "Internal error! $1" ; exit 1 ;;
+        esac
+    done
+
+    shift $(expr $OPTIND - 1 )
+    _parameters=$@
+    
+  # fi
+}
 #!/bin/bash
 #
 
@@ -2613,6 +2694,10 @@ git_clone()
             _pathname=./$(git_repo_name $repository)
         fi
         
+        if [ -f $_pathname/.env ]; then
+          localenv --file=$_pathname/.env
+        fi
+
         if [[ $_composer == 1 ]] ; then  
             echo "update composer $_pathname ...";
             composer_update $_pathname $_params ;
@@ -2710,6 +2795,54 @@ git_exists()
     GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git ls-remote $1 -q >/dev/null 2>&1
     
     echo $?
+}
+
+#!/bin/bash
+# sed -i -e 's/\r$//' scriptname.sh
+
+
+# copy local env
+function localenv() 
+{
+    set -e
+    local filename='.env.local'
+    local file
+    read_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    if [ -f $filename ]; then cp -f $filename $filename.bak-$(date +%Y-%m-%d); fi
+    > $filename
+
+    if [[ -n $file ]]; then
+        # take copy of file and replace vars found value 
+        if [[ ! -f $file && ! -f $file ]]; then
+            echo "No such file: $file"
+            exit 1
+        fi
+        cp -f $file $filename
+        for env in `env`; do
+            varName=${env%=*}
+            varValue=${env##*=}
+
+            if is_alphanum $varName; then
+                # echo "${varName}=\"$varValue\""
+                sed -ie "s/^$varName=*$/${varName}=\"${varValue//\//\/\/}\"/g" $filename
+            fi
+        done
+        echo  ">> Cloned file '$file' in '$filename' with locals environments variables"
+        exit 0
+    fi
+
+    # echo 'go'
+	for env in `env`; do
+		varName=${env%=*}
+		varValue=${env##*=}
+        if [[ " $@ " == *" $varName "* ]]; then
+            echo "${varName}=\"$varValue\"" >> $filename
+        fi
+	done
+    
+    echo ">> create/updated file '$filename' with locals environments variables"
 }
 
 #!/bin/bash
@@ -3243,16 +3376,25 @@ function user_add()
 
     
     if [ ! $(getent group ${username}) ]; then 
-        groupadd $gid ${username};
+        case `plateform` in 
+            alpine) addgroup $gid ${username};;
+            *) groupadd $gid ${username};;
+        esac
     # else
     #     groupmod -g $USER_UID ${username};
     fi
 
 
     if ! getent passwd ${username} > /dev/null 2>&1; then
-        useradd --shell /bin/bash $uid -g ${username} $home ${username};
+        case `plateform` in 
+            alpine) adduser --shell /bin/bash $uid -g ${username} $home ${username};;
+            *) useradd --shell /bin/bash $uid -g ${username} $home ${username};;
+        esac
     else
-        usermod --shell /bin/bash $uid -g ${username} ${username};
+        case `plateform` in 
+            alpine) moduser --shell /bin/bash $uid -g ${username} ${username};;
+            *) usermod --shell /bin/bash $uid -g ${username} ${username};;
+        esac
     fi
     
     for group in $groups
@@ -3260,20 +3402,26 @@ function user_add()
         # checks if user exit
         if ! $(getent group ${group})
         then
-            groupadd $group
+            case `plateform` in 
+                alpine) addgroup $group;;
+                *) groupadd $group;;
+            esac
+            
             # echo "Group '$group' does not exist: group created!"
         fi
-        usermod -aG $group ${username}
+        
+        
+        case `plateform` in 
+            alpine) usermod -aG $group ${username};;
+            *) usermod -aG $group ${username};;
+        esac
     done
 
     if [ -n "$password" ]; then
         case `plateform` in 
-            redhat)
-                echo "${password}" | passwd $username --stdin
-                ;;
-            debian)
-                echo -e "${password}" | passwd $username
-            ;;
+            redhat) echo "${password}" | passwd $username --stdin ;;
+            debian) echo -e "${password}" | passwd $username ;;
+            *) echo -e "${password}" | passwd $username ;;
         esac
     fi
 #     for user in $_USERS
@@ -3314,6 +3462,11 @@ function user_update()
     fi
 
     if [ -n "$uid" ] ; then
+        case `plateform` in 
+            redhat) echo "${password}" | passwd $username --stdin ;;
+            debian) echo -e "${password}" | passwd $username ;;
+            *) echo -e "${password}" | passwd $username ;;
+        esac
         usermod $uid ${username};
     fi
     if [ -n "$gid" ] ; then

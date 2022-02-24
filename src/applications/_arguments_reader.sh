@@ -4,12 +4,11 @@
 function read_application_arguments()
 {
     IS_SUPERUSER=0
-    local long="help,force,default,superuser,data::,name::,version::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
+    local long="help,force,default,superuser,data::,name::,version::,file::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,url::,client::,audience::,secret::,login-theme::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
 
-    OS_VERSION=`plateform_version`
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
     while true ; do
@@ -19,6 +18,7 @@ function read_application_arguments()
             --data) data=${2%"/"} ; shift 2 ;;
             --home-dir) home_dir=${2%"/"} ; shift 2 ;;
             --name) name=${2} ; shift 2 ;;
+            --file) file=${2}; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
             --version) version=${2:-"$version"}; shift 2 ;;
             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
