@@ -112,7 +112,7 @@ function postgresql_install()
                     sudo dnf -qy module disable postgresql; 
                 fi
             fi
-            install -y postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server
+            install -y postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server postgresql-contrib-$_postgresql_version
             
         ;;
     esac

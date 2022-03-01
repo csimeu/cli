@@ -1731,7 +1731,7 @@ function postgresql_install()
                     sudo dnf -qy module disable postgresql; 
                 fi
             fi
-            install -y postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server
+            install -y postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server postgresql-contrib-$_postgresql_version
             
         ;;
     esac
@@ -2103,8 +2103,8 @@ function solr_install()
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     case "$version" in
-        "8") version=8.2.0 ;;
-        "7") version=7.7.2 ;;
+        "8") version=8.11.1 ;;
+        "7") version=7.7.3 ;;
         *)
         ;;
     esac

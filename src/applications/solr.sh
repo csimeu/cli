@@ -50,8 +50,8 @@ function solr_install()
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     case "$version" in
-        "8") version=8.2.0 ;;
-        "7") version=7.7.2 ;;
+        "8") version=8.11.1 ;;
+        "7") version=7.7.3 ;;
         *)
         ;;
     esac
