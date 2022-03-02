@@ -72,8 +72,9 @@ function tomcat_install()
     
     case "$version" in
         "7") version=7.0.90;;
-        "8") version=8.5.69;;
-        "9") version=9.0.50;;
+        "8") version=8.5.76;;
+        "9") version=9.0.59;;
+        "10") version=10.0.17;;
         *)
         ;;
     esac

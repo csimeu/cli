@@ -50,10 +50,9 @@ function fcrepo_install()
     # https://github.com/fcrepo4/fcrepo4/releases/download/fcrepo-4.7.5/fcrepo-webapp-4.7.5.war
 
     case "$version" in
-
         "4") version=4.7.5;;
-
         "5") version=5.1.1;;
+        "6") version=6.1.1;;
         *)
         ;;
     esac
