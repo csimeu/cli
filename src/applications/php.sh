@@ -41,9 +41,8 @@ function php_remove()
 	local pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip   "
 	local cmd=
 	version=${version/./}
-	if ISDEFAULT; then
+	if [ "1" == "$IS_DEFAULT" ]; then
 		version=
-		exit 0
 	fi
 
 	if has_command php$version ; then 
@@ -71,9 +70,10 @@ function php_install()
 
     case `plateform` in 
         redhat)
-			if ISDEFAULT; then
+			if [ "1" == "$IS_DEFAULT" ] ; then
 				PHP_DEFAULT_VERSION=${version:-PHP_DEFAULT_VERSION}
 				version=
+				echo "---> Set default php version '$PHP_DEFAULT_VERSION'"
 				case $OS_VERSION in 
 					8)
 						execute yum module install -y php:remi-${$PHP_DEFAULT_VERSION};
@@ -106,8 +106,8 @@ function php_install()
 			#mcrypt mssql process
 			for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
 			for ext in $pecl_exts ; do  cmd+=" php$version-pecl-$ext"; done
-			# echo 
-			install -y php$version  $cmd
+			echo "Install: php$version $cmd"
+			install -y php$version $cmd
             ;;
         debian)
 			# https://www.digitalocean.com/community/tutorials/how-to-run-multiple-php-versions-on-one-server-using-apache-and-php-fpm-on-ubuntu-18-04

@@ -15,7 +15,7 @@ function read_application_arguments()
     while true ; do
         case "$1" in
             -f|--force) FORCE=1 ; shift 1 ;;
-            --default) IS_DEFAULT=1 ; ISDEFAULT=true; shift 1 ;;
+            --default) IS_DEFAULT=1 ; shift 1 ;;
             --data) data=${2%"/"} ; shift 2 ;;
             --home-dir) home_dir=${2%"/"} ; shift 2 ;;
             --name) name=${2} ; shift 2 ;;
