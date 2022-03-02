@@ -72,7 +72,7 @@ function php_install()
             ;;
         debian)
 			# https://www.digitalocean.com/community/tutorials/how-to-run-multiple-php-versions-on-one-server-using-apache-and-php-fpm-on-ubuntu-18-04
-			sudo apt-get install software-properties-common -y
+			sudo apt-get install software-properties-common -y 
 			sudo apt-get update -y
 			# sudo add-apt-repository ppa:ondrej/php
 			for ext in $php_exts ; do  cmd+=" php$version-$ext"; done

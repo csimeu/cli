@@ -256,7 +256,7 @@ apache_install() {
             ;;
         debian)
             ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
-            install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi libapache2-mod-php
+            install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
             a2enmod ssl
             # a2enconf mod-wsgi
             if ! getent passwd apache > /dev/null 2>&1; then
@@ -804,6 +804,67 @@ EOF
 
 }
 
+
+#!/bin/bash
+
+
+httpd_install() {
+    
+    case `plateform` in 
+        redhat)
+            install -y httpd mod_ssl mod_fcgid
+            sudo mkdir -p /etc/httpd/sites-enabled
+            sudo mkdir -p /etc/httpd/sites-availables
+            sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
+            # pip install mod_wsgi
+            sudo chown apache:apache -R /etc/httpd
+            sudo chmod -R g+w /etc/httpd
+            ;;
+        debian)
+            exit 0
+            # ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
+            # install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
+            # a2enmod ssl
+            # # a2enconf mod-wsgi
+            # if ! getent passwd apache > /dev/null 2>&1; then
+            #     sudo groupadd --system apache
+            #     sudo useradd -d /var/apache2 -r -s /bin/false -g apache apache
+            # fi
+            # sudo chown apache:apache -R /etc/apache2
+            # sudo chmod -R g+w /etc/apache2
+        ;;
+    esac
+
+    sudo mkdir -p /var/www/cgi-bin/
+    sudo chown apache:apache -R /var/www
+    sudo chmod -R g+w /var/www
+
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]];
+    then
+        sudo usermod -aG apache $ADMIN_USER;
+    fi
+    
+
+# sudo cat > /etc/httpd/sites-availables/php-fcgi.conf << EOF
+# # Configure multiple php version
+# ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
+# AddHandler php-fcgi .php
+# #Action php55-fcgi /cgi-bin/php55.fcgi
+# #Action php56-fcgi /cgi-bin/php56.fcgi
+# #Action php71-fcgi /cgi-bin/php71.fcgi
+# #Action php72-fcgi /cgi-bin/php72.fcgi
+# #Action php73-fcgi /cgi-bin/php73.fcgi
+# #Action php74-fcgi /cgi-bin/php74.fcgi
+# EOF
+
+# if [[ "$(rpm -E %{rhel})" == "6"  ]];
+# then
+#     sudo chkconfig httpd on
+# else 
+#     sudo systemctl enable httpd
+# fi
+
+}
 
 #!/bin/bash
 
@@ -1527,7 +1588,7 @@ function php_install()
             ;;
         debian)
 			# https://www.digitalocean.com/community/tutorials/how-to-run-multiple-php-versions-on-one-server-using-apache-and-php-fpm-on-ubuntu-18-04
-			sudo apt-get install software-properties-common -y
+			sudo apt-get install software-properties-common -y 
 			sudo apt-get update -y
 			# sudo add-apt-repository ppa:ondrej/php
 			for ext in $php_exts ; do  cmd+=" php$version-$ext"; done

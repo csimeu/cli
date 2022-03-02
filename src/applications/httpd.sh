@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-apache_install() {
+httpd_install() {
     
     case `plateform` in 
         redhat)
@@ -14,21 +14,21 @@ apache_install() {
             sudo chmod -R g+w /etc/httpd
             ;;
         debian)
-            ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
-            install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
-            a2enmod ssl
-            # a2enconf mod-wsgi
-            if ! getent passwd apache > /dev/null 2>&1; then
-                sudo groupadd --system apache
-                sudo useradd -d /var/apache2 -r -s /bin/false -g apache apache
-            fi
-            sudo chown apache:apache -R /etc/apache2
-            sudo chmod -R g+w /etc/apache2
+            exit 0
+            # ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
+            # install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
+            # a2enmod ssl
+            # # a2enconf mod-wsgi
+            # if ! getent passwd apache > /dev/null 2>&1; then
+            #     sudo groupadd --system apache
+            #     sudo useradd -d /var/apache2 -r -s /bin/false -g apache apache
+            # fi
+            # sudo chown apache:apache -R /etc/apache2
+            # sudo chmod -R g+w /etc/apache2
         ;;
     esac
 
     sudo mkdir -p /var/www/cgi-bin/
-    # sudo chown apache:apache -R /var/www/cgi-bin/
     sudo chown apache:apache -R /var/www
     sudo chmod -R g+w /var/www
 
