@@ -7,6 +7,11 @@ is_sourced () {
     return 1
 }
 
+# Checks if program was installed
+has_command() {
+    if [ -x "$(command -v ${1:-null})" ]; then true; else false; fi
+}
+
 # Checks if given string is an valid url
 function is_url()
 {
@@ -115,7 +120,7 @@ function is_debian()
     fi
 }
 
-function is_redhat() 
+function is_redhat()
 {    
     local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
     value=${value//\"/}
@@ -146,7 +151,24 @@ function install()
             execute apk add $@
         ;;
     esac
+}
 
+function remove() 
+{
+    # echo "sudo yum remove $@"
+    case `plateform` in 
+        debian)
+            execute apt-get remove $@
+        ;;
+            
+        redhat)
+            execute yum remove $@
+        ;;
+            
+        alpine)
+            execute apk remove $@
+        ;;
+    esac
 }
 
 

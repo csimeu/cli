@@ -29,46 +29,85 @@
 #   # fi
 # }
 
-function php_install()
+function php_remove()
 {
     set -e
     local version=
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
+	
+	local php_exts="fpm mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pear opcache json  "
+	local pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip   "
+	local cmd=
+	version=${version/./}
+	if ISDEFAULT; then
+		version=
+		exit 0
+	fi
 
+	if has_command php$version ; then 
+		for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
+		for ext in $pecl_exts ; do  cmd+=" php$version-pecl-$ext"; done
+		remove -y php$version $cmd
+	fi
+}
+
+function php_install()
+{
+	php_remove $@
+    set -e
+    local version=
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
 
 	local php_exts="fpm mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pear opcache json  "
 	local pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip   "
 
 	local cmd=
+	for ext in $php_exts ; do  phps+=" php$pversion-$ext"; done
+	for ext in $pecl_exts ; do  phps+=" php$pversion-pecl-$ext"; done
 
     case `plateform` in 
         redhat)
-			if [ -z $version ]; then 
-				echo "PHP_DEFAULT_VERSION=$PHP_DEFAULT_VERSION"
+			if ISDEFAULT; then
+				PHP_DEFAULT_VERSION=${version:-PHP_DEFAULT_VERSION}
+				version=
 				case $OS_VERSION in 
 					8)
-						if [ "$EUID" -ne 0 ]; then sudo yum module install -y php:remi-$PHP_DEFAULT_VERSION; else yum module install -y php:remi-$PHP_DEFAULT_VERSION; fi
-						# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
-						# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
+						execute yum module install -y php:remi-${$PHP_DEFAULT_VERSION};
 					;;
 					6|7)
-						if [ "$EUID" -ne 0 ]; then sudo yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./}; else yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./}; fi
-						# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
-						# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
+						execute yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./};
 					;;
 				esac
-			fi 
+			fi
+
+			# if [ -z $version ]; then 
+			# 	echo "PHP_DEFAULT_VERSION=$PHP_DEFAULT_VERSION"
+			# 	case $OS_VERSION in 
+			# 		8)
+			# 			if [ "$EUID" -ne 0 ]; then sudo yum module install -y php:remi-$PHP_DEFAULT_VERSION; else yum module install -y php:remi-$PHP_DEFAULT_VERSION; fi
+			# 			# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
+			# 			# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
+			# 		;;
+			# 		6|7)
+			# 			if [ "$EUID" -ne 0 ]; then sudo yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./}; else yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./}; fi
+			# 			# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
+			# 			# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
+			# 		;;
+			# 	esac
+			# fi 
 
 			version=${version/./}
-			local pversion=
-			if [ -n "$version" ]; then pversion=${version}-php;	fi
+			# local pversion=
+			# if [ -n "$version" ]; then pversion=${version}-php;	fi
 			#mcrypt mssql process
-			for ext in $php_exts ; do  cmd+=" php$pversion-$ext"; done
-			for ext in $pecl_exts ; do  cmd+=" php$pversion-pecl-$ext"; done
+			for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
+			for ext in $pecl_exts ; do  cmd+=" php$version-pecl-$ext"; done
 			# echo 
-			install -y php$pversion  $cmd
+			install -y php$version  $cmd
             ;;
         debian)
 			# https://www.digitalocean.com/community/tutorials/how-to-run-multiple-php-versions-on-one-server-using-apache-and-php-fpm-on-ubuntu-18-04
