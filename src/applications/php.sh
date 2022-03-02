@@ -65,18 +65,18 @@ function php_install()
 	local pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip   "
 
 	local cmd=
-	for ext in $php_exts ; do  phps+=" php$pversion-$ext"; done
-	for ext in $pecl_exts ; do  phps+=" php$pversion-pecl-$ext"; done
+	# for ext in $php_exts ; do  phps+=" php$pversion-$ext"; done
+	# for ext in $pecl_exts ; do  phps+=" php$pversion-pecl-$ext"; done
 
     case `plateform` in 
         redhat)
 			if [ "1" == "$IS_DEFAULT" ] ; then
-				PHP_DEFAULT_VERSION=${version:-PHP_DEFAULT_VERSION}
+				PHP_DEFAULT_VERSION=${version:-$PHP_DEFAULT_VERSION}
 				version=
 				echo "---> Set default php version '$PHP_DEFAULT_VERSION'"
 				case $OS_VERSION in 
 					8)
-						execute yum module install -y php:remi-${$PHP_DEFAULT_VERSION};
+						execute yum module install -y php:remi-${PHP_DEFAULT_VERSION};
 					;;
 					6|7)
 						execute yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./};
@@ -104,22 +104,22 @@ function php_install()
 			# local pversion=
 			# if [ -n "$version" ]; then pversion=${version}-php;	fi
 			#mcrypt mssql process
-			for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
-			for ext in $pecl_exts ; do  cmd+=" php$version-pecl-$ext"; done
-			echo "Install: php$version $cmd"
-			install -y php$version $cmd
             ;;
         debian)
 			# https://www.digitalocean.com/community/tutorials/how-to-run-multiple-php-versions-on-one-server-using-apache-and-php-fpm-on-ubuntu-18-04
 			sudo apt-get install software-properties-common -y 
 			sudo apt-get update -y
 			# sudo add-apt-repository ppa:ondrej/php
-			for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
-			for ext in $pecl_exts ; do  cmd+=" php$version-$ext"; done
-			install -y php$version  $cmd
+			# for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
+			# for ext in $pecl_exts ; do  cmd+=" php$version-$ext"; done
+			# install -y php$version  $cmd
         ;;
     esac
 
+	for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
+	for ext in $pecl_exts ; do  cmd+=" php$version-pecl-$ext"; done
+	echo "Install: php$version $cmd"
+	install -y php$version $cmd
 
 	
 
