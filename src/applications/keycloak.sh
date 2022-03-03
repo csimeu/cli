@@ -141,13 +141,13 @@ EOF
         sudo cat > /etc/systemd/system/$name.service << EOF
 [Unit]
 Description=The Keycloak Server $version
-After=syslog.target network.target tomcat.target
-Before=httpd.service
+After=syslog.target network.target
+#Before=httpd.service
 
 [Service]
 Environment=LAUNCH_JBOSS_IN_BACKGROUND=1
 EnvironmentFile=/etc/$appName/$name.conf
-User=keycloak
+#User=keycloak
 LimitNOFILE=102642
 PIDFile=$KEYCLOAK_HOME/keycloak.pid
 ExecStart=$KEYCLOAK_HOME/bin/launch.sh \$WILDFLY_MODE \$WILDFLY_CONFIG \$WILDFLY_BIND
@@ -195,12 +195,13 @@ keycloak_connect()
 
 keycloak_add_realm()
 {
+    keycloak_connect $@ 
+
     local home_dir=${KEYCLOAK_HOME:-"$INSTALL_DIR/keycloak"}
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    keycloak_connect
 
     kcadm=$home_dir/bin/kcadm.sh
     if [ ! -f $home_dir/bin/kcadm.sh ]; then
