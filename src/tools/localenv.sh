@@ -27,9 +27,10 @@ function localenv()
 
             if is_alphanum $varName; then
                 echo "${varName}=\"$varValue\""
-                sed -i -e "s|^$varName=*$|${varName}=\"${varValue/|//~/}\"|g" $filename
+                sed -i -e "s|^$varName=*$|${varName}=\"${varValue//|/\\|}\"|g" $filename
             fi
         done
+        sed -i -e 's/\r$//' $filename
         echo  ">> Cloned file '$file' in '$filename' with locals environments variables"
         exit 0
     fi
