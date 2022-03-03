@@ -2416,7 +2416,7 @@ function tomcat_install()
         sudo rm -rf $INSTALL_DIR/tomcat etc/tomcat
         sudo ln -s $INSTALL_DIR/tomcat-$version $INSTALL_DIR/tomcat
         sudo ln -s $INSTALL_DIR/tomcat/conf /etc/tomcat
-        if [ -f /etc/tomcat/tomcat.conf ]; then touch /etc/tomcat/tomcat.conf; fi
+        if [ ! -f /etc/tomcat/tomcat.conf ]; then touch /etc/tomcat/tomcat.conf; fi
         sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat /etc/tomcat
 
         if [[ "6" != $OS_VERSION ]]; then
