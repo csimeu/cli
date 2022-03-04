@@ -331,7 +331,7 @@ function read_application_arguments()
     IS_SUPERUSER=0
     local long="help,force,default,superuser,data::,name::,version::,file::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
-    long+=",realm::,url::,client::,audience::,secret::,login-theme::"
+    long+=",realm::,server-url::,server-user::,server-password::,admin-email::,url::,client::,audience::,secret::,login-theme::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
 
 	eval set -- "$TEMP"
@@ -363,6 +363,9 @@ function read_application_arguments()
             --realm) realm=${2:-"$realm"}; shift 2 ;;
             --email) email=${2:-"$email"}; shift 2 ;;
             --url) url=${2:-"$url"}; shift 2 ;;
+            --server-url) server_url=${2:-"$url"}; shift 2 ;;
+            --server-user) server_user=${2}; shift 2 ;;
+            --server-password) server_password=${2}; shift 2 ;;
             --client) client=${2:-"$client"}; shift 2 ;;
             --audience) audience=${2:-"$audience"}; shift 2 ;;
             --secret) secret=${2:-"$secret"}; shift 2 ;;
@@ -1107,15 +1110,16 @@ EOF
 keycloak_connect()
 {
     local home_dir=${KEYCLOAK_HOME:-"$INSTALL_DIR/keycloak"}
-    local url='http://localhost:8180/auth'
-    local user=${KEYCLOAK_ADMIN_USER:-admin}
-    local password=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    local server_url='http://localhost:8180/auth'
+    local server_user=${KEYCLOAK_ADMIN_USER:-admin}
+    local server_password=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    local mrealm=${1:-master}
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     if [ -f $home_dir/bin/kcadm.sh ]; then
-        $home_dir/bin/kcadm.sh config credentials --server $url --realm master --user $user --password $password
+        $home_dir/bin/kcadm.sh config credentials --realm $mrealm --server $server_url --user $server_user --password $server_password
     else
         echo "ERROR: not found kcadm.sh in $home_dir/bin/"
         exit 1
