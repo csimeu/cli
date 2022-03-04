@@ -1119,6 +1119,7 @@ keycloak_connect()
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     if [ -f $home_dir/bin/kcadm.sh ]; then
+        echo "$home_dir/bin/kcadm.sh config credentials --realm $mrealm --server $server_url --user $server_user --password $server_password"
         $home_dir/bin/kcadm.sh config credentials --realm $mrealm --server $server_url --user $server_user --password $server_password
     else
         echo "ERROR: not found kcadm.sh in $home_dir/bin/"
