@@ -7,7 +7,7 @@ function read_application_arguments()
     IS_SUPERUSER=0
     local long="help,force,default,superuser,data::,name::,version::,file::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
-    long+=",realm::,url::,client::,audience::,secret::,login-theme::"
+    long+=",realm::,server-url::,server-user::,server-password::,admin-email::,url::,client::,audience::,secret::,login-theme::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
 
 	eval set -- "$TEMP"
@@ -39,6 +39,9 @@ function read_application_arguments()
             --realm) realm=${2:-"$realm"}; shift 2 ;;
             --email) email=${2:-"$email"}; shift 2 ;;
             --url) url=${2:-"$url"}; shift 2 ;;
+            --server-url) server_url=${2:-"$url"}; shift 2 ;;
+            --server-user) server_user=${2}; shift 2 ;;
+            --server-password) server_password=${2}; shift 2 ;;
             --client) client=${2:-"$client"}; shift 2 ;;
             --audience) audience=${2:-"$audience"}; shift 2 ;;
             --secret) secret=${2:-"$secret"}; shift 2 ;;

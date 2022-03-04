@@ -178,15 +178,16 @@ EOF
 keycloak_connect()
 {
     local home_dir=${KEYCLOAK_HOME:-"$INSTALL_DIR/keycloak"}
-    local url='http://localhost:8180/auth'
-    local user=${KEYCLOAK_ADMIN_USER:-admin}
-    local password=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    local server_url='http://localhost:8180/auth'
+    local server_user=${KEYCLOAK_ADMIN_USER:-admin}
+    local server_password=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    local mrealm=${1:-master}
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     if [ -f $home_dir/bin/kcadm.sh ]; then
-        $home_dir/bin/kcadm.sh config credentials --server $url --realm master --user $user --password $password
+        $home_dir/bin/kcadm.sh config credentials --realm $mrealm --server $server_url --user $server_user --password $server_password
     else
         echo "ERROR: not found kcadm.sh in $home_dir/bin/"
         exit 1
