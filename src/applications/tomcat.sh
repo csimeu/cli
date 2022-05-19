@@ -101,6 +101,7 @@ function tomcat_install()
     sudo tar xf apache-tomcat-${version}.tar.gz -C $INSTALL_DIR
     sudo mv $INSTALL_DIR/apache-tomcat-$version $INSTALL_DIR/tomcat-$version
     sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat-$version
+    sed -i 's|<Connector port="8080".*|<Connector port="8080" URIEncoding="UTF-8"|' $INSTALL_DIR/tomcat-$version/conf/server.xml
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG tomcat $ADMIN_USER; fi
 
     if [ "1" == "$IS_DEFAULT" ]
