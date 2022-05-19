@@ -60,7 +60,46 @@ function blazegraph_install()
 
     sudo cp -f /tmp/releases/blazegraph-$version.war ${catalina_home}/webapps/${name}.war
 
+    sudo mkdir -p /var/lib/blazegraph/ /etc/blazegraph
+    sudo chown tomcat:tomcat /var/lib/blazegraph/ /etc/blazegraph
+    echo 'JAVA_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile=/etc/blazegraph/RWStore.properties"'| sudo tee -a /etc/tomcat/tomcat.conf
+    
+    if [ ! -f /etc/blazegraph/blazegraph.properties ]; then 
+        sudo cat > /etc/blazegraph/blazegraph.properties << EOF
+com.bigdata.rdf.sail.isolatableIndices=false
+com.bigdata.rdf.store.AbstractTripleStore.justify=true
+com.bigdata.rdf.sail.truthMaintenance=true
+com.bigdata.rdf.sail.namespace=islandora
+com.bigdata.rdf.store.AbstractTripleStore.quads=false
+com.bigdata.namespace.islandora.lex.com.bigdata.btree.BTree.branchingFactor=400
+com.bigdata.journal.Journal.groupCommit=false
+com.bigdata.namespace.islandora.spo.com.bigdata.btree.BTree.branchingFactor=1024
+com.bigdata.rdf.store.AbstractTripleStore.geoSpatial=false
+com.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false
+EOF
+    fi
 
+    if [ ! -f /etc/blazegraph/RWStore.properties ]; then 
+        sudo cat > /etc/blazegraph/RWStore.properties << EOF
+com.bigdata.journal.AbstractJournal.file=/var/lib/blazegraph/bigdata.jnl
+com.bigdata.journal.AbstractJournal.bufferMode=DiskRW
+com.bigdata.service.AbstractTransactionService.minReleaseAge=1
+com.bigdata.journal.Journal.groupCommit=false
+com.bigdata.btree.writeRetentionQueue.capacity=4000
+com.bigdata.btree.BTree.branchingFactor=128
+com.bigdata.journal.AbstractJournal.initialExtent=209715200
+com.bigdata.journal.AbstractJournal.maximumExtent=209715200
+com.bigdata.rdf.sail.truthMaintenance=false
+com.bigdata.rdf.store.AbstractTripleStore.quads=true
+com.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false
+com.bigdata.rdf.store.AbstractTripleStore.textIndex=false
+com.bigdata.rdf.store.AbstractTripleStore.axiomsClass=com.bigdata.rdf.axioms.NoAxioms
+com.bigdata.namespace.kb.lex.com.bigdata.btree.BTree.branchingFactor=400
+com.bigdata.namespace.kb.spo.com.bigdata.btree.BTree.branchingFactor=1024
+com.bigdata.journal.Journal.collectPlatformStatistics=false
+EOF
+    fi
+    
     # https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
 
 
