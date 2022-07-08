@@ -105,6 +105,8 @@ elasticsearch_install() {
     
     sed -i -e "s/^\#\# -Xms.*$/-Xms128m/" /etc/elasticsearch/jvm.options
     sed -i -e "s/^## -Xmx.*$/-Xmx128m/" /etc/elasticsearch/jvm.options
+    echo "transport.host: 127.0.0.1" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    echo "http.host: 0.0.0.0" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
 }
 
 kibana_install() {
