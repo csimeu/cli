@@ -39,7 +39,7 @@
 # }
 
 postgresql_add_repolist() {
-    case `plateform` in 
+    case `plateform_name` in 
         debian)
             if [[ ! -f /etc/apt/sources.list.d/pgdg.list ]]; then
                 cd /tmp
@@ -48,7 +48,11 @@ postgresql_add_repolist() {
                 sudo apt -y update
             fi
             ;;
-        redhat)
+        fedora)
+            if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
+                install -y https://download.postgresql.org/pub/repos/yum/reporpms/F-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+            fi
+        *)
             if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
                 install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
             fi

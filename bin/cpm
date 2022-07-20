@@ -1661,11 +1661,11 @@ function php_install()
 				version=
 				echo "---> Set default php version '$PHP_DEFAULT_VERSION'"
 				case $OS_VERSION in 
-					8)
-						execute yum module install -y php:remi-${PHP_DEFAULT_VERSION};
-					;;
 					6|7)
 						execute yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./};
+					;;
+					*)
+						execute yum module install -y php:remi-${PHP_DEFAULT_VERSION};
 					;;
 				esac
 			fi
@@ -1832,7 +1832,7 @@ EOF
 # }
 
 postgresql_add_repolist() {
-    case `plateform` in 
+    case `plateform_name` in 
         debian)
             if [[ ! -f /etc/apt/sources.list.d/pgdg.list ]]; then
                 cd /tmp
@@ -1841,7 +1841,11 @@ postgresql_add_repolist() {
                 sudo apt -y update
             fi
             ;;
-        redhat)
+        fedora)
+            if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
+                install -y https://download.postgresql.org/pub/repos/yum/reporpms/F-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+            fi
+        *)
             if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
                 install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
             fi

@@ -75,11 +75,11 @@ function php_install()
 				version=
 				echo "---> Set default php version '$PHP_DEFAULT_VERSION'"
 				case $OS_VERSION in 
-					8)
-						execute yum module install -y php:remi-${PHP_DEFAULT_VERSION};
-					;;
 					6|7)
 						execute yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./};
+					;;
+					*)
+						execute yum module install -y php:remi-${PHP_DEFAULT_VERSION};
 					;;
 				esac
 			fi
