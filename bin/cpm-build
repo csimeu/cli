@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-_HOME=${0/build_cpm/..}
+_HOME=${0/cpm-build/..}
 _SRC="$_HOME/src"
 _DIST="$_HOME/bin/cpm"
 
