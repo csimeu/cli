@@ -119,6 +119,7 @@ EOF
 
     # systemctl daemon-reload
     # systemctl enable prometheus
+    # sudo systemctl unmask prometheus.service
 
 
 }

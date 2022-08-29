@@ -9,4 +9,4 @@ echo "echo ${1:-1} > /proc/sys/vm/drop_caches"  && swapoff -a && swapon -a && pr
 # crontab -e
 # 0  2  *  *  *  /path/to/clearcache.sh 
 
-#  echo "0  2  *  *  *  /opt/csimeu/cli/bin/clearcache.sh" | crontab -
+#  echo "0  2  *  *  *  /opt/cenr/cenr-cli/bin/cpm-clearcache.sh" | crontab -
