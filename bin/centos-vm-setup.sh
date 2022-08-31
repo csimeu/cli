@@ -19,43 +19,6 @@ OS_PLATEFORM_NAME=$OS_PLATEFORM_NAME
 OS_PLATEFORM_VERSION=$OS_PLATEFORM_VERSION
 EOF
 
-# tee $CPM_HOME/bin/cenr-cli-install.sh << EOF > /dev/null
-# #!/bin/bash
-
-# CS_HOME=\${1:-/opt/cenr/cenr-cli}
-# sudo rm -rf \${CS_HOME}
-# sudo mkdir -p \${CS_HOME}
-# # sudo git clone https://github.com/csimeu/cli.git \${CS_HOME}
-# sudo git clone https://atelier-cen.cen.umontreal.ca/gitlab/cenr/cenr-cli.git \${CS_HOME}
-
-# sudo tee /etc/profile.d/cenr-cli.sh << FIN > /dev/null
-# #!/bin/bash
-
-# source /etc/environment
-
-# if ! [[ "\\\$PATH" =~ "\${CS_HOME}/bin:" ]]
-# then
-#     PATH="\${CS_HOME}/bin:\\\$PATH"
-# fi
-# export PATH=\\\$PATH OS_PLATEFORM_NAME OS_PLATEFORM_VERSION
-# alias vi=vim
-
-# git_branch() {
-#   git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
-# }
-
-# if [ -d \${CS_HOME}/env ];
-# then
-#   for file in \${CS_HOME}/env/*
-#   do 
-#     source \\\$file
-#   done
-# fi
-# FIN
-# EOF
-
-# sudo chmod +x $CPM_HOME/bin/cenr-cli-install.sh
-
 sudo tee /etc/gitconfig << EOF > /dev/null
 [http]
     sslVerify = false
@@ -115,11 +78,9 @@ sudo usermod -aG \$ADMIN_USER $OS_PLATEFORM_NAME
 sudo usermod -aG $OS_PLATEFORM_NAME \$ADMIN_USER
 sudo usermod -aG wheel \$ADMIN_USER
 sudo mkdir -p /home/\$ADMIN_USER/.ssh/
-
 sudo chown \$ADMIN_USER:\$ADMIN_USER -R /home/\$ADMIN_USER/.ssh/
 sudo chmod 600 -R /home/\$ADMIN_USER/.ssh/
 sudo chmod 700 /home/\$ADMIN_USER/.ssh/
-
 sudo tee /etc/sudoers.d/admin-init << FIN > /dev/null
 # User rules for \$ADMIN_USER
 %\$ADMIN_USER ALL=(ALL) 	ALL
