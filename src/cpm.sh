@@ -13,12 +13,12 @@ OS_NAME=$(plateform_name)
 OS_VERSION=$(plateform_version)
 mkdir -p /tmp/releases
 
-_home() {
-    echo ${0/cpm/..}
-}
+# _home() {
+#     echo ${0/cpm-cli/..}
+# }
 
 _self_update() {
-    cd `_home` && git pull origin master
+    cd ${CPM_HOME:-/opt/cenr/cpm-cli} && git pull origin master
 }
 
 _run_cpm() {

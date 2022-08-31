@@ -1,6 +1,6 @@
-# Csimeu Package Manager (CPM)
+# CENR Package Manager (CPM)
 
-CLI for csimeu
+CLI for CENR
 
 ## Global variables
 
@@ -16,6 +16,7 @@ GROUP_ADMIN=
 GIT_DOMAIN=${GIT_DOMAIN:-"github.com"}
 ```
 
+https://atelier-cen.cen.umontreal.ca/gitlab/cenr/cpm-cli.git
 ## USER
 cpm user:add --help
 cpm user:update --help
