@@ -1532,12 +1532,14 @@ mysql_update_password() {
 #!/bin/bash
 
 
-nexcloud_install() {
+nextcloud_install() {
     _VERSION=${1:-"latest"}
     _DESTINATION=${2:-"/var/www"}
     # Download
     cd $_DESTINATION && \
-    curl -fSL https://download.nextcloud.com/server/releases/$_VERSION.tar.bz2  -o nextcloud-$_VERSION.tar.bz2 && \
+    https://download.nextcloud.com/server/releases/nextcloud-23.0.7.tar.bz2
+    _VERSION=23.0.7
+    curl -fSL https://download.nextcloud.com/server/releases/nextcloud-$_VERSION.tar.bz2  -o nextcloud-$_VERSION.tar.bz2 && \
     tar -jxf nextcloud-$_VERSION.tar.bz2  # Extract files
 
     #  Create nextcloud data folder
@@ -2162,6 +2164,7 @@ EOF
 
     # systemctl daemon-reload
     # systemctl enable prometheus
+    # sudo systemctl unmask prometheus.service
 
 
 }
@@ -3764,12 +3767,12 @@ OS_NAME=$(plateform_name)
 OS_VERSION=$(plateform_version)
 mkdir -p /tmp/releases
 
-_home() {
-    echo ${0/cpm/..}
-}
+# _home() {
+#     echo ${0/cpm-cli/..}
+# }
 
 _self_update() {
-    cd `_home` && git pull origin master
+    cd ${CPM_HOME:-/opt/cenr/cpm-cli} && git pull origin master
 }
 
 _run_cpm() {
