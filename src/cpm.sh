@@ -47,6 +47,11 @@ _run_cpm() {
             _self_update $@
             exit 0;
             ;;
+        "node:configure")
+            shift
+            $(awk -F= '/^ID=/{print $2}' /etc/os-release)-vm-setup.sh
+            exit 0;
+            ;;
         *)
             cmd="${cmd//:/_}" 
             shift
