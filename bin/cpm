@@ -3803,7 +3803,7 @@ _run_cpm() {
             ;;
         "node:configure")
             shift
-            $(awk -F= '/^ID=/{print $2}' /etc/os-release)-vm-setup.sh
+            source ~/environment &&  $(awk -F= '/^ID=/{print $2}' /etc/os-release)-vm-setup.sh $@
             exit 0;
             ;;
         *)
