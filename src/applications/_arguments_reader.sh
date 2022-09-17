@@ -5,7 +5,7 @@ function read_application_arguments()
 {
     ISDEFAULT=false;
     IS_SUPERUSER=0
-    local long="help,force,default,superuser,data::,name::,version::,file::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,data-dir::,home-dir::"
+    local long="help,force,default,superuser,data::,name::,version::,file::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,config-dir::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,server-url::,server-user::,server-password::,admin-email::,url::,client::,audience::,secret::,login-theme::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
@@ -19,6 +19,7 @@ function read_application_arguments()
             --data) data=${2%"/"} ; shift 2 ;;
             --data-dir) data_dir=${2%"/"} ; shift 2 ;;
             --home-dir) home_dir=${2%"/"} ; shift 2 ;;
+            --config-dir) config_dir=${2%"/"} ; shift 2 ;;
             --name) name=${2} ; shift 2 ;;
             --file) file=${2}; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;

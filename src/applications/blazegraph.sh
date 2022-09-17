@@ -12,9 +12,10 @@ function blazegraph_install()
     local version=$BLAZEGRAPH_DEFAULT_VERSION
     local data=/var/lib
     local name=
-    local catalina_home=
-    local fcrepo_config=
-    local file_config=
+    local catalina_home=$CATALINA_HOME
+    local data_dir=
+    local config_dir=
+    # local file_config=
     # echo $@
 
     local _parameters=
@@ -25,7 +26,7 @@ function blazegraph_install()
     name=${name//./-/}
 
     if [ '1' == $IS_DEFAULT ]; then 
-        catalina_home=/usr/share/tomcat; 
+        # catalina_home=/usr/share/tomcat; 
         name=$appName
     fi
 
@@ -60,12 +61,25 @@ function blazegraph_install()
 
     sudo cp -f /tmp/releases/blazegraph-$version.war ${catalina_home}/webapps/${name}.war
 
-    sudo mkdir -p /var/lib/blazegraph/ /etc/blazegraph
-    sudo chown tomcat:tomcat /var/lib/blazegraph/ /etc/blazegraph
-    echo 'JAVA_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile=/etc/blazegraph/RWStore.properties"'| sudo tee -a /etc/tomcat/tomcat.conf
+    if [ -z $data_dir ]; then
+        data_dir="${data}/${name}"
+    fi
+
+    if [ -z $config_dir ]; then
+        config_dir="/etc/${name}"
+    fi
+
+    sudo mkdir -p $data_dir $config_dir
+    # sudo chown tomcat:tomcat $data_dir/ $config_dir
+    if [ -d /etc/tomcat ]; then
+        echo 'JAVA_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"'| sudo tee -a /etc/tomcat/$name.conf
+    fi
+    if [ -f /etc/profile.d/java.sh ]; then
+        echo 'export JAVA_OPTS="$JAVA_OPTS -Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"' | sudo tee -a /etc/profile.d/java.sh
+    fi
     
-    if [ ! -f /etc/blazegraph/blazegraph.properties ]; then 
-        sudo cat > /etc/blazegraph/blazegraph.properties << EOF
+    if [ ! -f $config_dir/blazegraph.properties ]; then 
+        sudo cat > $config_dir/blazegraph.properties << EOF
 com.bigdata.rdf.sail.isolatableIndices=false
 com.bigdata.rdf.store.AbstractTripleStore.justify=true
 com.bigdata.rdf.sail.truthMaintenance=true
@@ -79,9 +93,9 @@ com.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false
 EOF
     fi
 
-    if [ ! -f /etc/blazegraph/RWStore.properties ]; then 
-        sudo cat > /etc/blazegraph/RWStore.properties << EOF
-com.bigdata.journal.AbstractJournal.file=/var/lib/blazegraph/bigdata.jnl
+    if [ ! -f $config_dir/RWStore.properties ]; then 
+        sudo cat > $config_dir/RWStore.properties << EOF
+com.bigdata.journal.AbstractJournal.file=$data_dir/bigdata.jnl
 com.bigdata.journal.AbstractJournal.bufferMode=DiskRW
 com.bigdata.service.AbstractTransactionService.minReleaseAge=1
 com.bigdata.journal.Journal.groupCommit=false
@@ -103,8 +117,8 @@ EOF
     # https://nvbach.blogspot.com/2019/04/installing-blazegraph-on-linux-debian.html
 
 
-    # mkdir -p /etc/blazegraph/
-    # chown tomcat:tomcat -R /etc/blazegraph/
+    # mkdir -p $config_dir/
+    # chown tomcat:tomcat -R $config_dir/
     echo ">> Installed application '$appName' (version = $version) in ${catalina_home}/webapps/${name}.war"
 }
 
