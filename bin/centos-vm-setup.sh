@@ -78,9 +78,7 @@ sudo usermod -aG \$ADMIN_USER $OS_PLATEFORM_NAME
 sudo usermod -aG $OS_PLATEFORM_NAME \$ADMIN_USER
 sudo usermod -aG wheel \$ADMIN_USER
 sudo mkdir -p /home/\$ADMIN_USER/.ssh/
-sudo chown \$ADMIN_USER:\$ADMIN_USER -R /home/\$ADMIN_USER/.ssh/
-sudo chmod 600 -R /home/\$ADMIN_USER/.ssh/
-sudo chmod 700 /home/\$ADMIN_USER/.ssh/
+#
 sudo tee /etc/sudoers.d/admin-init << FIN > /dev/null
 # User rules for \$ADMIN_USER
 %\$ADMIN_USER ALL=(ALL) 	ALL

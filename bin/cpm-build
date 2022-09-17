@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-_HOME=${0/build_cpm/..}
+_HOME=${0/cpm-build/..}
 _SRC="$_HOME/src"
 _DIST="$_HOME/bin/cpm"
 
@@ -13,5 +13,5 @@ $_SRC/*/*.sh \
 $_SRC/cpm.sh \
 > $DIST
 
-sed -i -e 's/\r$//' $DIST
+# sed -i -e 's/\r$//' $DIST
 chmod +x $DIST

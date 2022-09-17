@@ -12,7 +12,7 @@ function fcrepo_install()
     local version=$FCREPO_DEFAULT_VERSION
     local data=/var/lib
     local name=
-    local catalina_home=
+    local catalina_home=$CATALINA_HOME
     local fcrepo_config=
     local file_config=
     # echo $@
@@ -25,7 +25,7 @@ function fcrepo_install()
     name=${name//./-/}
 
     if [ '1' == $IS_DEFAULT ]; then 
-        catalina_home=/usr/share/tomcat; 
+        # catalina_home=/usr/share/tomcat; 
         name=fcrepo
     fi
 
@@ -69,16 +69,20 @@ function fcrepo_install()
     #
     local ModeshapeConfig=file-simple
     local JDBCConfig=
-  # ARG FCREPO_DIR=${APP_DIR}/fcrepo
-    sudo mkdir -p "${data}/${name}" && sudo chown tomcat:tomcat -R ${data}/${name}
+
+    if [ -z $data_dir ]; then
+        data="${data}/${name}"
+    fi
+    # ARG FCREPO_DIR=${APP_DIR}/fcrepo
+    sudo mkdir -p $data_dir && sudo chown tomcat:tomcat -R $data_dir
     if [ -f $catalina_home/conf/tomcat.conf ]; then 
         sudo sed -i -e "/JAVA_OPTS=\"-Dfcrepo.*/d" $catalina_home/conf/tomcat.conf
     fi
-    sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='${data}/${name}' -Dfcrepo.audit.container=/audit"' >> $catalina_home/conf/tomcat.conf \
+    sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='$data_dir' -Dfcrepo.audit.container=/audit"' >> $catalina_home/conf/tomcat.conf \
     # sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 
-    sudo mkdir -p /etc/${name}
-    sudo chown tomcat:tomcat /etc/${name}
+    # sudo mkdir -p /etc/${name}
+    # sudo chown tomcat:tomcat /etc/${name}
 
     echo ">> Installed application '$name' (version = $version) in ${catalina_home}/webapps/${name}.war"
 }

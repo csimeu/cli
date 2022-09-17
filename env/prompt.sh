@@ -11,3 +11,7 @@ then # you are root, set red color prompt
 else # normal
   export PS1='\[\033[1;34m\]\u@\H:\[\033[1;33m\]\w \[\033[1;32m\]$(git_branch)\n\[\033[0m\]└─ $ '
 fi
+
+# export PS1='%F{cyan}%n@%m%f %F{green}%~%f %F{yellow}$%f '
+# export PS1="%F{cyan}%n@%m%f %F{green}%~%f%F{blue}[$(git_branch)]%f \n%F{yellow}└─ $%f "
+# export PS1=$'\e[1;34m%n@%m:\e[1;33m %~ \e[1;32m$(git_branch)\n\e[0m└─ $'

@@ -9,8 +9,12 @@
 
 
 # Stop on first error [duplicate]
-OS_NAME=$(plateform_name)
-OS_VERSION=$(plateform_version)
+if [ -f /etc/os-release ];
+then 
+    OS_NAME=$(plateform_name)
+    OS_VERSION=$(plateform_version)
+fi
+
 mkdir -p /tmp/releases
 
 # _home() {
