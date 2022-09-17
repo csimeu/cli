@@ -63,7 +63,7 @@ function solr_install()
     # sudo mkdir -p ${data_dir} $INSTALL_DIR
     tar -xzf solr-"$version".tgz solr-"$version"/bin/install_solr_service.sh --strip-components=2
 
-    sudo ./install_solr_service.sh solr-"$version".tgz -i "${INSTALL_DIR}" -d "$data_dir" -p "${port}" 
+    ./install_solr_service.sh solr-"$version".tgz -i "${INSTALL_DIR}" -d "$data_dir" -p "${port}" 
     # if [ -n "$data_dir" ]; then 
     #     ./install_solr_service.sh solr-"$version".tgz -i "${INSTALL_DIR}" -d "$data_dir" -p "${port}" 
     # else
