@@ -18,11 +18,11 @@ fi
 mkdir -p /tmp/releases
 
 # _home() {
-#     echo ${0/cpm-cli/..}
+#     echo ${0/cenr-cli/..}
 # }
 
 _self_update() {
-    cd ${CPM_HOME:-/opt/cenr/cpm-cli} && git pull origin master
+    cd ${CPM_HOME:-/opt/cenr/cenr-cli} && git pull origin master
 }
 
 _run_cpm() {

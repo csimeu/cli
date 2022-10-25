@@ -81,7 +81,6 @@ function camel_to_snake()
 
 function is_alphanum() 
 {    
-    value=${value//\"/}
     regex="^[a-zA-Z0-9_]+$"
 
     if [[ $1 =~ $regex ]]
@@ -1396,8 +1395,9 @@ function mysql_install()
 
     case `plateform` in 
         redhat)
-			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
-			# mysqld --initialize-insecure --user=mysql; 
+			/usr/sbin/mysqld --initialize-insecure  --user=mysql
+			/usr/bin/mysqld_pre_systemd
+			# if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
             ;;
         debian)
 			execute systemctl enable mysql;
@@ -3763,11 +3763,11 @@ fi
 mkdir -p /tmp/releases
 
 # _home() {
-#     echo ${0/cpm-cli/..}
+#     echo ${0/cenr-cli/..}
 # }
 
 _self_update() {
-    cd ${CPM_HOME:-/opt/cenr/cpm-cli} && git pull origin master
+    cd ${CPM_HOME:-/opt/cenr/cenr-cli} && git pull origin master
 }
 
 _run_cpm() {

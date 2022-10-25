@@ -57,8 +57,9 @@ function mysql_install()
 
     case `plateform` in 
         redhat)
-			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
-			# mysqld --initialize-insecure --user=mysql; 
+			/usr/sbin/mysqld --initialize-insecure  --user=mysql
+			/usr/bin/mysqld_pre_systemd
+			# if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
             ;;
         debian)
 			execute systemctl enable mysql;

@@ -40,7 +40,6 @@ function camel_to_snake()
 
 function is_alphanum() 
 {    
-    value=${value//\"/}
     regex="^[a-zA-Z0-9_]+$"
 
     if [[ $1 =~ $regex ]]
