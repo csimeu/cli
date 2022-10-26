@@ -25,12 +25,12 @@ function fcrepo_install()
     name=${name//./-/}
 
     if [ '1' == $IS_DEFAULT ]; then 
-        # catalina_home=/usr/share/tomcat; 
+        catalina_home=/usr/share/tomcat; 
         name=fcrepo
     fi
 
     if [ -z $catalina_home ]; then
-        echo "If not --default, --catalina_home value is required"
+        echo " --catalina_home value is required"
         exit 1
     fi
 
@@ -81,6 +81,7 @@ function fcrepo_install()
     sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='$data_dir' -Dfcrepo.audit.container=/audit"' >> $catalina_home/conf/tomcat.conf \
     # sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 
+    sudo echo "JAVA_OPTS='$JAVA_OPTS -Dfcrepo.modeshape.configuration=classpath:/config/$ModeshapeConfig/repository.json $JDBCConfig -Dfcrepo.home=$data_dir -Dfcrepo.audit.container=/audit'"  >> /etc/profile.d/fcrepo.sh
     # sudo mkdir -p /etc/${name}
     # sudo chown tomcat:tomcat /etc/${name}
 

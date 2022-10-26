@@ -25,7 +25,7 @@ function mysql_install()
 			# fixed Public key for mysql-community-xxx.rpm is not installed https://segmentfault.com/a/1190000041433962
 			rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
 
-			if [[ $_version =~ ^8.*$ ]];
+			if [[ $version =~ ^8.*$ ]];
 			then 
 				MYSQL_RPM=mysql80-community-release-el$OS_VERSION-1.noarch.rpm
 			fi
@@ -39,7 +39,7 @@ function mysql_install()
             ;;
         debian)
 			local MYSQL_DEB="mysql-apt-config_0.8.16-1_all.deb"
-			if [[ $_version =~ ^8.*$ ]];
+			if [[ $version =~ ^8.*$ ]];
 			then 
 				# wget https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb
 				if [[ ! -f /tmp/releases/$MYSQL_DEB ]]; then
@@ -59,7 +59,7 @@ function mysql_install()
         redhat)
 			/usr/sbin/mysqld --initialize-insecure  --user=mysql
 			/usr/bin/mysqld_pre_systemd
-			# if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
+			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
             ;;
         debian)
 			execute systemctl enable mysql;

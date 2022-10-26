@@ -98,10 +98,13 @@ function postgresql_install()
     local _postgresql_version=$POSTGRESQL_DEFAULT_VERSION
     local _postgis_version=
     local _parameters=
+    local version=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     postgresql_add_repolist
+    
+    _postgresql_version=${version:-$_postgis_version}
 
     case `plateform` in 
         debian)

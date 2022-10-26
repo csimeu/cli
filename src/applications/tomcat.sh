@@ -113,8 +113,13 @@ function tomcat_install()
         if [ ! -f /etc/tomcat/tomcat.conf ]; then touch /etc/tomcat/tomcat.conf; fi
         sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat /etc/tomcat
 
-        if [[ "6" != $OS_VERSION ]]; then
+        echo "export CATALINA_HOME=${INSTALL_DIR}/tomcat" > /etc/profile.d/tomcat.sh
+        echo "CATALINA_BASE=${CATALINA_HOME}"  >> /etc/profile.d/tomcat.sh
+        echo "JAVA_OPTS='$JAVA_OPTS -Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true'"  >> /etc/profile.d/tomcat.sh
+        echo "CATALINA_OPTS='-Xms512M -Xmx512M -server -XX:+UseParallelGC'"  >> /etc/profile.d/tomcat.sh
+        source /etc/profile.d/tomcat.sh
 
+        if [[ "6" != $OS_VERSION ]]; then
             sudo cat > /etc/systemd/system/tomcat.service << EOF
 [Unit]
 Description=Tomcat $version Server
@@ -131,7 +136,7 @@ Environment='JAVA_OPTS=-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true
 Environment=CATALINA_HOME=$INSTALL_DIR/tomcat
 Environment=CATALINA_BASE=$INSTALL_DIR/tomcat
 Environment=CATALINA_PID=$INSTALL_DIR/tomcat/temp/tomcat.pid
-Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'
+Environment='CATALINA_OPTS=-Xms512M -Xmx512M -server -XX:+UseParallelGC'
 
 ExecStart=$INSTALL_DIR/tomcat/bin/startup.sh
 ExecStop=$INSTALL_DIR/tomcat/bin/shutdown.sh 

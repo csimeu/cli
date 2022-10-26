@@ -12,8 +12,8 @@ INSTALL_DIR=${INSTALL_DIR:-"/usr/share"}
 
 POSTGRESQL_RELEASES="11 12 13 14"
 POSTGIS_RELEASES="2.4 2.5 3"
-POSTGRESQL_DEFAULT_VERSION=${POSTGRESQL_DEFAULT_VERSION:-"11"}
-POSTGIS_DEFAULT_VERSION=${POSTGIS_DEFAULT_VERSION:-"2.4"}
+POSTGRESQL_DEFAULT_VERSION=${POSTGRESQL_DEFAULT_VERSION:-"13"}
+POSTGIS_DEFAULT_VERSION=${POSTGIS_DEFAULT_VERSION:-"3.3"}
 
 
 TOMCAT_RELEASES="7 8 9"
@@ -33,7 +33,7 @@ KEYCLOAK_DEFAULT_VERSION=${KEYCLOAK_DEFAULT_VERSION:-"8.0.2"}
 
 
 MYSQL_RELEASES="5 8"
-MYSQL_DEFAULT_VERSION=${MYSQL_DEFAULT_VERSION:-"5"}
+MYSQL_DEFAULT_VERSION=${MYSQL_DEFAULT_VERSION:-"8"}
 
 SORL_RELEASES="7 8"
 SORL_DEFAULT_VERSION=${SORL_DEFAULT_VERSION:-"8"}
@@ -616,10 +616,12 @@ elasticsearch_install() {
 
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG elasticsearch $ADMIN_USER; fi
     
-    sed -i -e "s/^\#\# -Xms.*$/-Xms128m/" /etc/elasticsearch/jvm.options
-    sed -i -e "s/^## -Xmx.*$/-Xmx128m/" /etc/elasticsearch/jvm.options
-    echo "transport.host: 127.0.0.1" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
-    echo "http.host: 0.0.0.0" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/^\#\# -Xms.*$/-Xms512m/" /etc/elasticsearch/jvm.options
+    sed -i -e "s/^## -Xmx.*$/-Xmx512m/" /etc/elasticsearch/jvm.options
+    sed -i -e "s/^#transport.host: .*/transport.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/http.host: .*/http.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/^#http.host: .*/http.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    execute systemctl enable elasticsearch
 }
 
 kibana_install() {
@@ -629,6 +631,7 @@ kibana_install() {
     
     elk_import_repolist
     install -y kibana
+    execute systemctl enable kibana
 }
 
 ## detect if a script is being sourced or not
@@ -668,12 +671,12 @@ function fcrepo_install()
     name=${name//./-/}
 
     if [ '1' == $IS_DEFAULT ]; then 
-        # catalina_home=/usr/share/tomcat; 
+        catalina_home=/usr/share/tomcat; 
         name=fcrepo
     fi
 
     if [ -z $catalina_home ]; then
-        echo "If not --default, --catalina_home value is required"
+        echo " --catalina_home value is required"
         exit 1
     fi
 
@@ -724,6 +727,7 @@ function fcrepo_install()
     sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='$data_dir' -Dfcrepo.audit.container=/audit"' >> $catalina_home/conf/tomcat.conf \
     # sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 
+    sudo echo "JAVA_OPTS='$JAVA_OPTS -Dfcrepo.modeshape.configuration=classpath:/config/$ModeshapeConfig/repository.json $JDBCConfig -Dfcrepo.home=$data_dir -Dfcrepo.audit.container=/audit'"  >> /etc/profile.d/fcrepo.sh
     # sudo mkdir -p /etc/${name}
     # sudo chown tomcat:tomcat /etc/${name}
 
@@ -1363,7 +1367,7 @@ function mysql_install()
 			# fixed Public key for mysql-community-xxx.rpm is not installed https://segmentfault.com/a/1190000041433962
 			rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
 
-			if [[ $_version =~ ^8.*$ ]];
+			if [[ $version =~ ^8.*$ ]];
 			then 
 				MYSQL_RPM=mysql80-community-release-el$OS_VERSION-1.noarch.rpm
 			fi
@@ -1377,7 +1381,7 @@ function mysql_install()
             ;;
         debian)
 			local MYSQL_DEB="mysql-apt-config_0.8.16-1_all.deb"
-			if [[ $_version =~ ^8.*$ ]];
+			if [[ $version =~ ^8.*$ ]];
 			then 
 				# wget https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb
 				if [[ ! -f /tmp/releases/$MYSQL_DEB ]]; then
@@ -1397,7 +1401,7 @@ function mysql_install()
         redhat)
 			/usr/sbin/mysqld --initialize-insecure  --user=mysql
 			/usr/bin/mysqld_pre_systemd
-			# if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
+			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
             ;;
         debian)
 			execute systemctl enable mysql;
@@ -1913,10 +1917,13 @@ function postgresql_install()
     local _postgresql_version=$POSTGRESQL_DEFAULT_VERSION
     local _postgis_version=
     local _parameters=
+    local version=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     postgresql_add_repolist
+    
+    _postgresql_version=${version:-$_postgis_version}
 
     case `plateform` in 
         debian)
@@ -2470,8 +2477,13 @@ function tomcat_install()
         if [ ! -f /etc/tomcat/tomcat.conf ]; then touch /etc/tomcat/tomcat.conf; fi
         sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat /etc/tomcat
 
-        if [[ "6" != $OS_VERSION ]]; then
+        echo "export CATALINA_HOME=${INSTALL_DIR}/tomcat" > /etc/profile.d/tomcat.sh
+        echo "CATALINA_BASE=${CATALINA_HOME}"  >> /etc/profile.d/tomcat.sh
+        echo "JAVA_OPTS='$JAVA_OPTS -Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true'"  >> /etc/profile.d/tomcat.sh
+        echo "CATALINA_OPTS='-Xms512M -Xmx512M -server -XX:+UseParallelGC'"  >> /etc/profile.d/tomcat.sh
+        source /etc/profile.d/tomcat.sh
 
+        if [[ "6" != $OS_VERSION ]]; then
             sudo cat > /etc/systemd/system/tomcat.service << EOF
 [Unit]
 Description=Tomcat $version Server
@@ -2488,7 +2500,7 @@ Environment='JAVA_OPTS=-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true
 Environment=CATALINA_HOME=$INSTALL_DIR/tomcat
 Environment=CATALINA_BASE=$INSTALL_DIR/tomcat
 Environment=CATALINA_PID=$INSTALL_DIR/tomcat/temp/tomcat.pid
-Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'
+Environment='CATALINA_OPTS=-Xms512M -Xmx512M -server -XX:+UseParallelGC'
 
 ExecStart=$INSTALL_DIR/tomcat/bin/startup.sh
 ExecStop=$INSTALL_DIR/tomcat/bin/shutdown.sh 

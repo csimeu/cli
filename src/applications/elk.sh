@@ -103,10 +103,12 @@ elasticsearch_install() {
 
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG elasticsearch $ADMIN_USER; fi
     
-    sed -i -e "s/^\#\# -Xms.*$/-Xms128m/" /etc/elasticsearch/jvm.options
-    sed -i -e "s/^## -Xmx.*$/-Xmx128m/" /etc/elasticsearch/jvm.options
-    echo "transport.host: 127.0.0.1" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
-    echo "http.host: 0.0.0.0" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/^\#\# -Xms.*$/-Xms512m/" /etc/elasticsearch/jvm.options
+    sed -i -e "s/^## -Xmx.*$/-Xmx512m/" /etc/elasticsearch/jvm.options
+    sed -i -e "s/^#transport.host: .*/transport.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/http.host: .*/http.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/^#http.host: .*/http.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    execute systemctl enable elasticsearch
 }
 
 kibana_install() {
@@ -116,6 +118,7 @@ kibana_install() {
     
     elk_import_repolist
     install -y kibana
+    execute systemctl enable kibana
 }
 
 ## detect if a script is being sourced or not
