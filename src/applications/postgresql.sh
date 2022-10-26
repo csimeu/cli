@@ -208,7 +208,7 @@ postgresql_setup(){
 
     if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
         echo "Init postgresql $version"
-        sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -o "-p $port" init
+        sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data init
         # /usr/pgsql-${version}/bin/postgresql-${version}-setup initdb
     fi
 
@@ -223,8 +223,8 @@ postgresql_setup(){
         sudo touch $log
     fi
     chown posgtres:postgres $log
-    # sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log -o "-p $port" restart
-    sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log  restart
+    sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log -o "-p $port" restart
+    # sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log  restart
 	# systemctl restart postgresql-${version}
 
 	sleep 2
