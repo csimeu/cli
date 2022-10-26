@@ -1956,7 +1956,7 @@ function postgresql_install()
                 fi
             fi
             install -y postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server postgresql-contrib-$_postgresql_version
-            postgresql_setup --data=$data --log=$log --port=$port
+            postgresql_setup --version=$_postgresql_version --data=$data --log=$log --port=$port
         ;;
     esac
     
@@ -2046,7 +2046,8 @@ postgresql_setup(){
         sudo touch $log
     fi
     chown posgtres:postgres $log
-    sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log -o "-p $port" restart
+    # sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log -o "-p $port" restart
+    sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log  restart
 	# systemctl restart postgresql-${version}
 
 	sleep 2
