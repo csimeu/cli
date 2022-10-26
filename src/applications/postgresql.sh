@@ -212,10 +212,10 @@ postgresql_setup(){
         # /usr/pgsql-${version}/bin/postgresql-${version}-setup initdb
     fi
 
-    if ! grep '0.0.0.0/0' $data/pg_hba.conf ; then
-        echo 'host      all     all     0.0.0.0/0 md5' >> $data/pg_hba.conf
+    if ! sudo -u postgres grep '0.0.0.0/0' $data/pg_hba.conf ; then
+        echo 'host      all     all     0.0.0.0/0 md5' | sudo -u postgres tee -a $data/pg_hba.conf
     fi
-    sed -i -e 's/ident$/md5/g' $data/pg_hba.conf
+    sudo -u postgres sed -i -e 's/ident$/md5/g' $data/pg_hba.conf
 
 	systemctl enable postgresql-${version}
 
