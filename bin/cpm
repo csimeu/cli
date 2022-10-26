@@ -328,11 +328,12 @@ function read_application_arguments()
 {
     ISDEFAULT=false;
     IS_SUPERUSER=0
-    local long="help,force,default,superuser,data::,name::,version::,file::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,config-dir::,data-dir::,home-dir::"
+    local long="help,force,default,superuser,data::,name::,version::,file::,log::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,config-dir::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,server-url::,server-user::,server-password::,admin-email::,url::,client::,audience::,secret::,login-theme::"
+    long+=",postgresql-version::,postgis-version::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
-
+postgresql_version
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
     while true ; do
@@ -345,8 +346,11 @@ function read_application_arguments()
             --config-dir) config_dir=${2%"/"} ; shift 2 ;;
             --name) name=${2} ; shift 2 ;;
             --file) file=${2}; shift 2 ;;
+            --log) log=${2}; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
             --version) version=${2:-"$version"}; shift 2 ;;
+            --postgis-version) postgis_version=${2}; shift 2 ;;
+            --postgresql-version) postgresql_version=${2}; shift 2 ;;
             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
             --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"}; shift 2 ;;
@@ -618,9 +622,9 @@ elasticsearch_install() {
     
     sed -i -e "s/^\#\# -Xms.*$/-Xms512m/" /etc/elasticsearch/jvm.options
     sed -i -e "s/^## -Xmx.*$/-Xmx512m/" /etc/elasticsearch/jvm.options
-    sed -i -e "s/^#transport.host: .*/transport.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
-    sed -i -e "s/http.host: .*/http.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
-    sed -i -e "s/^#http.host: .*/http.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/^#transport.host: .*/transport.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/^#http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
     execute systemctl enable elasticsearch
 }
 
@@ -1891,6 +1895,8 @@ function postgis_install()
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     postgresql_add_repolist
+    _postgresql_version=${postgresql_version:-$_postgresql_version}
+    _postgis_version=${postgis_version:-$_postgis_version}
 
     case `plateform` in 
         debian)
@@ -1918,12 +1924,22 @@ function postgresql_install()
     local _postgis_version=
     local _parameters=
     local version=
+    local data=
+    local log=
+    local port=5432
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     postgresql_add_repolist
     
-    _postgresql_version=${version:-$_postgis_version}
+    _postgresql_version=${version:-$_postgresql_version}
+    _postgis_version=${postgis_version:-$_postgis_version}
+    data=${data:-"/var/lib/pgsql/$_postgresql_version/data"}
+    log=${log:-"var/log/postgresql-$_postgresql_version.log"}
+
+    # echo "PGDATA=/var/lib/pgsql/$_postgresql_version/data"
+    echo "export PATH=$PATH:/usr/pgsql-${_postgresql_version}/bin" | sudo tee -a /etc/profile.d/postgresql.sh
+    # source /etc/profile.d/postgresql.sh
 
     case `plateform` in 
         debian)
@@ -1940,7 +1956,7 @@ function postgresql_install()
                 fi
             fi
             install -y postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server postgresql-contrib-$_postgresql_version
-            
+            postgresql_setup --data=$data --log=$log --port=$port
         ;;
     esac
     
@@ -2003,16 +2019,20 @@ postgresql_createdb(){
 postgresql_setup(){
     local version=11
     local data=
+    local log=
+    local port=5432
 
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    local data=${data:-"/var/lib/pgsql/${version}/data"}
+    data=${data:-"/var/lib/pgsql/${version}/data"}
+    log=${log:-"/var/log/postgresql-${version}.log"}
 
     if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
         echo "Init postgresql $version"
-        /usr/pgsql-${version}/bin/postgresql-${version}-setup initdb
+        sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -o "-p $port" init
+        # /usr/pgsql-${version}/bin/postgresql-${version}-setup initdb
     fi
 
     if ! grep '0.0.0.0/0' $data/pg_hba.conf ; then
@@ -2020,8 +2040,15 @@ postgresql_setup(){
     fi
     sed -i -e 's/ident$/md5/g' $data/pg_hba.conf
 
-	systemctl enable postgresql-${version} --now
-	systemctl restart postgresql-${version}
+	systemctl enable postgresql-${version}
+
+    if [[ ! -f "$log" ]]
+        sudo touch $log
+    fi
+    chown posgtres:postgres $log
+    sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log -o "-p $port" restart
+	# systemctl restart postgresql-${version}
+
 	sleep 2
 	# cd /tmp
 
