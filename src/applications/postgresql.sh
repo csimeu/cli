@@ -112,7 +112,7 @@ function postgresql_install()
     _postgresql_version=${version:-$_postgresql_version}
     _postgis_version=${postgis_version:-$_postgis_version}
     data=${data:-"/var/lib/pgsql/$_postgresql_version/data"}
-    log=${log:-"var/log/postgresql-$_postgresql_version.log"}
+    log=${log:-"/var/log/postgresql-$_postgresql_version.log"}
 
     # echo "PGDATA=/var/lib/pgsql/$_postgresql_version/data"
     echo "export PATH=$PATH:/usr/pgsql-${_postgresql_version}/bin" | sudo tee -a /etc/profile.d/postgresql.sh

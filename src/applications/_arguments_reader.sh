@@ -11,7 +11,7 @@ function read_application_arguments()
     long+=",postgresql-version::,postgis-version::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
 
-	eval set -- "$TEMP"
+	eval set -- "$TEMP"         
     # extract options and their arguments into variables.
     while true ; do
         case "$1" in
