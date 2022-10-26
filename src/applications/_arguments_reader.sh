@@ -5,11 +5,12 @@ function read_application_arguments()
 {
     ISDEFAULT=false;
     IS_SUPERUSER=0
-    local long="help,force,default,superuser,data::,name::,version::,file::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,config-dir::,data-dir::,home-dir::"
+    local long="help,force,default,superuser,data::,name::,version::,file::,log::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,config-dir::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,server-url::,server-user::,server-password::,admin-email::,url::,client::,audience::,secret::,login-theme::"
+    long+=",postgresql-version::,postgis-version::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
-
+postgresql_version
 	eval set -- "$TEMP"
     # extract options and their arguments into variables.
     while true ; do
@@ -22,8 +23,11 @@ function read_application_arguments()
             --config-dir) config_dir=${2%"/"} ; shift 2 ;;
             --name) name=${2} ; shift 2 ;;
             --file) file=${2}; shift 2 ;;
+            --log) log=${2}; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
             --version) version=${2:-"$version"}; shift 2 ;;
+            --postgis-version) postgis_version=${2}; shift 2 ;;
+            --postgresql-version) postgresql_version=${2}; shift 2 ;;
             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
             --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"}; shift 2 ;;

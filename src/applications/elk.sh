@@ -105,9 +105,9 @@ elasticsearch_install() {
     
     sed -i -e "s/^\#\# -Xms.*$/-Xms512m/" /etc/elasticsearch/jvm.options
     sed -i -e "s/^## -Xmx.*$/-Xmx512m/" /etc/elasticsearch/jvm.options
-    sed -i -e "s/^#transport.host: .*/transport.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
-    sed -i -e "s/http.host: .*/http.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
-    sed -i -e "s/^#http.host: .*/http.host: 0.0.0.0/" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/^#transport.host: .*/transport.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
+    sed -i -e "s/^#http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
     execute systemctl enable elasticsearch
 }
 

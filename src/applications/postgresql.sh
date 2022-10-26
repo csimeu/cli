@@ -72,6 +72,8 @@ function postgis_install()
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     postgresql_add_repolist
+    _postgresql_version=${postgresql_version:-$_postgresql_version}
+    _postgis_version=${postgis_version:-$_postgis_version}
 
     case `plateform` in 
         debian)
@@ -99,12 +101,22 @@ function postgresql_install()
     local _postgis_version=
     local _parameters=
     local version=
+    local data=
+    local log=
+    local port=5432
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     postgresql_add_repolist
     
-    _postgresql_version=${version:-$_postgis_version}
+    _postgresql_version=${version:-$_postgresql_version}
+    _postgis_version=${postgis_version:-$_postgis_version}
+    data=${data:-"/var/lib/pgsql/$_postgresql_version/data"}
+    log=${log:-"var/log/postgresql-$_postgresql_version.log"}
+
+    # echo "PGDATA=/var/lib/pgsql/$_postgresql_version/data"
+    echo "export PATH=$PATH:/usr/pgsql-${_postgresql_version}/bin" | sudo tee -a /etc/profile.d/postgresql.sh
+    # source /etc/profile.d/postgresql.sh
 
     case `plateform` in 
         debian)
@@ -121,7 +133,7 @@ function postgresql_install()
                 fi
             fi
             install -y postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server postgresql-contrib-$_postgresql_version
-            
+            postgresql_setup --data=$data --log=$log --port=$port
         ;;
     esac
     
@@ -184,16 +196,20 @@ postgresql_createdb(){
 postgresql_setup(){
     local version=11
     local data=
+    local log=
+    local port=5432
 
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    local data=${data:-"/var/lib/pgsql/${version}/data"}
+    data=${data:-"/var/lib/pgsql/${version}/data"}
+    log=${log:-"/var/log/postgresql-${version}.log"}
 
     if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
         echo "Init postgresql $version"
-        /usr/pgsql-${version}/bin/postgresql-${version}-setup initdb
+        sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -o "-p $port" init
+        # /usr/pgsql-${version}/bin/postgresql-${version}-setup initdb
     fi
 
     if ! grep '0.0.0.0/0' $data/pg_hba.conf ; then
@@ -201,8 +217,15 @@ postgresql_setup(){
     fi
     sed -i -e 's/ident$/md5/g' $data/pg_hba.conf
 
-	systemctl enable postgresql-${version} --now
-	systemctl restart postgresql-${version}
+	systemctl enable postgresql-${version}
+
+    if [[ ! -f "$log" ]]
+        sudo touch $log
+    fi
+    chown posgtres:postgres $log
+    sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log -o "-p $port" restart
+	# systemctl restart postgresql-${version}
+
 	sleep 2
 	# cd /tmp
 
