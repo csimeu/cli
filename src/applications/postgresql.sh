@@ -219,7 +219,7 @@ postgresql_setup(){
 
 	systemctl enable postgresql-${version}
 
-    if [[ ! -f "$log" ]]
+    if [[ ! -f "$log" ]]; then
         sudo touch $log
     fi
     chown posgtres:postgres $log
