@@ -222,7 +222,7 @@ postgresql_setup(){
     if [[ ! -f "$log" ]]; then
         sudo touch $log
     fi
-    chown posgtres:postgres $log
+    chown postgres:postgres $log
     sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log -o "-p $port" restart
     # sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log  restart
 	# systemctl restart postgresql-${version}
