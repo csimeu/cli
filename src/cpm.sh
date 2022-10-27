@@ -22,7 +22,7 @@ mkdir -p /tmp/releases
 # }
 
 _self_update() {
-    cd ${CPM_HOME:-/opt/cenr/cenr-cli} && git pull origin master
+    cd ${CPM_HOME:-/opt/cenr/cpm-cli} && git pull origin master
 }
 
 _run_cpm() {

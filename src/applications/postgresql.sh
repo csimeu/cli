@@ -209,7 +209,6 @@ postgresql_setup(){
     if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
         echo "Init postgresql $version"
         sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data init
-        # /usr/pgsql-${version}/bin/postgresql-${version}-setup initdb
     fi
 
     if ! sudo -u postgres grep '0.0.0.0/0' $data/pg_hba.conf ; then
@@ -223,6 +222,7 @@ postgresql_setup(){
         sudo touch $log
     fi
     chown postgres:postgres $log
+    sudo sed -i -e "s/fr_CA/en_US/g" $data/postgresql.conf
     sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log -o "-p $port" restart
     # sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log  restart
 	# systemctl restart postgresql-${version}
