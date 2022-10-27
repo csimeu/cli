@@ -33,6 +33,9 @@ function java_install()
             echo ">> Noy implemented script for plateform: $plateform"
         ;;
     esac
+
+    echo "export JAVA_HOME=$(readlink -f $(which java) | sed -e "s/\/bin\/java//")"  >> /etc/profile.d/java.sh
+    source /etc/profile.d/java.sh
 }
 
 

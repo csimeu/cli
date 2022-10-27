@@ -52,7 +52,7 @@ cpm git:exists /csimeu/cpm.git
 
 ## Troubleshoots
 
-fix bad interpreter: sed -i -e 's/\r$//' scriptname.sh
+fix bad interpreter: `sed -i -e 's/\r$//' scriptname.sh`
 
 ## Comcat bash script in single file
 

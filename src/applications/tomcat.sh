@@ -114,9 +114,9 @@ function tomcat_install()
         sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat /etc/tomcat
 
         echo "export CATALINA_HOME=${INSTALL_DIR}/tomcat" > /etc/profile.d/tomcat.sh
-        echo "CATALINA_BASE=${CATALINA_HOME}"  >> /etc/profile.d/tomcat.sh
-        echo "JAVA_OPTS='$JAVA_OPTS -Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true'"  >> /etc/profile.d/tomcat.sh
-        echo "CATALINA_OPTS='-Xms512M -Xmx512M -server -XX:+UseParallelGC'"  >> /etc/profile.d/tomcat.sh
+        echo "export CATALINA_BASE=${CATALINA_HOME}"  >> /etc/profile.d/tomcat.sh
+        echo "export JAVA_OPTS='\$JAVA_OPTS -Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true'"  >> /etc/profile.d/tomcat.sh
+        echo "export CATALINA_OPTS='-Xms512M -Xmx512M -server -XX:+UseParallelGC'"  >> /etc/profile.d/tomcat.sh
         source /etc/profile.d/tomcat.sh
 
         if [[ "6" != $OS_VERSION ]]; then

@@ -74,10 +74,10 @@ function blazegraph_install()
     if [ -d /etc/tomcat ]; then
         echo 'JAVA_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"'| sudo tee -a /etc/tomcat/$name.conf
     fi
-    if [ -f /etc/profile.d/java.sh ]; then
-        echo 'export JAVA_OPTS="$JAVA_OPTS -Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"' | sudo tee -a /etc/profile.d/java.sh
-    fi
     
+    echo 'export JAVA_OPTS="\$JAVA_OPTS -Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"' | sudo tee /etc/profile.d/blazegraph.sh
+    source /etc/profile.d/blazegraph.sh
+
     if [ ! -f $config_dir/blazegraph.properties ]; then 
         sudo cat > $config_dir/blazegraph.properties << EOF
 com.bigdata.rdf.sail.isolatableIndices=false
