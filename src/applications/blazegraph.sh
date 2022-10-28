@@ -26,7 +26,7 @@ function blazegraph_install()
     name=${name//./-/}
 
     if [ '1' == $IS_DEFAULT ]; then 
-        # catalina_home=/usr/share/tomcat; 
+        catalina_home=/usr/share/tomcat; 
         name=$appName
     fi
 
