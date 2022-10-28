@@ -105,10 +105,10 @@ function tomcat_install()
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG tomcat $ADMIN_USER; fi
 
     CATALINA_HOME=$INSTALL_DIR/tomcat-$version
-    echo "CATALINA_HOME=\"${CATALINA_HOME}\"" > ${CATALINA_HOME}/conf/tomcat.conf
-    echo "CATALINA_BASE=\"${CATALINA_HOME}\""  >> ${CATALINA_HOME}/conf/tomcat.conf
-    echo "CATALINA_OPTS=\"-Xms256m -Xmx256m -server -XX:+UseParallelGC\"" >> ${CATALINA_HOME}/conf/tomcat.conf
-    echo "JAVA_OPTS=\"-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\""  >> ${CATALINA_HOME}/conf/tomcat.conf
+    echo "CATALINA_HOME=\"${CATALINA_HOME}\"" > ${CATALINA_HOME}/conf/tomcat.sh
+    echo "CATALINA_BASE=\"${CATALINA_HOME}\""  >> ${CATALINA_HOME}/conf/tomcat.sh
+    echo "CATALINA_OPTS=\"-Xms256m -Xmx256m -server -XX:+UseParallelGC\"" >> ${CATALINA_HOME}/conf/tomcat.sh
+    echo "JAVA_OPTS=\"-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\""  >> ${CATALINA_HOME}/conf/tomcat.sh
 
     if [ "1" == "$IS_DEFAULT" ]
     then

@@ -75,9 +75,9 @@ function fcrepo_install()
     fi
     # ARG FCREPO_DIR=${APP_DIR}/fcrepo
     sudo mkdir -p $data_dir && sudo chown tomcat:tomcat -R $data_dir
-    if [ -f $catalina_home/conf/tomcat.conf ]; then 
-        sudo sed -i -e "/^JAVA_OPTS=\"-Dfcrepo.*/d" $catalina_home/conf/tomcat.conf
-        sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='$data_dir' -Dfcrepo.audit.container=/audit $JAVA_OPTS"' >> $catalina_home/conf/tomcat.conf
+    if [ -f $catalina_home/conf/tomcat.sh ]; then 
+        sudo sed -i -e "/^JAVA_OPTS=\"-Dfcrepo.*/d" $catalina_home/conf/tomcat.sh
+        sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='$data_dir' -Dfcrepo.audit.container=/audit $JAVA_OPTS"' >> $catalina_home/conf/tomcat.sh
     fi
 
     # sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
