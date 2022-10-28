@@ -79,7 +79,7 @@ function blazegraph_install()
 
     if [ -f $catalina_home/conf/tomcat.conf ]; then 
         sudo sed -i -e "/^JAVA_OPTS=\"-Dcom.bigdata.*/d" $catalina_home/conf/tomcat.conf
-        echo "JAVA_OPTS=\"BLAZEGRAPH_OPTS\"" | sudo tee -a /etc/tomcat/tomcat.conf
+        echo "JAVA_OPTS=\"BLAZEGRAPH_OPTS\" \$JAVA_OPTS" | sudo tee -a /etc/tomcat/tomcat.conf
     fi
     
     # echo 'export JAVA_OPTS="$JAVA_OPTS -Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"' | sudo tee /etc/profile.d/blazegraph.sh

@@ -107,7 +107,7 @@ function tomcat_install()
     CATALINA_HOME=$INSTALL_DIR/tomcat-$version
     echo "CATALINA_HOME=\"${CATALINA_HOME}\"" > ${CATALINA_HOME}/conf/tomcat.conf
     echo "CATALINA_BASE=\"${CATALINA_HOME}\""  >> ${CATALINA_HOME}/conf/tomcat.conf
-    echo "CATALINA_OPTS=\"-Xms256M -Xmx256M -server -XX:+UseParallelGC\"" >> ${CATALINA_HOME}/conf/tomcat.conf
+    echo "CATALINA_OPTS=\"-Xms256m -Xmx256m -server -XX:+UseParallelGC\"" >> ${CATALINA_HOME}/conf/tomcat.conf
     echo "JAVA_OPTS=\"-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\""  >> ${CATALINA_HOME}/conf/tomcat.conf
 
     if [ "1" == "$IS_DEFAULT" ]
@@ -122,7 +122,7 @@ function tomcat_install()
         CATALINA_HOME=$INSTALL_DIR/tomcat
         echo "export CATALINA_HOME=${CATALINA_HOME}" > /etc/profile.d/tomcat.sh
         echo "export CATALINA_BASE=${CATALINA_HOME}"  >> /etc/profile.d/tomcat.sh
-        # echo "export CATALINA_OPTS='-Xms256M -Xmx256M -server -XX:+UseParallelGC'"  >> /etc/profile.d/tomcat.sh
+        # echo "export CATALINA_OPTS='-Xms256m -Xmx256m -server -XX:+UseParallelGC'"  >> /etc/profile.d/tomcat.sh
         # echo "export JAVA_OPTS=\"\$JAVA_OPTS -Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\""  >> /etc/profile.d/tomcat.sh
         source /etc/profile.d/tomcat.sh
 
