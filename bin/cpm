@@ -397,7 +397,7 @@ function blazegraph_install()
     local FORCE=0
     local IS_DEFAULT=0
     local version=$BLAZEGRAPH_DEFAULT_VERSION
-    local data=/var/lib
+    # local data=/var/lib
     local name=
     local catalina_home=$CATALINA_HOME
     local data_dir=
@@ -449,7 +449,7 @@ function blazegraph_install()
     sudo cp -f /tmp/releases/blazegraph-$version.war ${catalina_home}/webapps/${name}.war
 
     if [ -z $data_dir ]; then
-        data_dir="${data}/${name}"
+        data_dir="/var/lib/${name}"
     fi
 
     if [ -z $config_dir ]; then
@@ -458,12 +458,19 @@ function blazegraph_install()
 
     sudo mkdir -p $data_dir $config_dir
     # sudo chown tomcat:tomcat $data_dir/ $config_dir
-    if [ -d /etc/tomcat ]; then
-        echo 'JAVA_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"'| sudo tee -a /etc/tomcat/$name.conf
+    # if [ -d /etc/tomcat ]; then
+    #     echo 'JAVA_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"'| sudo tee -a /etc/tomcat/$name.conf
+    # fi
+
+    BLAZEGRAPH_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile=$config_dir/RWStore.properties"
+
+    if [ -f $catalina_home/conf/tomcat.conf ]; then 
+        sudo sed -i -e "/^JAVA_OPTS=\"-Dcom.bigdata.*/d" $catalina_home/conf/tomcat.conf
+        echo "JAVA_OPTS=\"BLAZEGRAPH_OPTS\"" | sudo tee -a /etc/tomcat/tomcat.conf
     fi
     
-    echo 'export JAVA_OPTS="\$JAVA_OPTS -Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"' | sudo tee /etc/profile.d/blazegraph.sh
-    source /etc/profile.d/blazegraph.sh
+    # echo 'export JAVA_OPTS="$JAVA_OPTS -Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"' | sudo tee /etc/profile.d/blazegraph.sh
+    # source /etc/profile.d/blazegraph.sh
 
     if [ ! -f $config_dir/blazegraph.properties ]; then 
         sudo cat > $config_dir/blazegraph.properties << EOF
@@ -660,7 +667,7 @@ function fcrepo_install()
     local FORCE=0
     local IS_DEFAULT=0
     local version=$FCREPO_DEFAULT_VERSION
-    local data=/var/lib
+    local data_dir=
     local name=
     local catalina_home=$CATALINA_HOME
     local fcrepo_config=
@@ -720,22 +727,20 @@ function fcrepo_install()
     local ModeshapeConfig=file-simple
     local JDBCConfig=
 
-    if [ -z $data_dir ]; then
-        data="${data}/${name}"
+    if [ -z "$data_dir" ]; then
+        data_dir="/var/lib/${name}"
     fi
     # ARG FCREPO_DIR=${APP_DIR}/fcrepo
     sudo mkdir -p $data_dir && sudo chown tomcat:tomcat -R $data_dir
     if [ -f $catalina_home/conf/tomcat.conf ]; then 
-        sudo sed -i -e "/JAVA_OPTS=\"-Dfcrepo.*/d" $catalina_home/conf/tomcat.conf
+        sudo sed -i -e "/^JAVA_OPTS=\"-Dfcrepo.*/d" $catalina_home/conf/tomcat.conf
     fi
 
     sudo echo 'JAVA_OPTS="-Dfcrepo.modeshape.configuration=classpath:/config/'$ModeshapeConfig'/repository.json '$JDBCConfig' -Dfcrepo.home='$data_dir' -Dfcrepo.audit.container=/audit"' >> $catalina_home/conf/tomcat.conf
     # sudo mv fcrepo-$fcrepo_config$version.war "${catalina_home}/webapps/${name}.war"
 
-    sudo echo "export JAVA_OPTS=\"\$JAVA_OPTS -Dfcrepo.modeshape.configuration=classpath:/config/$ModeshapeConfig/repository.json $JDBCConfig -Dfcrepo.home=$data_dir -Dfcrepo.audit.container=/audit\"" > /etc/profile.d/fcrepo.sh
-    # sudo mkdir -p /etc/${name}
-    # sudo chown tomcat:tomcat /etc/${name}
-    source /etc/profile.d/fcrepo.sh
+    # sudo echo "export JAVA_OPTS=\"\$JAVA_OPTS -Dfcrepo.modeshape.configuration=classpath:/config/$ModeshapeConfig/repository.json $JDBCConfig -Dfcrepo.home=$data -Dfcrepo.audit.container=/audit\"" > /etc/profile.d/fcrepo.sh
+    # source /etc/profile.d/fcrepo.sh
 
     echo ">> Installed application '$name' (version = $version) in ${catalina_home}/webapps/${name}.war"
 }
@@ -2501,6 +2506,12 @@ function tomcat_install()
     sed -i 's|<Connector port="8080".*|<Connector port="8080" URIEncoding="UTF-8"|' $INSTALL_DIR/tomcat-$version/conf/server.xml
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG tomcat $ADMIN_USER; fi
 
+    CATALINA_HOME=$INSTALL_DIR/tomcat-$version
+    echo "CATALINA_HOME=\"${CATALINA_HOME}\"" > ${CATALINA_HOME}/conf/tomcat.conf
+    echo "CATALINA_BASE=\"${CATALINA_HOME}\""  >> ${CATALINA_HOME}/conf/tomcat.conf
+    echo "CATALINA_OPTS=\"-Xms256M -Xmx256M -server -XX:+UseParallelGC\"" >> ${CATALINA_HOME}/conf/tomcat.conf
+    echo "JAVA_OPTS=\"-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\""  >> ${CATALINA_HOME}/conf/tomcat.conf
+
     if [ "1" == "$IS_DEFAULT" ]
     then
         if [ -L /etc/tomcat ]; then unlink /etc/tomcat; fi
@@ -2510,10 +2521,11 @@ function tomcat_install()
         if [ ! -f /etc/tomcat/tomcat.conf ]; then touch /etc/tomcat/tomcat.conf; fi
         sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat /etc/tomcat
 
-        echo "export CATALINA_HOME=${INSTALL_DIR}/tomcat" > /etc/profile.d/tomcat.sh
+        CATALINA_HOME=$INSTALL_DIR/tomcat
+        echo "export CATALINA_HOME=${CATALINA_HOME}" > /etc/profile.d/tomcat.sh
         echo "export CATALINA_BASE=${CATALINA_HOME}"  >> /etc/profile.d/tomcat.sh
-        echo "export JAVA_OPTS=\"\$JAVA_OPTS -Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\""  >> /etc/profile.d/tomcat.sh
-        echo "export CATALINA_OPTS='-Xms512M -Xmx512M -server -XX:+UseParallelGC'"  >> /etc/profile.d/tomcat.sh
+        # echo "export CATALINA_OPTS='-Xms256M -Xmx256M -server -XX:+UseParallelGC'"  >> /etc/profile.d/tomcat.sh
+        # echo "export JAVA_OPTS=\"\$JAVA_OPTS -Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\""  >> /etc/profile.d/tomcat.sh
         source /etc/profile.d/tomcat.sh
 
         if [[ "6" != $OS_VERSION ]]; then

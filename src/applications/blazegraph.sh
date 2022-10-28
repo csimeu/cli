@@ -10,7 +10,7 @@ function blazegraph_install()
     local FORCE=0
     local IS_DEFAULT=0
     local version=$BLAZEGRAPH_DEFAULT_VERSION
-    local data=/var/lib
+    # local data=/var/lib
     local name=
     local catalina_home=$CATALINA_HOME
     local data_dir=
@@ -62,7 +62,7 @@ function blazegraph_install()
     sudo cp -f /tmp/releases/blazegraph-$version.war ${catalina_home}/webapps/${name}.war
 
     if [ -z $data_dir ]; then
-        data_dir="${data}/${name}"
+        data_dir="/var/lib/${name}"
     fi
 
     if [ -z $config_dir ]; then
@@ -71,12 +71,19 @@ function blazegraph_install()
 
     sudo mkdir -p $data_dir $config_dir
     # sudo chown tomcat:tomcat $data_dir/ $config_dir
-    if [ -d /etc/tomcat ]; then
-        echo 'JAVA_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"'| sudo tee -a /etc/tomcat/$name.conf
+    # if [ -d /etc/tomcat ]; then
+    #     echo 'JAVA_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"'| sudo tee -a /etc/tomcat/$name.conf
+    # fi
+
+    BLAZEGRAPH_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile=$config_dir/RWStore.properties"
+
+    if [ -f $catalina_home/conf/tomcat.conf ]; then 
+        sudo sed -i -e "/^JAVA_OPTS=\"-Dcom.bigdata.*/d" $catalina_home/conf/tomcat.conf
+        echo "JAVA_OPTS=\"BLAZEGRAPH_OPTS\"" | sudo tee -a /etc/tomcat/tomcat.conf
     fi
     
-    echo 'export JAVA_OPTS="\$JAVA_OPTS -Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"' | sudo tee /etc/profile.d/blazegraph.sh
-    source /etc/profile.d/blazegraph.sh
+    # echo 'export JAVA_OPTS="$JAVA_OPTS -Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"' | sudo tee /etc/profile.d/blazegraph.sh
+    # source /etc/profile.d/blazegraph.sh
 
     if [ ! -f $config_dir/blazegraph.properties ]; then 
         sudo cat > $config_dir/blazegraph.properties << EOF
