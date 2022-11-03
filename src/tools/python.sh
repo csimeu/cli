@@ -58,7 +58,7 @@ function pip_install()
         _USE_PROXY="--proxy $http_proxy";
     fi
 
-    pip3 install ${PIP_USE_PROXY} $@
+    sudo pip3 install ${PIP_USE_PROXY} $@
 }
 
 

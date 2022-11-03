@@ -4,10 +4,17 @@ redis_install() {
     local appName=redis
     case `plateform` in 
         redhat)
-            if [ ! -f /etc/yum.repos.d/remi.repo ]; then
-                install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
-            fi
-            sudo yum-config-manager --enable remi 
+            case $OS_VERSION in 
+                6|7)
+                    if [ ! -f /etc/yum.repos.d/remi.repo ]; then
+                        install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+                    fi
+                    sudo yum-config-manager --enable remi 
+                ;;
+                *)
+                    # 
+                ;;
+            esac
         ;;
     esac
 
