@@ -260,67 +260,6 @@ function servicectl()
 
 }
 
-#!/bin/bash
-
-
-apache_install() {
-    
-    case `plateform` in 
-        redhat)
-            install -y httpd mod_ssl mod_fcgid
-            sudo mkdir -p /etc/httpd/sites-enabled
-            sudo mkdir -p /etc/httpd/sites-availables
-            sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
-            # pip install mod_wsgi
-            sudo chown apache:apache -R /etc/httpd
-            sudo chmod -R g+w /etc/httpd
-            ;;
-        debian)
-            ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
-            install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
-            a2enmod ssl
-            # a2enconf mod-wsgi
-            if ! getent passwd apache > /dev/null 2>&1; then
-                sudo groupadd --system apache
-                sudo useradd -d /var/apache2 -r -s /bin/false -g apache apache
-            fi
-            sudo chown apache:apache -R /etc/apache2
-            sudo chmod -R g+w /etc/apache2
-        ;;
-    esac
-
-    sudo mkdir -p /var/www/cgi-bin/
-    # sudo chown apache:apache -R /var/www/cgi-bin/
-    sudo chown apache:apache -R /var/www
-    sudo chmod -R g+w /var/www
-
-    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]];
-    then
-        sudo usermod -aG apache $ADMIN_USER;
-    fi
-    
-
-# sudo cat > /etc/httpd/sites-availables/php-fcgi.conf << EOF
-# # Configure multiple php version
-# ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
-# AddHandler php-fcgi .php
-# #Action php55-fcgi /cgi-bin/php55.fcgi
-# #Action php56-fcgi /cgi-bin/php56.fcgi
-# #Action php71-fcgi /cgi-bin/php71.fcgi
-# #Action php72-fcgi /cgi-bin/php72.fcgi
-# #Action php73-fcgi /cgi-bin/php73.fcgi
-# #Action php74-fcgi /cgi-bin/php74.fcgi
-# EOF
-
-# if [[ "$(rpm -E %{rhel})" == "6"  ]];
-# then
-#     sudo chkconfig httpd on
-# else 
-#     sudo systemctl enable httpd
-# fi
-
-}
-
 
 
 # Reads arguments options
@@ -385,6 +324,67 @@ function read_application_arguments()
     
   # fi
 }
+#!/bin/bash
+
+
+apache_install() {
+    
+    case `plateform` in 
+        redhat)
+            install -y httpd mod_ssl mod_fcgid
+            sudo mkdir -p /etc/httpd/sites-enabled
+            sudo mkdir -p /etc/httpd/sites-availables
+            sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
+            # pip install mod_wsgi
+            sudo chown apache:apache -R /etc/httpd
+            sudo chmod -R g+w /etc/httpd
+            ;;
+        debian)
+            ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
+            install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
+            a2enmod ssl
+            # a2enconf mod-wsgi
+            if ! getent passwd apache > /dev/null 2>&1; then
+                sudo groupadd --system apache
+                sudo useradd -d /var/apache2 -r -s /bin/false -g apache apache
+            fi
+            sudo chown apache:apache -R /etc/apache2
+            sudo chmod -R g+w /etc/apache2
+        ;;
+    esac
+
+    sudo mkdir -p /var/www/cgi-bin/
+    # sudo chown apache:apache -R /var/www/cgi-bin/
+    sudo chown apache:apache -R /var/www
+    sudo chmod -R g+w /var/www
+
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]];
+    then
+        sudo usermod -aG apache $ADMIN_USER;
+    fi
+    
+
+# sudo cat > /etc/httpd/sites-availables/php-fcgi.conf << EOF
+# # Configure multiple php version
+# ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
+# AddHandler php-fcgi .php
+# #Action php55-fcgi /cgi-bin/php55.fcgi
+# #Action php56-fcgi /cgi-bin/php56.fcgi
+# #Action php71-fcgi /cgi-bin/php71.fcgi
+# #Action php72-fcgi /cgi-bin/php72.fcgi
+# #Action php73-fcgi /cgi-bin/php73.fcgi
+# #Action php74-fcgi /cgi-bin/php74.fcgi
+# EOF
+
+# if [[ "$(rpm -E %{rhel})" == "6"  ]];
+# then
+#     sudo chkconfig httpd on
+# else 
+#     sudo systemctl enable httpd
+# fi
+
+}
+
 #!/bin/bash
 
 # Install blazegraph
@@ -1379,7 +1379,7 @@ function mysql_install()
 			local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
 
 			# fixed Public key for mysql-community-xxx.rpm is not installed https://segmentfault.com/a/1190000041433962
-			rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+			sudo rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
 
 			if [[ $version =~ ^8.*$ ]];
 			then 
@@ -1413,8 +1413,14 @@ function mysql_install()
 
     case `plateform` in 
         redhat)
-			/usr/sbin/mysqld --initialize-insecure  --user=mysql
-			/usr/bin/mysqld_pre_systemd
+			if [ -f /usr/libexec/mysqld ]; then sudo setcap -r /usr/libexec/mysqld; fi
+			if [ -f /usr/libexec/mysql-check-socket ]; then 
+				sudo /usr/libexec/mysql-check-socket
+				sudo /usr/libexec/mysql-prepare-db-dir %n
+			else
+				/usr/sbin/mysqld --initialize-insecure  --user=mysql
+				/usr/bin/mysqld_pre_systemd
+			fi
 			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
             ;;
         debian)
@@ -1604,7 +1610,7 @@ nodejs_install() {
             if [ ! -f /etc/yum.repos.d/yarn.repo ]
             then
                 curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
-                rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
+                sudo rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
             fi
             install -y nodejs npm yarn
             ;;
@@ -1613,7 +1619,7 @@ nodejs_install() {
         ;;
     esac
 
-    npm install -g n && n lts
+    sudo npm install -g n && sudo /usr/local/bin/n lts
 
     # echo "---> npm install -g npm@latest"
     # # npm install -g npm@latest
@@ -1680,15 +1686,16 @@ function php_remove()
 
 function php_install()
 {
-	php_remove $@
+	# php_remove $@
     set -e
     local version=
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-	local php_exts="fpm mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pear opcache json  "
-	local pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip   "
+	local php_exts="fpm pgsql odbc gd intl mbstring ldap xml xmlrpc soap pear opcache json  "
+	local pecl_exts="apcu xdebug zip "
+	# local php_exts=" mysql  imap interbase xmlrpc"
 
 	local cmd=
 	# for ext in $php_exts ; do  phps+=" php$pversion-$ext"; done
@@ -1703,9 +1710,13 @@ function php_install()
 				case $OS_VERSION in 
 					6|7)
 						execute yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./};
+						php_exts="$php_exts mysql  imap interbase "
+						pecl_exts="$pecl_exts geoip memcache memcached  igbinary mongodb redis imagick "
 					;;
 					*)
-						execute yum module install -y php:remi-${PHP_DEFAULT_VERSION};
+						execute yum module reset -y php;
+						execute yum module enable -y php:${PHP_DEFAULT_VERSION};
+						# execute yum module install -y php:-${PHP_DEFAULT_VERSION};
 					;;
 				esac
 			fi
@@ -1742,8 +1753,8 @@ function php_install()
 			# for ext in $pecl_exts ; do  cmd+=" php$version-$ext"; done
 			# install -y php$version  $cmd
 			
-			local php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath json opcache json  "
-			local pecl_exts=
+			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath json opcache json  "
+			pecl_exts=
         ;;
     esac
 
@@ -1816,7 +1827,7 @@ function php_install()
 	sudo mkdir -p /var/www/cgi-bin
 	if [ ! -f /var/www/cgi-bin/php$version.fcgi  ]
     then 
-		sudo cat > /var/www/cgi-bin/php$version.fcgi << EOF 
+		sudo tee /var/www/cgi-bin/php$version.fcgi << EOF > /dev/null
 #!/bin/bash 
 exec $_BIN_/php$version-cgi
 EOF

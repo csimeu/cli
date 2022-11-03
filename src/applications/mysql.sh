@@ -23,7 +23,7 @@ function mysql_install()
 			local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
 
 			# fixed Public key for mysql-community-xxx.rpm is not installed https://segmentfault.com/a/1190000041433962
-			rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+			sudo rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
 
 			if [[ $version =~ ^8.*$ ]];
 			then 
@@ -57,8 +57,14 @@ function mysql_install()
 
     case `plateform` in 
         redhat)
-			/usr/sbin/mysqld --initialize-insecure  --user=mysql
-			/usr/bin/mysqld_pre_systemd
+			if [ -f /usr/libexec/mysqld ]; then sudo setcap -r /usr/libexec/mysqld; fi
+			if [ -f /usr/libexec/mysql-check-socket ]; then 
+				sudo /usr/libexec/mysql-check-socket
+				sudo /usr/libexec/mysql-prepare-db-dir %n
+			else
+				/usr/sbin/mysqld --initialize-insecure  --user=mysql
+				/usr/bin/mysqld_pre_systemd
+			fi
 			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
             ;;
         debian)

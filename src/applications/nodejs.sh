@@ -9,7 +9,7 @@ nodejs_install() {
             if [ ! -f /etc/yum.repos.d/yarn.repo ]
             then
                 curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
-                rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
+                sudo rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
             fi
             install -y nodejs npm yarn
             ;;
@@ -18,7 +18,7 @@ nodejs_install() {
         ;;
     esac
 
-    npm install -g n && n lts
+    sudo npm install -g n && sudo /usr/local/bin/n lts
 
     # echo "---> npm install -g npm@latest"
     # # npm install -g npm@latest

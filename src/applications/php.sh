@@ -54,15 +54,16 @@ function php_remove()
 
 function php_install()
 {
-	php_remove $@
+	# php_remove $@
     set -e
     local version=
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-	local php_exts="fpm mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pear opcache json  "
-	local pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip   "
+	local php_exts="fpm pgsql odbc gd intl mbstring ldap xml xmlrpc soap pear opcache json  "
+	local pecl_exts="apcu xdebug zip "
+	# local php_exts=" mysql  imap interbase xmlrpc"
 
 	local cmd=
 	# for ext in $php_exts ; do  phps+=" php$pversion-$ext"; done
@@ -77,9 +78,13 @@ function php_install()
 				case $OS_VERSION in 
 					6|7)
 						execute yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./};
+						php_exts="$php_exts mysql  imap interbase "
+						pecl_exts="$pecl_exts geoip memcache memcached  igbinary mongodb redis imagick "
 					;;
 					*)
-						execute yum module install -y php:remi-${PHP_DEFAULT_VERSION};
+						execute yum module reset -y php;
+						execute yum module enable -y php:${PHP_DEFAULT_VERSION};
+						# execute yum module install -y php:-${PHP_DEFAULT_VERSION};
 					;;
 				esac
 			fi
@@ -116,8 +121,8 @@ function php_install()
 			# for ext in $pecl_exts ; do  cmd+=" php$version-$ext"; done
 			# install -y php$version  $cmd
 			
-			local php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath json opcache json  "
-			local pecl_exts=
+			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath json opcache json  "
+			pecl_exts=
         ;;
     esac
 
@@ -190,7 +195,7 @@ function php_install()
 	sudo mkdir -p /var/www/cgi-bin
 	if [ ! -f /var/www/cgi-bin/php$version.fcgi  ]
     then 
-		sudo cat > /var/www/cgi-bin/php$version.fcgi << EOF 
+		sudo tee /var/www/cgi-bin/php$version.fcgi << EOF > /dev/null
 #!/bin/bash 
 exec $_BIN_/php$version-cgi
 EOF
