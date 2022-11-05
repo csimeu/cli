@@ -85,6 +85,7 @@ function php_install()
 						execute yum module reset -y php;
 						execute yum module enable -y php:${PHP_DEFAULT_VERSION};
 						# execute yum module install -y php:-${PHP_DEFAULT_VERSION};
+						php_exts="$php_exts mysqlnd  "
 					;;
 				esac
 			fi
@@ -128,8 +129,10 @@ function php_install()
 
 	for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
 	for ext in $pecl_exts ; do  cmd+=" php$version-pecl-$ext"; done
-	echo "Install: php$version $cmd"
-	install -y php$version $cmd
+	# echo "Install: php$version $cmd"
+	# install -y php$version $cmd
+	echo "Install: php$version php$version-* "
+	install -y php$version php$version-* 
 
 	
 
