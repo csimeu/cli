@@ -12,7 +12,7 @@ httpd_install() {
             # pip install mod_wsgi
             sudo chown apache:apache -R /etc/httpd
             sudo chmod -R g+w /etc/httpd
-            if [ -f /etc/httpd/conf.modules.d/00-mpm.conf ];
+            if [ -f /etc/httpd/conf.modules.d/00-mpm.conf ]; then
                 sudo sed -i -e "s/^LoadModule mpm_event_module/#LoadModule mpm_event_module/" /etc/httpd/conf.modules.d/00-mpm.conf
                 sudo sed -i -e "s/^#LoadModule mpm_prefork_module/LoadModule mpm_prefork_module/" /etc/httpd/conf.modules.d/00-mpm.conf
             fi

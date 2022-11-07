@@ -132,7 +132,7 @@ function php_install()
 	echo "Install: php$version $cmd"
 	install -y php$version $cmd
 
-	if [ -f /etc/httpd/conf.modules.d/00-mpm.conf ];
+	if [ -f /etc/httpd/conf.modules.d/00-mpm.conf ]; then
 		sudo sed -i -e "s/^LoadModule mpm_event_module/#LoadModule mpm_event_module/" /etc/httpd/conf.modules.d/00-mpm.conf
 		sudo sed -i -e "s/^#LoadModule mpm_prefork_module/LoadModule mpm_prefork_module/" /etc/httpd/conf.modules.d/00-mpm.conf
 	fi
