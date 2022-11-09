@@ -36,7 +36,7 @@ function parse_wp_arguments()
 function wordpress_install() 
 {
 	set -e
-  local name="wordpress"
+  	local name="wordpress"
 	local version=
 	local DB_NAME=
 	local DB_USER=
@@ -55,30 +55,31 @@ function wordpress_install()
 
 	local DIR_NAME=$data/$name
 	
-	curl -fSL http://wordpress.org/latest.zip -o latest.zip
+	mkdir -p $DIR_NAME
+	curl -fSL http://wordpress.org/latest.tar.gz -o wordpress.tar.gz
+	rm -rf /tmp/wordpress
+
 	# wget http://wordpress.org/latest.zip
-	rm -rf $DIR_NAME
-	unzip -q latest.zip -d $data
-	rm -f latest.zip
+	tar -zxf wordpress.tar.gz --directory $DIR_NAME -C /tmp
+	cp -ax /tmp/wordpress/* $DIR_NAME
 
-	if [ ! "$name" == "wordpress" ]
-	then
-		# echo mv $data/wordpress $data/$name
-		mv -f $data/wordpress $data/$name
-	fi
-
-	# mv $_INSTALL_DIR/wordpress $_INSTALL_DIR/$_SITE_NAME
+	rm -rf wordpress.tar.gz /tmp/wordpress
+	
 	# chown -R :$ $_INSTALL_DIR/$_SITE_NAME
 
-	chmod -R 775 $DIR_NAME
 	mkdir -p $DIR_NAME/wp-content/uploads
+	# chmod -R 775 $DIR_NAME
 	# chown -R :apache $DIR_NAME/wp-content/uploads
-	cp -f $DIR_NAME/wp-config-sample.php $DIR_NAME/wp-config.php
 
-	sed -i "s/database_name_here/$DB_NAME/" $DIR_NAME/wp-config.php
-	sed -i "s/username_here/$DB_USER/" $DIR_NAME/wp-config.php
-	sed -i "s/password_here/$DB_PASSWORD/" $DIR_NAME/wp-config.php
-	sed -i "s/localhost/$DB_HOST:$DB_PORT/" $DIR_NAME/wp-config.php
+	if [ -n "$DB_NAME" ]; then
+		cp -f $DIR_NAME/wp-config-sample.php $DIR_NAME/wp-config.php
+		sed -i "s/database_name_here/$DB_NAME/" $DIR_NAME/wp-config.php
+		sed -i "s/username_here/$DB_USER/" $DIR_NAME/wp-config.php
+		sed -i "s/password_here/$DB_PASSWORD/" $DIR_NAME/wp-config.php
+		sed -i "s/localhost/$DB_HOST:$DB_PORT/" $DIR_NAME/wp-config.php
+	fi
+
+    echo ">> Installed latest version of wordpress in '$DIR_NAME' "
 }
 
 

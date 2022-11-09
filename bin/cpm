@@ -260,6 +260,67 @@ function servicectl()
 
 }
 
+#!/bin/bash
+
+
+apache_install() {
+    
+    case `plateform` in 
+        redhat)
+            install -y httpd mod_ssl mod_fcgid
+            sudo mkdir -p /etc/httpd/sites-enabled
+            sudo mkdir -p /etc/httpd/sites-availables
+            sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
+            # pip install mod_wsgi
+            sudo chown apache:apache -R /etc/httpd
+            sudo chmod -R g+w /etc/httpd
+            ;;
+        debian)
+            ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
+            install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
+            a2enmod ssl
+            # a2enconf mod-wsgi
+            if ! getent passwd apache > /dev/null 2>&1; then
+                sudo groupadd --system apache
+                sudo useradd -d /var/apache2 -r -s /bin/false -g apache apache
+            fi
+            sudo chown apache:apache -R /etc/apache2
+            sudo chmod -R g+w /etc/apache2
+        ;;
+    esac
+
+    sudo mkdir -p /var/www/cgi-bin/
+    # sudo chown apache:apache -R /var/www/cgi-bin/
+    sudo chown apache:apache -R /var/www
+    sudo chmod -R g+w /var/www
+
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]];
+    then
+        sudo usermod -aG apache $ADMIN_USER;
+    fi
+    
+
+# sudo cat > /etc/httpd/sites-availables/php-fcgi.conf << EOF
+# # Configure multiple php version
+# ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
+# AddHandler php-fcgi .php
+# #Action php55-fcgi /cgi-bin/php55.fcgi
+# #Action php56-fcgi /cgi-bin/php56.fcgi
+# #Action php71-fcgi /cgi-bin/php71.fcgi
+# #Action php72-fcgi /cgi-bin/php72.fcgi
+# #Action php73-fcgi /cgi-bin/php73.fcgi
+# #Action php74-fcgi /cgi-bin/php74.fcgi
+# EOF
+
+# if [[ "$(rpm -E %{rhel})" == "6"  ]];
+# then
+#     sudo chkconfig httpd on
+# else 
+#     sudo systemctl enable httpd
+# fi
+
+}
+
 
 
 # Reads arguments options
@@ -324,67 +385,6 @@ function read_application_arguments()
     
   # fi
 }
-#!/bin/bash
-
-
-apache_install() {
-    
-    case `plateform` in 
-        redhat)
-            install -y httpd mod_ssl mod_fcgid
-            sudo mkdir -p /etc/httpd/sites-enabled
-            sudo mkdir -p /etc/httpd/sites-availables
-            sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
-            # pip install mod_wsgi
-            sudo chown apache:apache -R /etc/httpd
-            sudo chmod -R g+w /etc/httpd
-            ;;
-        debian)
-            ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
-            install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
-            a2enmod ssl
-            # a2enconf mod-wsgi
-            if ! getent passwd apache > /dev/null 2>&1; then
-                sudo groupadd --system apache
-                sudo useradd -d /var/apache2 -r -s /bin/false -g apache apache
-            fi
-            sudo chown apache:apache -R /etc/apache2
-            sudo chmod -R g+w /etc/apache2
-        ;;
-    esac
-
-    sudo mkdir -p /var/www/cgi-bin/
-    # sudo chown apache:apache -R /var/www/cgi-bin/
-    sudo chown apache:apache -R /var/www
-    sudo chmod -R g+w /var/www
-
-    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]];
-    then
-        sudo usermod -aG apache $ADMIN_USER;
-    fi
-    
-
-# sudo cat > /etc/httpd/sites-availables/php-fcgi.conf << EOF
-# # Configure multiple php version
-# ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
-# AddHandler php-fcgi .php
-# #Action php55-fcgi /cgi-bin/php55.fcgi
-# #Action php56-fcgi /cgi-bin/php56.fcgi
-# #Action php71-fcgi /cgi-bin/php71.fcgi
-# #Action php72-fcgi /cgi-bin/php72.fcgi
-# #Action php73-fcgi /cgi-bin/php73.fcgi
-# #Action php74-fcgi /cgi-bin/php74.fcgi
-# EOF
-
-# if [[ "$(rpm -E %{rhel})" == "6"  ]];
-# then
-#     sudo chkconfig httpd on
-# else 
-#     sudo systemctl enable httpd
-# fi
-
-}
-
 #!/bin/bash
 
 # Install blazegraph
@@ -1824,6 +1824,27 @@ function php_install()
 	    curl -sS https://getcomposer.org/installer | php$version && sudo mv composer.phar /usr/local/bin/composer
     fi
 
+    if [ ! -f /usr/bin/symfony ]
+    then 
+		case `plateform` in 
+			redhat)
+				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.rpm.sh' | sudo -E bash
+				sudo dnf install -y symfony-cli
+			;;
+
+        	debian)
+				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | sudo -E bash
+				sudo apt install symfony-cli
+			;;
+
+        	alpine)
+				sudo apk add --no-cache bash
+				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.alpine.sh' | sudo -E bash
+				sudo apk add symfony-cli
+			;;
+    	esac
+    fi
+
 	if [ -f /etc/httpd/conf.d/php$version-php.conf ]
     then 
 	    sudo mv /etc/httpd/conf.d/php$version-php.conf /etc/httpd/conf.d/php$version-php.conf.bck
@@ -2651,7 +2672,7 @@ function parse_wp_arguments()
 function wordpress_install() 
 {
 	set -e
-  local name="wordpress"
+  	local name="wordpress"
 	local version=
 	local DB_NAME=
 	local DB_USER=
@@ -2670,30 +2691,31 @@ function wordpress_install()
 
 	local DIR_NAME=$data/$name
 	
-	curl -fSL http://wordpress.org/latest.zip -o latest.zip
+	mkdir -p $DIR_NAME
+	curl -fSL http://wordpress.org/latest.tar.gz -o wordpress.tar.gz
+	rm -rf /tmp/wordpress
+
 	# wget http://wordpress.org/latest.zip
-	rm -rf $DIR_NAME
-	unzip -q latest.zip -d $data
-	rm -f latest.zip
+	tar -zxf wordpress.tar.gz --directory $DIR_NAME -C /tmp
+	cp -ax /tmp/wordpress/* $DIR_NAME
 
-	if [ ! "$name" == "wordpress" ]
-	then
-		# echo mv $data/wordpress $data/$name
-		mv -f $data/wordpress $data/$name
-	fi
-
-	# mv $_INSTALL_DIR/wordpress $_INSTALL_DIR/$_SITE_NAME
+	rm -rf wordpress.tar.gz /tmp/wordpress
+	
 	# chown -R :$ $_INSTALL_DIR/$_SITE_NAME
 
-	chmod -R 775 $DIR_NAME
 	mkdir -p $DIR_NAME/wp-content/uploads
+	# chmod -R 775 $DIR_NAME
 	# chown -R :apache $DIR_NAME/wp-content/uploads
-	cp -f $DIR_NAME/wp-config-sample.php $DIR_NAME/wp-config.php
 
-	sed -i "s/database_name_here/$DB_NAME/" $DIR_NAME/wp-config.php
-	sed -i "s/username_here/$DB_USER/" $DIR_NAME/wp-config.php
-	sed -i "s/password_here/$DB_PASSWORD/" $DIR_NAME/wp-config.php
-	sed -i "s/localhost/$DB_HOST:$DB_PORT/" $DIR_NAME/wp-config.php
+	if [ -n "$DB_NAME" ]; then
+		cp -f $DIR_NAME/wp-config-sample.php $DIR_NAME/wp-config.php
+		sed -i "s/database_name_here/$DB_NAME/" $DIR_NAME/wp-config.php
+		sed -i "s/username_here/$DB_USER/" $DIR_NAME/wp-config.php
+		sed -i "s/password_here/$DB_PASSWORD/" $DIR_NAME/wp-config.php
+		sed -i "s/localhost/$DB_HOST:$DB_PORT/" $DIR_NAME/wp-config.php
+	fi
+
+    echo ">> Installed latest version of wordpress in '$DIR_NAME' "
 }
 
 

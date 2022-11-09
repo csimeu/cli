@@ -188,6 +188,27 @@ function php_install()
 	    curl -sS https://getcomposer.org/installer | php$version && sudo mv composer.phar /usr/local/bin/composer
     fi
 
+    if [ ! -f /usr/bin/symfony ]
+    then 
+		case `plateform` in 
+			redhat)
+				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.rpm.sh' | sudo -E bash
+				sudo dnf install -y symfony-cli
+			;;
+
+        	debian)
+				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | sudo -E bash
+				sudo apt install symfony-cli
+			;;
+
+        	alpine)
+				sudo apk add --no-cache bash
+				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.alpine.sh' | sudo -E bash
+				sudo apk add symfony-cli
+			;;
+    	esac
+    fi
+
 	if [ -f /etc/httpd/conf.d/php$version-php.conf ]
     then 
 	    sudo mv /etc/httpd/conf.d/php$version-php.conf /etc/httpd/conf.d/php$version-php.conf.bck
