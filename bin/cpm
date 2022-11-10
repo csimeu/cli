@@ -3664,7 +3664,7 @@ function user_add()
     
     if [ ! $(getent group ${username}) ]; then 
         case `plateform` in 
-            alpine) addgroup $gid ${username};;
+            # alpine) addgroup $gid ${username};;
             *) groupadd $gid ${username};;
         esac
     # else
@@ -3676,8 +3676,9 @@ function user_add()
         case `plateform` in 
             alpine) 
                 if [ -n "$home" ]; then home="-h $home"; fi
-                echo "adduser -D --shell /bin/bash $uid ${gid} $home ${username}"
-                adduser -D --shell /bin/bash $uid ${gid} $home ${username}
+                echo "adduser -D --shell /bin/bash $uid $home ${username}"
+                adduser -D --shell /bin/bash $home ${username}
+                moduser --shell /bin/bash $uid ${username};
             ;;
             *) 
                 if [ -n "$home" ]; then home="-d $home"; fi
