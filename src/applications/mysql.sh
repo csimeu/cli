@@ -62,8 +62,8 @@ function mysql_install()
 				sudo /usr/libexec/mysql-check-socket
 				sudo /usr/libexec/mysql-prepare-db-dir %n
 			else
-				/usr/sbin/mysqld --initialize-insecure  --user=mysql
-				/usr/bin/mysqld_pre_systemd
+				sudo /usr/sbin/mysqld --initialize-insecure  --user=mysql
+				sudo /usr/bin/mysqld_pre_systemd
 			fi
 			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
             ;;

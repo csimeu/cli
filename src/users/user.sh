@@ -38,7 +38,7 @@ function parse_user_arguments()
             -h|--help) HELP=1 ; shift 1 ;;
             --uid) uid="-u ${2}" ; shift 2 ;;
             --gid) gid="-g ${2}" ; shift 2 ;;
-            --home) home="-d ${2}" ; shift 2 ;;
+            --home) home="${2}" ; shift 2 ;;
             --password) password="${2}" ; shift 2 ;;
             --group) groups+="${2} "; shift 2 ;;
             --user) users+="${2} "; shift 2 ;;
@@ -96,8 +96,14 @@ function user_add()
 
     if ! getent passwd ${username} > /dev/null 2>&1; then
         case `plateform` in 
-            alpine) adduser --shell /bin/bash $uid -g ${username} $home ${username};;
-            *) useradd --shell /bin/bash $uid -g ${username} $home ${username};;
+            alpine) 
+                if [ -n "$home" ]; then home="-h $home"
+                adduser --shell /bin/bash $uid -g ${username} $home ${username}
+            ;;
+            *) 
+                if [ -n "$home" ]; then home="-d $home"
+                useradd --shell /bin/bash $uid -g ${username} $home ${username}
+            ;;
         esac
     else
         case `plateform` in 
