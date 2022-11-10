@@ -195,7 +195,10 @@ function user_update()
         # checks if user exit
         if ! $(getent group ${group})
         then
-            groupadd $group               
+            case `plateform` in 
+                alpine) addgroup $group;;
+                *) groupadd $group;;
+            esac            
         fi
         usermod -aG $group ${username}
     done
