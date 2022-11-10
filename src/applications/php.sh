@@ -70,6 +70,9 @@ function php_install()
 	# for ext in $pecl_exts ; do  phps+=" php$pversion-pecl-$ext"; done
 
     case `plateform` in 
+        alpine)
+			version=${version%.*}
+		;;
         redhat)
 			if [ "1" == "$IS_DEFAULT" ] ; then
 				PHP_DEFAULT_VERSION=${version:-$PHP_DEFAULT_VERSION}
@@ -78,7 +81,7 @@ function php_install()
 				case $OS_VERSION in 
 					6|7)
 						execute yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./};
-						php_exts="$php_exts mysql  imap interbase "
+						php_exts="$php_exts mysql imap interbase "
 						pecl_exts="$pecl_exts geoip memcache memcached  igbinary mongodb redis imagick "
 					;;
 					*)
@@ -130,7 +133,8 @@ function php_install()
 	for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
 	for ext in $pecl_exts ; do  cmd+=" php$version-pecl-$ext"; done
 	echo "Install: php$version $cmd"
-	install -y php$version $cmd
+	
+	install php$version $cmd
 
 	if [ -f /etc/httpd/conf.modules.d/00-mpm.conf ]; then
 		sudo sed -i -e "s/^LoadModule mpm_event_module/#LoadModule mpm_event_module/" /etc/httpd/conf.modules.d/00-mpm.conf

@@ -139,11 +139,11 @@ function install()
     # echo "sudo yum install $@"
     case `plateform` in 
         debian)
-            execute apt-get install $@
+            execute apt-get install -y $@
         ;;
             
         redhat)
-            execute yum install $@
+            execute yum install -y $@
         ;;
             
         alpine)
