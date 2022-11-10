@@ -97,11 +97,11 @@ function user_add()
     if ! getent passwd ${username} > /dev/null 2>&1; then
         case `plateform` in 
             alpine) 
-                if [ -n "$home" ]; then home="-h $home"
+                if [ -n "$home" ]; then home="-h $home"; fi
                 adduser --shell /bin/bash $uid -g ${username} $home ${username}
             ;;
             *) 
-                if [ -n "$home" ]; then home="-d $home"
+                if [ -n "$home" ]; then home="-d $home"; fi
                 useradd --shell /bin/bash $uid -g ${username} $home ${username}
             ;;
         esac
