@@ -98,7 +98,7 @@ function user_add()
         case `plateform` in 
             alpine) 
                 if [ -n "$home" ]; then home="-h $home"; fi
-                adduser --shell /bin/bash $uid -g ${username} $home ${username}
+                adduser -D --shell /bin/bash $uid -g ${username} $home ${username}
             ;;
             *) 
                 if [ -n "$home" ]; then home="-d $home"; fi
