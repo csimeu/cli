@@ -84,14 +84,14 @@ function user_add()
     fi
 
     
-    if [ ! $(getent group ${username}) ]; then 
-        case `plateform` in 
-            alpine) addgroup $gid ${username};;
-            *) groupadd $gid ${username};;
-        esac
-    # else
-    #     groupmod -g $USER_UID ${username};
-    fi
+    # if [ ! $(getent group ${username}) ]; then 
+    #     case `plateform` in 
+    #         alpine) addgroup $gid ${username};;
+    #         *) groupadd $gid ${username};;
+    #     esac
+    # # else
+    # #     groupmod -g $USER_UID ${username};
+    # fi
 
 
     if ! getent passwd ${username} > /dev/null 2>&1; then
