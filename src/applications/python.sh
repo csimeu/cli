@@ -16,6 +16,7 @@ function python_install()
 
     case $plateform in 
         alpine) install python3 python3-dev py3-pip
+        ;;
         redhat)
             if [ "$(rpm -E %{rhel})" ==  "6" ]; then
                 install python34 python34-libs python34-devel python34-pip;
