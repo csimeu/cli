@@ -1697,6 +1697,7 @@ function php_install()
     case `plateform` in 
         alpine)
 			# https://www.cyberciti.biz/faq/how-to-install-php-7-fpm-on-alpine-linux/
+			php_exts="$php_exts mysqlnd  "
 			version=${version%.*}
 		;;
         redhat)
