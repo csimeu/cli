@@ -1767,6 +1767,7 @@ function php_install()
 		sudo sed -i -e "s/^LoadModule mpm_event_module/#LoadModule mpm_event_module/" /etc/httpd/conf.modules.d/00-mpm.conf
 		sudo sed -i -e "s/^#LoadModule mpm_prefork_module/LoadModule mpm_prefork_module/" /etc/httpd/conf.modules.d/00-mpm.conf
 	fi
+
 	# echo "Install: php$version php$version-* "
 	# install -y php$version php$version-* 
 
@@ -1814,9 +1815,13 @@ function php_install()
 	# 	php$phpversion-pecl-
 	
 	# # Setting composer
-    if [ ! -f /usr/local/bin/composer ]
-    then 
-	    curl -sS https://getcomposer.org/installer | php$version && sudo mv composer.phar /usr/local/bin/composer
+    if [ ! -f /usr/bin/composer ]
+    then
+		case `plateform` in 
+			alpine) install composer ;;
+			*) curl -sS https://getcomposer.org/installer | php$version && sudo mv composer.phar /usr/bin/composer
+			;;
+    	esac
     fi
 
     if [ ! -f /usr/bin/symfony ]
@@ -3858,6 +3863,7 @@ mkdir -p /tmp/releases
 # }
 
 _self_update() {
+    sudo chown $EUID -R ${CPM_HOME:-/opt/cenr/cpm-cli}
     cd ${CPM_HOME:-/opt/cenr/cpm-cli} && git pull origin master
 }
 

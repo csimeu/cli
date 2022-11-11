@@ -22,6 +22,7 @@ mkdir -p /tmp/releases
 # }
 
 _self_update() {
+    sudo chown $EUID -R ${CPM_HOME:-/opt/cenr/cpm-cli}
     cd ${CPM_HOME:-/opt/cenr/cpm-cli} && git pull origin master
 }
 
