@@ -1366,7 +1366,7 @@ function mysql_install()
 	cd /tmp/releases
 
     case `plateform` in
-        alpine) install apk add --update mysql mysql-client ;;
+        alpine) install mysql mysql-client ;;
         redhat)
 			local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
 
