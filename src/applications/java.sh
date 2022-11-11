@@ -9,7 +9,7 @@ function java_install()
     set -e
     local FORCE=0
     local IS_DEFAULT=0
-    local version=
+    local version=11
     # echo $@
 
     local _parameters=
@@ -19,15 +19,16 @@ function java_install()
     plateform=`plateform`
 
     case $plateform in 
+        alpine)  install openjdk${version:-11} ;; 
         redhat)
 			if [[ `plateform_version` =~ 6 ]]; then 
-                install -y java-1.8.0-openjdk-devel; 
+                install java-1.8.0-openjdk-devel; 
             else 
-                install -y java-11-openjdk-devel; 
+                install java-${version:-11}-openjdk-devel; 
             fi
             ;;
         debian)
-            install -y default-jdk
+            install default-jdk
         ;;
         *)
             echo ">> Noy implemented script for plateform: $plateform"

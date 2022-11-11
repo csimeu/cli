@@ -6,7 +6,7 @@ wso2_install() {
     _INSTALL_DIR=${2:-"/usr/share"}
 
     curl -fSL https://bintray.com/wso2/rpm/rpm -o /etc/yum.repos.d/bintray-wso2-rpm.repo
-    yum install -y wso2is-$_VERSION
+    install wso2is-$_VERSION
 
     _WSO2_DIR=/usr/lib64/wso2/wso2is/$_VERSION
     _WSO2_HOME=/usr/lib64/wso2

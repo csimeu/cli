@@ -109,7 +109,7 @@ function user_add()
         esac
     else
         case `plateform` in 
-            alpine) moduser --shell /bin/bash $uid -g ${username} ${username};;
+            # alpine) moduser --shell /bin/bash $uid -g ${username} ${username};;
             *) usermod --shell /bin/bash $uid -g ${username} ${username};;
         esac
     fi

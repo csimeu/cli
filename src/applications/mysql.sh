@@ -19,6 +19,7 @@ function mysql_install()
 	cd /tmp/releases
 
     case `plateform` in
+        alpine) install apk add --update mysql mysql-client ;;
         redhat)
 			local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
 
@@ -36,6 +37,7 @@ function mysql_install()
 				# wget https://dev.mysql.com/get/$MYSQL_RPM
 			fi
 			execute rpm -ivh "/tmp/releases/${MYSQL_RPM}"
+			install mysql-server
             ;;
         debian)
 			local MYSQL_DEB="mysql-apt-config_0.8.16-1_all.deb"
@@ -46,12 +48,11 @@ function mysql_install()
 					curl -fSL https://dev.mysql.com/get/$MYSQL_DEB -o /tmp/releases/$MYSQL_DEB
 				fi
 				
-				apt-get install -y /tmp/releases/$MYSQL_DEB
+				apt-get install /tmp/releases/$MYSQL_DEB
 			fi
+			install mysql-server
         ;;
     esac
-	
-	install -y mysql-server
 	
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG mysql $ADMIN_USER; fi
 

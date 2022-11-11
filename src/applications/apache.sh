@@ -4,8 +4,17 @@
 apache_install() {
     
     case `plateform` in 
+        alpine)
+            install apache2 apache2-ssl apache2-mod-wsgi apache2-proxy php$phpverx-apache2
+            # if ! getent passwd apache > /dev/null 2>&1; then
+            #     sudo groupadd --system apache
+            #     sudo useradd -d /var/www -r -s /bin/false -g apache apache
+            # fi
+            # sudo chown apache:apache -R /etc/apache2
+            # sudo chmod -R g+w /etc/apache2
+            ;;
         redhat)
-            install -y httpd mod_ssl mod_fcgid
+            install httpd mod_ssl mod_fcgid
             sudo mkdir -p /etc/httpd/sites-enabled
             sudo mkdir -p /etc/httpd/sites-availables
             sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
@@ -15,7 +24,7 @@ apache_install() {
             ;;
         debian)
             ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
-            install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
+            install apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
             a2enmod ssl
             # a2enconf mod-wsgi
             if ! getent passwd apache > /dev/null 2>&1; then

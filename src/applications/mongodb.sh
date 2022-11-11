@@ -8,6 +8,6 @@ mongodb_install() {
     echo "enabled=1" >> /etc/yum.repos.d/mongodb.repo; \
     echo "gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc" >> /etc/yum.repos.d/mongodb.repo;
 
-    yum install -y mongodb-org
-    systemctl unmask mongodb
+    install mongodb-org
+    execute systemctl unmask mongodb
 }

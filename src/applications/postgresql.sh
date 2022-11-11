@@ -1,42 +1,6 @@
 #!/bin/bash
 
 
-# Reads arguments options
-# function parse_postgresql_arguments()
-# {
-#   # if [ $# -ne 0 ]; then
-#     local long="data::,version::,postgis-version::,postgresql-version::,port::,config-file::,db-user::,db-password::,db-name::,host::"
-#     # echo "long = $long"
-#     local TEMP=`getopt -o p:: --long $long -n "$0" -- "$@"`
-    
-# 	eval set -- "$TEMP"
-#     # extract options and their arguments into variables.
-#     while true ; do
-#         case "$1" in
-#             --data) data=${2%"/"} ; shift 2 ;;
-#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-#             --version) _version=${2:-"$_version"}; shift 2 ;;
-#             --postgis-version) _postgis_version=${2}; shift 2 ;;
-#             --postgis) _postgis_version=${2}; shift 2 ;;
-#             --postgresql-version) _postgresql_version=${2:-$_postgresql_version}; shift 2 ;;
-#             --postgresql) _postgresql_version=${2}; shift 2 ;;
-#             --port) port=${2:-"$port"}; shift 2 ;;
-#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-#             --db-user) DB_USER=${2}; shift 2 ;;
-#             --db-password) DB_PASSWORD=${2}; shift 2 ;;
-#             --db-name) DB_NAME=${2}; shift 2 ;;
-#             --host) _host=${2}; shift 2 ;;
-#             # --port) port=${2:-"$port"}; shift 2 ;;
-#             --) shift ; break ;;
-#             *) echo "Internal error! $1" ; exit 1 ;;
-#         esac
-#     done
-
-#     shift $(expr $OPTIND - 1 )
-#     _parameters=$@
-    
-#   # fi
-# }
 
 postgresql_add_repolist() {
     case `plateform_name` in 
@@ -50,13 +14,13 @@ postgresql_add_repolist() {
             ;;
         fedora)
             if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
-                install -y https://download.postgresql.org/pub/repos/yum/reporpms/F-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+                install https://download.postgresql.org/pub/repos/yum/reporpms/F-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
             fi
             ;;
-        *)
+        redhat)
             if [[ ! -f /etc/yum.repos.d/pgdg-redhat-all.repo ]]; then
-                # dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-                install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+                # dnf install https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+                install https://download.postgresql.org/pub/repos/yum/reporpms/EL-$OS_VERSION-x86_64/pgdg-redhat-repo-latest.noarch.rpm
             fi
         ;;
     esac
@@ -77,8 +41,10 @@ function postgis_install()
     _postgis_version=${postgis_version:-$_postgis_version}
 
     case `plateform` in 
+        alpine)
+            install postgis ;;
         debian)
-            install -y postgresql-$_postgresql_version-postgis-$_postgis_version
+            install postgresql-$_postgresql_version-postgis-$_postgis_version
             ;;
         redhat)
             if [ '8' == "$OS_VERSION" ]; then 
@@ -86,10 +52,10 @@ function postgis_install()
                 # sudo dnf -qy module disable postgresql
                 echo ">> dnf config-manager --set-enabled powertools"
                 if [ "$EUID" -eq 0 ]; then dnf config-manager --set-enabled powertools; else sudo dnf config-manager --set-enabled powertools; fi
-                echo ">> install -y dnf-plugins-core gdal-devel "
-                install -y dnf-plugins-core gdal-devel 
+                echo ">> install dnf-plugins-core gdal-devel "
+                install dnf-plugins-core gdal-devel 
             fi
-            install -y postgis${_postgis_version//./}_$_postgresql_version # postgis24_11
+            install postgis${_postgis_version//./}_$_postgresql_version # postgis24_11
         ;;
     esac
 
@@ -101,7 +67,7 @@ function postgresql_install()
     local _postgresql_version=$POSTGRESQL_DEFAULT_VERSION
     local _postgis_version=
     local _parameters=
-    local version=
+    local version=14
     local data=
     local log=
     local port=5432
@@ -113,15 +79,20 @@ function postgresql_install()
     _postgresql_version=${version:-$_postgresql_version}
     _postgis_version=${postgis_version:-$_postgis_version}
     data=${data:-"/var/lib/pgsql/$_postgresql_version/data"}
-    log=${log:-"/var/log/postgresql-$_postgresql_version.log"}
+    log=${log:-"/var/log/postgresql.log"}
 
     # echo "PGDATA=/var/lib/pgsql/$_postgresql_version/data"
     echo "export PATH=$PATH:/usr/pgsql-${_postgresql_version}/bin" | sudo tee -a /etc/profile.d/postgresql.sh
     # source /etc/profile.d/postgresql.sh
 
     case `plateform` in 
+        alpine)
+            install postgresql$_postgresql_version  postgresql$_postgresql_version-openrc postgresql$_postgresql_version-contrib
+            data=/var/lib/postgresql/data
+            postgresql_setup --version=$_postgresql_version --data=$data --log=$log --port=$port
+        ;;
         debian)
-            install -y postgresql-${_postgresql_version} postgresql-client-${_postgresql_version} postgresql-$_postgresql_version-pglogical pgbouncer
+            install postgresql-${_postgresql_version} postgresql-client-${_postgresql_version} postgresql-$_postgresql_version-pglogical pgbouncer
             ;;
         redhat)
             if [ '8' == "$OS_VERSION" ]; then 
@@ -133,7 +104,7 @@ function postgresql_install()
                     sudo dnf -qy module disable postgresql; 
                 fi
             fi
-            install -y postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server postgresql-contrib-$_postgresql_version
+            install postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server postgresql-contrib-$_postgresql_version
             postgresql_setup --version=$_postgresql_version --data=$data --log=$log --port=$port
         ;;
     esac

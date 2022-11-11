@@ -5,16 +5,17 @@ nodejs_install() {
     local appName="nodejs npm yarn"
     
     case `plateform` in 
+        alpine) install nodejs npm yarn ;;
         redhat)
             if [ ! -f /etc/yum.repos.d/yarn.repo ]
             then
                 curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
                 sudo rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
             fi
-            install -y nodejs npm yarn
+            install nodejs npm yarn
             ;;
         debian)
-            install -y nodejs npm node-gyp nodejs-dev libssl1.0-dev yarn
+            install nodejs npm node-gyp nodejs-dev libssl1.0-dev yarn
         ;;
     esac
 

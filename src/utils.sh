@@ -140,14 +140,18 @@ function install()
     case `plateform` in 
         debian)
             execute apt-get install -y $@
+            execute rm -f /var/cache/apt/* 
         ;;
             
         redhat)
             execute yum install -y $@
+            execute rm -f /var/cache/yum/* 
+            execute rm -f /var/cache/dnf/* 
         ;;
             
         alpine)
             execute apk add $@
+            execute rm -f /var/cache/apk/* 
         ;;
     esac
 }

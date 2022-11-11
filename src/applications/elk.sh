@@ -1,32 +1,5 @@
 #!/bin/bash
 
-# Reads arguments options
-function parse_elk_arguments()
-{
-    local TEMP=`getopt -o p:: --long version::,beats:: -n "$0" -- "$@"`
-    
-	eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            --version) version=${2:-"$version"}; shift 2 ;;
-            # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-            # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-            # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-            # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-            # --db-port) DB_PORT=${2:-"$DB_PORT"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
-
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
-    
-  # fi
-}
 
 elk_import_repolist() {
     # echo $(plateform)
@@ -81,33 +54,33 @@ EOF
 
 elk_install_beats() {
     elk_import_repolist
-    install -y filebeat auditbeat metricbeat packetbeat heartbeat-elastic
+    install filebeat auditbeat metricbeat packetbeat heartbeat-elastic
 }
 
 elk_install() {
     local version=7
     local _parameters=
-    parse_elk_arguments $@ 
+    read_application_arguments $@ 
     
     elk_import_repolist
-    install -y elasticsearch kibana
+    install elasticsearch kibana
 }
 
 elasticsearch_install() {
     local version=7
     local _parameters=
-    parse_elk_arguments $@ 
+    read_application_arguments $@ 
     
     elk_import_repolist
-    install -y elasticsearch
+    install elasticsearch
 
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG elasticsearch $ADMIN_USER; fi
     
-    sed -i -e "s/^\#\# -Xms.*$/-Xms512m/" /etc/elasticsearch/jvm.options
-    sed -i -e "s/^## -Xmx.*$/-Xmx512m/" /etc/elasticsearch/jvm.options
-    sed -i -e "s/^#transport.host: .*/transport.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
-    sed -i -e "s/http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
-    sed -i -e "s/^#http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
+    sudo sed -i -e "s/^\#\# -Xms.*$/-Xms512m/" /etc/elasticsearch/jvm.options
+    sudo sed -i -e "s/^## -Xmx.*$/-Xmx512m/" /etc/elasticsearch/jvm.options
+    sudo sed -i -e "s/^#transport.host: .*/transport.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
+    sudo sed -i -e "s/http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
+    sudo sed -i -e "s/^#http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
     execute systemctl enable elasticsearch
 }
 
@@ -117,7 +90,7 @@ kibana_install() {
     parse_elk_arguments $@ 
     
     elk_import_repolist
-    install -y kibana
+    install kibana
     execute systemctl enable kibana
 }
 

@@ -15,22 +15,23 @@ function python_install()
     plateform=`plateform`
 
     case $plateform in 
+        alpine) install python3 python3-dev py3-pip
         redhat)
             if [ "$(rpm -E %{rhel})" ==  "6" ]; then
-                install -y python34 python34-libs python34-devel python34-pip;
+                install python34 python34-libs python34-devel python34-pip;
             fi
 
             if [ "$(rpm -E %{rhel})" ==  "7" ]; then
-                install -y python36 python36-libs python36-devel python36-pip;
+                install python36 python36-libs python36-devel python36-pip;
                 execute ln -s -f /usr/bin/pip3.6 /usr/bin/pip3;
             fi
 
             if [ "$(rpm -E %{rhel})" ==  "8" ]; then
-                install -y python3 python3-pip;
+                install python3 python3-pip;
             fi
             ;;
         debian)
-            install -yqq python3-pip python3-dev
+            install -qq python3-pip python3-dev
         ;;
         *)
             echo ">> Noy implemented script for plateform: $plateform"

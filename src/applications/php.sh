@@ -62,7 +62,7 @@ function php_install()
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
 	local php_exts="fpm pgsql odbc gd intl mbstring ldap xml xmlrpc soap pear opcache json  "
-	local pecl_exts="apcu xdebug zip "
+	local pecl_exts="apcu xdebug "
 	# local php_exts=" mysql  imap interbase xmlrpc"
 
 	local cmd=
@@ -71,6 +71,7 @@ function php_install()
 
     case `plateform` in 
         alpine)
+			# https://www.cyberciti.biz/faq/how-to-install-php-7-fpm-on-alpine-linux/
 			version=${version%.*}
 		;;
         redhat)
@@ -82,13 +83,14 @@ function php_install()
 					6|7)
 						execute yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./};
 						php_exts="$php_exts mysql imap interbase "
-						pecl_exts="$pecl_exts geoip memcache memcached  igbinary mongodb redis imagick "
+						pecl_exts="$pecl_exts geoip memcache memcached  igbinary mongodb redis imagick zip "
 					;;
 					*)
 						execute yum module reset -y php;
 						execute yum module enable -y php:${PHP_DEFAULT_VERSION};
 						# execute yum module install -y php:-${PHP_DEFAULT_VERSION};
 						php_exts="$php_exts mysqlnd  "
+						pecl_exts="$php_exts zip  "
 					;;
 				esac
 			fi
@@ -123,7 +125,7 @@ function php_install()
 			# sudo add-apt-repository ppa:ondrej/php
 			# for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
 			# for ext in $pecl_exts ; do  cmd+=" php$version-$ext"; done
-			# install -y php$version  $cmd
+			# install php$version  $cmd
 			
 			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath json opcache json  "
 			pecl_exts=
@@ -197,12 +199,12 @@ function php_install()
 		case `plateform` in 
 			redhat)
 				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.rpm.sh' | sudo -E bash
-				sudo dnf install -y symfony-cli
+				install symfony-cli
 			;;
 
         	debian)
 				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | sudo -E bash
-				sudo apt install symfony-cli
+				install symfony-cli
 			;;
 
         	alpine)

@@ -5,7 +5,7 @@ httpd_install() {
     
     case `plateform` in 
         redhat)
-            install -y httpd mod_ssl mod_fcgid
+            install httpd mod_ssl mod_fcgid
             sudo mkdir -p /etc/httpd/sites-enabled
             sudo mkdir -p /etc/httpd/sites-availables
             sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
@@ -20,7 +20,7 @@ httpd_install() {
         debian)
             exit 0
             # ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
-            # install -y apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
+            # install apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
             # a2enmod ssl
             # # a2enconf mod-wsgi
             # if ! getent passwd apache > /dev/null 2>&1; then
