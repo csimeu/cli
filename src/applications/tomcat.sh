@@ -126,7 +126,7 @@ function tomcat_install()
         # echo "export JAVA_OPTS=\"\$JAVA_OPTS -Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\""  >> /etc/profile.d/tomcat.sh
         source /etc/profile.d/tomcat.sh
 
-        if [[ "6" != $OS_VERSION ]]; then
+        if [[ "6" != $OS_VERSION && -d /etc/systemd ]]; then
             sudo cat > /etc/systemd/system/tomcat.service << EOF
 [Unit]
 Description=Tomcat $version Server

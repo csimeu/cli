@@ -95,6 +95,9 @@ scrape_configs:
       - targets: ['localhost:$port']
 EOF
     chown prometheus:prometheus /etc/prometheus/prometheus.yml
+            
+    if [[ -d /etc/systemd ]]; then
+
     touch /etc/systemd/system/prometheus.service
     cat /etc/systemd/system/prometheus.service << EOF
 [Unit]
@@ -121,7 +124,7 @@ EOF
     # systemctl enable prometheus
     # sudo systemctl unmask prometheus.service
 
-
+  fi
 }
 
 
