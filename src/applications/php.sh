@@ -72,7 +72,7 @@ function php_install()
     case `plateform` in 
         alpine)
 			# https://www.cyberciti.biz/faq/how-to-install-php-7-fpm-on-alpine-linux/
-			php_exts="$php_exts mysqlnd  "
+			php_exts="$php_exts mysqlnd phar"
 			version=${version%.*}
 		;;
         redhat)
@@ -193,11 +193,12 @@ function php_install()
 	# # Setting composer
     if [ ! -f /usr/bin/composer ]
     then
-		case `plateform` in 
-			alpine) install composer ;;
-			*) curl -sS https://getcomposer.org/installer | php$version && sudo mv composer.phar /usr/bin/composer
-			;;
-    	esac
+		curl -sS https://getcomposer.org/installer |sudo  php -- --install-dir=/usr/bin --filename=composer
+		# case `plateform` in 
+		# 	alpine) install composer ;;
+		# 	*) curl -sS https://getcomposer.org/installer | php$version && sudo mv composer.phar /usr/bin/composer
+		# 	;;
+    	# esac
     fi
 
     if [ ! -f /usr/bin/symfony ]
