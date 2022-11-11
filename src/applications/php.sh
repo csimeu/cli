@@ -61,7 +61,7 @@ function php_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-	local php_exts="fpm pgsql odbc gd intl mbstring ldap xml xmlrpc soap pear opcache json  "
+	local php_exts="fpm pgsql odbc gd intl mbstring ldap xml xmlrpc soap pear opcache json fileinfo simplexml xmlreader xmlwriter zip zlib"
 	local pecl_exts="apcu xdebug "
 	# local php_exts=" mysql  imap interbase xmlrpc"
 
