@@ -6,6 +6,7 @@ apache_install() {
     case `plateform` in 
         alpine)
             install apache2 apache2-ssl apache2-mod-wsgi apache2-proxy php$phpverx-apache2
+            sudo sed -i '/LoadModule rewrite_module/s/^#//g' /etc/apache2/conf/httpd.conf
             # if ! getent passwd apache > /dev/null 2>&1; then
             #     sudo groupadd --system apache
             #     sudo useradd -d /var/www -r -s /bin/false -g apache apache

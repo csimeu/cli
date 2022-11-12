@@ -61,7 +61,7 @@ function php_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-	local php_exts="fpm pgsql odbc gd intl mbstring ldap xml xmlrpc soap pear opcache json    fileinfo simplexml xmlreader xmlwriter zip zlib"
+	local php_exts="fpm pgsql odbc gd intl mbstring ldap xml xmlrpc soap pear opcache json  fileinfo simplexml xmlreader xmlwriter zip zlib"
 	local pecl_exts="apcu xdebug "
 	# local php_exts=" mysql  imap interbase xmlrpc"
 
@@ -72,7 +72,7 @@ function php_install()
     case `plateform` in 
         alpine)
 			# https://www.cyberciti.biz/faq/how-to-install-php-7-fpm-on-alpine-linux/
-			php_exts="$php_exts mysqlnd phar pdo ctype curl iconv dom tokenizer dev exif  common"
+			php_exts="$php_exts mysqlnd phar pdo pdo_mysql pdo_pgsql pdo_sqlite pdo_odbc pdo_dblib ctype curl iconv dom tokenizer dev exif common"
 			pecl_exts="$pecl_exts memcache memcached uploadprogress igbinary mongodb redis imagick uuid"
 			version=${version%.*}
 		;;
