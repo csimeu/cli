@@ -1817,6 +1817,11 @@ function php_install()
 	# 	php$phpversion-pecl- \
 	# 	php$phpversion-pecl-
 	
+	if [[ ! ( -f /etc/php.ini || -L /etc/php.ini ) && -f /etc/php$version/php.ini ]]
+    then 
+	    sudo ln -s /etc/php$version/php.ini /etc/php.ini
+    fi
+
 	# # Setting composer
     if [ ! -f /usr/bin/composer ]
     then
