@@ -86,7 +86,7 @@ function user_add()
     
     if [ ! $(getent group ${username}) ]; then 
         case `plateform` in 
-            alpine) echo "addgroup $gid ${username}" ;;
+            # alpine) echo "addgroup $gid ${username}" ;;
             *) groupadd $gid ${username};;
         esac
     # else
@@ -96,12 +96,12 @@ function user_add()
 
     if ! getent passwd ${username} > /dev/null 2>&1; then
         case `plateform` in 
-            alpine) 
-                if [ -n "$home" ]; then home="-h $home"; fi
-                echo "adduser -D --shell /bin/bash $uid $home ${username}"
-                adduser -D --shell /bin/bash  $uid $home ${username}
-                # moduser --shell /bin/bash${username};
-            ;;
+            # alpine) 
+            #     if [ -n "$home" ]; then home="-h $home"; fi
+            #     echo "adduser -D --shell /bin/bash $uid $home ${username}"
+            #     adduser -D --shell /bin/bash  $uid $home ${username}
+            #     # moduser --shell /bin/bash${username};
+            # ;;
             *) 
                 if [ -n "$home" ]; then home="-d $home"; fi
                 useradd --shell /bin/bash $uid -g ${username} $home ${username}
@@ -120,7 +120,7 @@ function user_add()
         if ! $(getent group ${group})
         then
             case `plateform` in 
-                alpine) addgroup $group;;
+                # alpine) addgroup $group;;
                 *) groupadd $group;;
             esac
             
@@ -196,7 +196,7 @@ function user_update()
         if ! $(getent group ${group})
         then
             case `plateform` in 
-                alpine) addgroup $group;;
+                # alpine) addgroup $group;;
                 *) groupadd $group;;
             esac            
         fi
