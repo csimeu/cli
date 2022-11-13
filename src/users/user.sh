@@ -104,6 +104,7 @@ function user_add()
             # ;;
             *) 
                 if [ -n "$home" ]; then home="-d $home"; fi
+                echo "useradd --shell /bin/bash $uid -g ${username} $home ${username}"
                 useradd --shell /bin/bash $uid -g ${username} $home ${username}
             ;;
         esac
