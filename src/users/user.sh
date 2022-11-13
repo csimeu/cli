@@ -96,18 +96,18 @@ function user_add()
 
     if ! getent passwd ${username} > /dev/null 2>&1; then
         case `plateform` in 
-            alpine) 
-                if [ -n "$home" ]; then home="-h $home"; fi
-                echo "adduser -D --shell /bin/bash $uid $home ${username}"
-                addduser -D --shell /bin/bash  $uid $home ${username}
-                # moduser --shell /bin/bash${username};
-            ;;
+            # alpine) 
+            #     if [ -n "$home" ]; then home="-h $home"; fi
+            #     echo "adduser -D --shell /bin/bash $uid $home ${username}"
+            #     adduser -D --shell /bin/bash  $uid $home ${username}
+            #     # moduser --shell /bin/bash${username};
+            # ;;
             *) 
                 if [ -n "$home" ]; then home="-d $home"; fi
-                useraddd --shell /bin/bash $uid -g ${username} $home ${username}
+                useradd --shell /bin/bash $uid -g ${username} $home ${username}
             ;;
         esac
-        if [ -n "$home" && ! -d $home ]; then sudo mkdir -p $home; fi
+        # if [ -n "$home" && ! -d $home ]; then sudo mkdir -p $home; fi
     else
         case `plateform` in 
             # alpine) moduser --shell /bin/bash $uid -g ${username} ${username};;
