@@ -104,7 +104,7 @@ function user_add()
             ;;
             *) 
                 if [ -n "$home" ]; then home="-d $home"; fi
-                useradd --shell /bin/bash $uid -g ${username} $home ${username}
+                useraddd --shell /bin/bash $uid -g ${username} $home ${username}
             ;;
         esac
         if [ -n "$home" && ! -d $home ]; then sudo mkdir -p $home; fi
