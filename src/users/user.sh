@@ -103,7 +103,7 @@ function user_add()
             #     # moduser --shell /bin/bash${username};
             # ;;
             *) 
-                if [ -n "$home" ]; then home="--home-dir $home"; fi
+                if [ -n "$home" ]; then home="-d $home"; fi
                 echo "useradd --shell /bin/bash $uid -g ${username} $home ${username}"
                 useradd --shell /bin/bash $uid -g ${username} $home ${username}
             ;;
