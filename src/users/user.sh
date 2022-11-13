@@ -86,7 +86,7 @@ function user_add()
     
     if [ ! $(getent group ${username}) ]; then 
         case `plateform` in 
-            # alpine) echo "addgroup $gid ${username}" ;;
+            alpine) echo "addgroup $gid ${username}" ;;
             *) groupadd $gid ${username};;
         esac
     # else
