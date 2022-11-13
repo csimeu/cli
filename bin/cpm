@@ -3670,7 +3670,7 @@ function user_add()
                 useradd --shell /bin/bash $uid -g ${username} $home ${username}
             ;;
         esac
-        if [ -n "$home" && ! -d $home ]; then sudo mkdir -p $home; fi
+        if [[ -n "$home" && ! -d $home ]]; then sudo mkdir -p $home; fi
     else
         case `plateform` in 
             # alpine) moduser --shell /bin/bash $uid -g ${username} ${username};;
