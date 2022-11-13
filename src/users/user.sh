@@ -99,7 +99,7 @@ function user_add()
             alpine) 
                 if [ -n "$home" ]; then home="-h $home"; fi
                 echo "adduser -D --shell /bin/bash $uid $home ${username}"
-                adduser -D --shell /bin/bash  $uid $home ${username}
+                addduser -D --shell /bin/bash  $uid $home ${username}
                 # moduser --shell /bin/bash${username};
             ;;
             *) 
