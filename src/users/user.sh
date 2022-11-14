@@ -141,6 +141,7 @@ function user_add()
         case `plateform` in 
             redhat) echo "${password}" | passwd $username --stdin ;;
             debian) echo -e "${password}" | passwd $username ;;
+            alpine) echo -e "${password}\n${password}" | passwd $username ;;
             *) echo -e "${password}" | passwd $username ;;
         esac
     fi
