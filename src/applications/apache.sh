@@ -23,17 +23,22 @@ apache_install() {
             sudo chown apache:apache -R /etc/httpd
             sudo chmod -R g+w /etc/httpd
             ;;
-        debian|ubuntu)
+        debian)
             ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
-            install apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
-            a2enmod ssl
-            # a2enconf mod-wsgi
+            install apache2 apache2-utils libexpat1 ssl-cert python libapache2-mod-wsgi*
+            # install libapache2-mod-wsgi 
+            # execute a2enconf mod-wsgi
+            execute a2enmod ssl
+            execute a2enmod proxy
+            execute a2enmod proxy_http
+            execute a2enmod proxy_balancer
+            execute a2enmod lbmethod_byrequests
             if ! getent passwd apache > /dev/null 2>&1; then
-                sudo groupadd --system apache
-                sudo useradd -d /var/apache2 -r -s /bin/false -g apache apache
+                execute groupadd --system apache
+                execute useradd -d /var/www -r -s /bin/false -g apache apache
             fi
-            sudo chown apache:apache -R /etc/apache2
-            sudo chmod -R g+w /etc/apache2
+            execute chown apache:apache -R /etc/apache2
+            execute chmod -R g+w /etc/apache2
         ;;
     esac
 

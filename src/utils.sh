@@ -59,6 +59,9 @@ function plateform()
         centos|rhel|fedora)
             value="redhat";
         ;;
+        debian|ubuntu)
+            value="debian";
+        ;;
         # *)
         #     value="debian"
         # ;;
