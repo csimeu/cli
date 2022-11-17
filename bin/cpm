@@ -180,6 +180,7 @@ function install()
     # echo "sudo yum install $@"
     case `plateform` in 
         debian|ubuntu)
+            execute apt-get update
             execute apt-get install -y $@
             execute rm -f /var/cache/apt/* 
         ;;
