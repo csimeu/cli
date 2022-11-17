@@ -101,7 +101,7 @@ function user_add()
                 echo "adduser -D --shell /bin/bash $uid $home ${username}"
                 adduser -D --shell /bin/bash  $uid $home ${username}
             ;;
-            ubuntu) 
+            debian) 
                 if [ -n "$home" ]; then home="-m -d $home"; fi
                 echo "useradd --shell /bin/bash $uid -g ${username} $home ${username}"
                 useradd --shell /bin/bash $uid -g ${username} $home ${username}
