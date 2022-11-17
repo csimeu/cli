@@ -141,18 +141,18 @@ function install()
         debian|ubuntu)
             execute apt-get update
             execute apt-get install -y $@
-            execute rm -f /var/cache/apt/* 
+            execute rm -rf /var/cache/apt/* 
         ;;
             
         redhat)
             execute yum install -y $@
-            execute rm -f /var/cache/yum/* 
-            execute rm -f /var/cache/dnf/* 
+            execute rm -rf /var/cache/yum/* 
+            execute rm -rf /var/cache/dnf/* 
         ;;
             
         alpine)
             execute apk add $@
-            execute rm -f /var/cache/apk/* 
+            execute rm -rf /var/cache/apk/* 
         ;;
     esac
 }
