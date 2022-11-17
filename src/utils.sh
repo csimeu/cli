@@ -138,7 +138,7 @@ function install()
 {
     # echo "sudo yum install $@"
     case `plateform` in 
-        debian)
+        debian|ubuntu)
             execute apt-get install -y $@
             execute rm -f /var/cache/apt/* 
         ;;
@@ -160,7 +160,7 @@ function remove()
 {
     # echo "sudo yum remove $@"
     case `plateform` in 
-        debian)
+        debian|ubuntu)
             execute apt-get remove $@
         ;;
             

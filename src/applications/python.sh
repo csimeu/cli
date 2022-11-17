@@ -31,7 +31,7 @@ function python_install()
                 install python3 python3-pip;
             fi
             ;;
-        debian)
+        debian|ubuntu)
             install -qq python3-pip python3-dev
         ;;
         *)

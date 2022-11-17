@@ -146,7 +146,7 @@ function user_add()
     if [ -n "$password" ]; then
         case `plateform` in 
             redhat) echo "${password}" | passwd $username --stdin ;;
-            debian) echo -e "${password}" | passwd $username ;;
+            debian|ubuntu) echo -e "${password}" | passwd $username ;;
             alpine) echo -e "${password}\n${password}" | passwd $username ;;
             *) echo -e "${password}" | passwd $username ;;
         esac
@@ -191,7 +191,7 @@ function user_update()
     if [ -n "$uid" ] ; then
         case `plateform` in 
             redhat) echo "${password}" | passwd $username --stdin ;;
-            debian) echo -e "${password}" | passwd $username ;;
+            debian|ubuntu) echo -e "${password}" | passwd $username ;;
             *) echo -e "${password}" | passwd $username ;;
         esac
         usermod $uid ${username};

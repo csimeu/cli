@@ -30,6 +30,9 @@ function java_install()
         debian)
             install default-jdk
         ;;
+        ubuntu)
+            install openjdk-${version:-11}-jdk
+        ;;
         *)
             echo ">> Noy implemented script for plateform: $plateform"
         ;;

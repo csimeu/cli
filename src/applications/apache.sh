@@ -23,7 +23,7 @@ apache_install() {
             sudo chown apache:apache -R /etc/httpd
             sudo chmod -R g+w /etc/httpd
             ;;
-        debian)
+        debian|ubuntu)
             ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
             install apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
             a2enmod ssl

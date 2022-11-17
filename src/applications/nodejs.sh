@@ -14,7 +14,7 @@ nodejs_install() {
             fi
             install nodejs npm yarn
             ;;
-        debian)
+        debian|ubuntu)
             install nodejs npm node-gyp nodejs-dev libssl1.0-dev yarn
         ;;
     esac

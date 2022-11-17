@@ -4,7 +4,7 @@
 elk_import_repolist() {
     # echo $(plateform)
     case `plateform` in 
-        debian)
+        debian|ubuntu)
             # echo "debian"
             if [[ ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]]; then
                 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -

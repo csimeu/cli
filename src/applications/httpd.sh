@@ -17,7 +17,7 @@ httpd_install() {
                 sudo sed -i -e "s/^#LoadModule mpm_prefork_module/LoadModule mpm_prefork_module/" /etc/httpd/conf.modules.d/00-mpm.conf
             fi
             ;;
-        debian)
+        debian|ubuntu)
             exit 0
             # ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
             # install apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php

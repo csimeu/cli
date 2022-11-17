@@ -4,7 +4,7 @@
 
 postgresql_add_repolist() {
     case `plateform_name` in 
-        debian)
+        debian|ubuntu)
             if [[ ! -f /etc/apt/sources.list.d/pgdg.list ]]; then
                 cd /tmp
                 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
@@ -43,7 +43,7 @@ function postgis_install()
     case `plateform` in 
         alpine)
             install postgis ;;
-        debian)
+        debian|ubuntu)
             install postgresql-$_postgresql_version-postgis-$_postgis_version
             ;;
         redhat)
@@ -91,7 +91,7 @@ function postgresql_install()
             data=/var/lib/postgresql/data
             postgresql_setup --version=$_postgresql_version --data=$data --log=$log --port=$port
         ;;
-        debian)
+        debian|ubuntu)
             install postgresql-${_postgresql_version} postgresql-client-${_postgresql_version} postgresql-$_postgresql_version-pglogical pgbouncer
             ;;
         redhat)

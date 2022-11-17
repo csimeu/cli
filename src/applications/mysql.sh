@@ -39,7 +39,7 @@ function mysql_install()
 			execute rpm -ivh "/tmp/releases/${MYSQL_RPM}"
 			install mysql-server
             ;;
-        debian)
+        debian|ubuntu)
 			local MYSQL_DEB="mysql-apt-config_0.8.16-1_all.deb"
 			if [[ $version =~ ^8.*$ ]];
 			then 
@@ -68,7 +68,7 @@ function mysql_install()
 			fi
 			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
             ;;
-        debian)
+        debian|ubuntu)
 			execute systemctl enable mysql;
         ;;
     esac

@@ -118,7 +118,7 @@ function php_install()
 			# if [ -n "$version" ]; then pversion=${version}-php;	fi
 			#mcrypt mssql process
             ;;
-        debian)
+        debian|ubuntu)
 			# https://www.digitalocean.com/community/tutorials/how-to-run-multiple-php-versions-on-one-server-using-apache-and-php-fpm-on-ubuntu-18-04
 			sudo wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
 			echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list
@@ -215,7 +215,7 @@ function php_install()
 				install symfony-cli
 			;;
 
-        	debian)
+        	debian|ubuntu)
 				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | sudo -E bash
 				install symfony-cli
 			;;
@@ -235,7 +235,7 @@ function php_install()
 
     local _BIN_="/bin"
 
-    if [[ "$OS_VERSION" == "6" || "$(plateform)" == "debian" ]];
+    if [[ "$OS_VERSION" == "6" || "$(plateform)" == "debian" || "$(plateform)" == "ubuntu" ]];
     then
         _BIN_="/usr/bin"
     fi

@@ -179,7 +179,7 @@ function install()
 {
     # echo "sudo yum install $@"
     case `plateform` in 
-        debian)
+        debian|ubuntu)
             execute apt-get install -y $@
             execute rm -f /var/cache/apt/* 
         ;;
@@ -201,7 +201,7 @@ function remove()
 {
     # echo "sudo yum remove $@"
     case `plateform` in 
-        debian)
+        debian|ubuntu)
             execute apt-get remove $@
         ;;
             
@@ -353,7 +353,7 @@ apache_install() {
             sudo chown apache:apache -R /etc/httpd
             sudo chmod -R g+w /etc/httpd
             ;;
-        debian)
+        debian|ubuntu)
             ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
             install apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
             a2enmod ssl
@@ -542,7 +542,7 @@ EOF
 elk_import_repolist() {
     # echo $(plateform)
     case `plateform` in 
-        debian)
+        debian|ubuntu)
             # echo "debian"
             if [[ ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]]; then
                 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
@@ -912,7 +912,7 @@ httpd_install() {
                 sudo sed -i -e "s/^#LoadModule mpm_prefork_module/LoadModule mpm_prefork_module/" /etc/httpd/conf.modules.d/00-mpm.conf
             fi
             ;;
-        debian)
+        debian|ubuntu)
             exit 0
             # ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
             # install apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi # libapache2-mod-php
@@ -989,6 +989,9 @@ function java_install()
             ;;
         debian)
             install default-jdk
+        ;;
+        ubuntu)
+            install openjdk-${version:-11}-jdk
         ;;
         *)
             echo ">> Noy implemented script for plateform: $plateform"
@@ -1387,7 +1390,7 @@ function mysql_install()
 			execute rpm -ivh "/tmp/releases/${MYSQL_RPM}"
 			install mysql-server
             ;;
-        debian)
+        debian|ubuntu)
 			local MYSQL_DEB="mysql-apt-config_0.8.16-1_all.deb"
 			if [[ $version =~ ^8.*$ ]];
 			then 
@@ -1416,7 +1419,7 @@ function mysql_install()
 			fi
 			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
             ;;
-        debian)
+        debian|ubuntu)
 			execute systemctl enable mysql;
         ;;
     esac
@@ -1608,7 +1611,7 @@ nodejs_install() {
             fi
             install nodejs npm yarn
             ;;
-        debian)
+        debian|ubuntu)
             install nodejs npm node-gyp nodejs-dev libssl1.0-dev yarn
         ;;
     esac
@@ -1744,7 +1747,7 @@ function php_install()
 			# if [ -n "$version" ]; then pversion=${version}-php;	fi
 			#mcrypt mssql process
             ;;
-        debian)
+        debian|ubuntu)
 			# https://www.digitalocean.com/community/tutorials/how-to-run-multiple-php-versions-on-one-server-using-apache-and-php-fpm-on-ubuntu-18-04
 			sudo wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
 			echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list
@@ -1841,7 +1844,7 @@ function php_install()
 				install symfony-cli
 			;;
 
-        	debian)
+        	debian|ubuntu)
 				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | sudo -E bash
 				install symfony-cli
 			;;
@@ -1861,7 +1864,7 @@ function php_install()
 
     local _BIN_="/bin"
 
-    if [[ "$OS_VERSION" == "6" || "$(plateform)" == "debian" ]];
+    if [[ "$OS_VERSION" == "6" || "$(plateform)" == "debian" || "$(plateform)" == "ubuntu" ]];
     then
         _BIN_="/usr/bin"
     fi
@@ -1890,7 +1893,7 @@ EOF
 
 postgresql_add_repolist() {
     case `plateform_name` in 
-        debian)
+        debian|ubuntu)
             if [[ ! -f /etc/apt/sources.list.d/pgdg.list ]]; then
                 cd /tmp
                 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
@@ -1929,7 +1932,7 @@ function postgis_install()
     case `plateform` in 
         alpine)
             install postgis ;;
-        debian)
+        debian|ubuntu)
             install postgresql-$_postgresql_version-postgis-$_postgis_version
             ;;
         redhat)
@@ -1977,7 +1980,7 @@ function postgresql_install()
             data=/var/lib/postgresql/data
             postgresql_setup --version=$_postgresql_version --data=$data --log=$log --port=$port
         ;;
-        debian)
+        debian|ubuntu)
             install postgresql-${_postgresql_version} postgresql-client-${_postgresql_version} postgresql-$_postgresql_version-pglogical pgbouncer
             ;;
         redhat)
@@ -2296,7 +2299,7 @@ function python_install()
                 install python3 python3-pip;
             fi
             ;;
-        debian)
+        debian|ubuntu)
             install -qq python3-pip python3-dev
         ;;
         *)
@@ -3708,7 +3711,7 @@ function user_add()
     if [ -n "$password" ]; then
         case `plateform` in 
             redhat) echo "${password}" | passwd $username --stdin ;;
-            debian) echo -e "${password}" | passwd $username ;;
+            debian|ubuntu) echo -e "${password}" | passwd $username ;;
             alpine) echo -e "${password}\n${password}" | passwd $username ;;
             *) echo -e "${password}" | passwd $username ;;
         esac
@@ -3753,7 +3756,7 @@ function user_update()
     if [ -n "$uid" ] ; then
         case `plateform` in 
             redhat) echo "${password}" | passwd $username --stdin ;;
-            debian) echo -e "${password}" | passwd $username ;;
+            debian|ubuntu) echo -e "${password}" | passwd $username ;;
             *) echo -e "${password}" | passwd $username ;;
         esac
         usermod $uid ${username};
