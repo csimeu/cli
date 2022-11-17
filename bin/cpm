@@ -359,7 +359,7 @@ apache_install() {
             ;;
         debian)
             ## https://ubiq.co/tech-blog/install-mod_wsgi-ubuntu/
-            install apache2 apache2-utils libexpat1 ssl-cert python libapache2-mod-wsgi*
+            install apache2 apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi*
             # install libapache2-mod-wsgi 
             # execute a2enconf mod-wsgi
             execute a2enmod ssl
