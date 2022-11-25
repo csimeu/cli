@@ -72,7 +72,7 @@ function php_install()
     case `plateform` in 
         alpine)
 			# https://www.cyberciti.biz/faq/how-to-install-php-7-fpm-on-alpine-linux/
-			php_exts="$php_exts mysqlnd phar pdo pdo_mysql pdo_pgsql pdo_sqlite pdo_odbc pdo_dblib ctype curl iconv dom tokenizer dev exif common"
+			php_exts="$php_exts mysqlnd mysqli phar pdo pdo_mysql pdo_pgsql pdo_sqlite pdo_odbc pdo_dblib ctype curl iconv dom tokenizer dev exif common"
 			pecl_exts="$pecl_exts memcache memcached uploadprogress igbinary mongodb redis imagick uuid"
 			version=${version%.*}
 		;;
