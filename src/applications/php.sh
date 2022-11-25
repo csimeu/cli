@@ -120,9 +120,11 @@ function php_install()
             ;;
         debian|ubuntu)
 			# https://www.digitalocean.com/community/tutorials/how-to-run-multiple-php-versions-on-one-server-using-apache-and-php-fpm-on-ubuntu-18-04
+			sudo apt-get install lsb-release apt-transport-https ca-certificates -y 
+			# sudo apt-get install software-properties-common lsb-release apt-transport-https ca-certificates -y 
+
 			sudo wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
 			echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list
-			sudo apt-get install software-properties-common lsb-release apt-transport-https ca-certificates -y 
 			sudo apt-get update -y
 			# sudo add-apt-repository ppa:ondrej/php
 			# for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
