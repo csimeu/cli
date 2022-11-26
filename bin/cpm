@@ -2013,20 +2013,15 @@ function postgresql_install()
     
     postgresql_init --version=$_postgresql_version --data=$data
 
-    echo "export PATH=$PATH:$PG_BIN" | sudo tee -a /etc/profile.d/postgresql.sh
-    echo "export PG_DATA=$data" | sudo tee -a /etc/profile.d/postgresql.sh
-    echo "export PG_LOG=$log" | sudo tee -a /etc/profile.d/postgresql.sh
-    source /etc/profile.d/postgresql.sh
-
     if [[ -n "$_postgis_version" ]]
     then 
         # echo "postgis_install --postgresql-version=$_postgresql_version --postgis-version=$_postgis_version"
         postgis_install --postgresql-version=$_postgresql_version --postgis-version=$_postgis_version
     fi
     
-    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then 
-        sudo usermod -aG postgres $ADMIN_USER;    
-    fi
+    # if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then 
+    #     sudo usermod -aG postgres $ADMIN_USER;    
+    # fi
 }
 
 postgresql_create_user(){
@@ -2079,10 +2074,10 @@ postgresql_create_db(){
 }
 
 postgresql_start(){
-    local version=11
+    local version=$POSTGRESQL_VERSION
+    local port=${POSTGRESQL_PORT:-5432}
     local data=
-    local log=
-    local port=5432
+    local log=    
 
     local _parameters=
     read_application_arguments $@ 
@@ -2091,28 +2086,36 @@ postgresql_start(){
     data=${data:-"/var/lib/postgresql/${version}/data"}
     log=${log:-"/var/log/postgresql-${version}.log"}
 
-    if [[ ! -f "$log" ]]; then
-        sudo touch $log
-        sudo chown postgres:postgres $log
-    fi
+    # if [[ ! -f "$log" ]]; then
+    #     sudo touch $log
+    #     sudo chown postgres:postgres $log
+    # fi
 
     postgresql_ctl -D $data -l $log -o "-p $port" restart
 }
 
 postgresql_ctl(){
+    local cmd=/usr/pgsql-${version}/bin/pg_ctl
 
     if [ -d /usr/lib/postgresql/${version}/bin ]; then
-        sudo -u postgres /usr/lib/postgresql/${version}/bin/pg_ctl $@
-    else
-        sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $@
+        cmd=/usr/lib/postgresql/${version}/bin/pg_ctl
     fi
 
+    postgres_exec $cmd $@
+}
+
+postgres_exec(){
+    if [ "$(id -u -n)" == "postgres" ]; then
+        $@
+    else
+        sudo -u postgres $@
+    fi
 }
 
 postgresql_init(){
-    local version=14
+    local version=$POSTGRESQL_VERSION
     local data=
-    # local log=
+        # local log=
     # local port=5432
 
     local _parameters=
@@ -2124,8 +2127,8 @@ postgresql_init(){
 
     if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
         echo "Init postgresql $version: $data"
-        sudo mkdir -p $data
-        sudo chown postgres:postgres $data
+        mkdir -p $data
+        chown postgres:postgres $data
 
         postgresql_ctl -D $data init
         # else
@@ -2133,15 +2136,19 @@ postgresql_init(){
         # fi
     fi
 
-    if ! sudo -u postgres grep '0.0.0.0/0' $data/pg_hba.conf ; then
-        echo 'host      all     all     0.0.0.0/0 md5' | sudo -u postgres tee -a $data/pg_hba.conf
+    if ! postgres_exec grep '0.0.0.0/0' $data/pg_hba.conf ; then
+        echo 'host      all     all     0.0.0.0/0 md5' | postgres_exec tee -a $data/pg_hba.conf
     fi
-    sudo -u postgres sed -i -e 's/ident$/md5/g' $data/pg_hba.conf
+    
+    postgres_exec sed -i -e 's/ident$/md5/g' $data/pg_hba.conf
+    postgres_exec sed -i -e "s/fr_CA/en_US/g" $data/postgresql.conf
+
+    # sudo -u postgres sed -i -e 's/ident$/md5/g' $data/pg_hba.conf
+
+    # sudo sed -i -e "s/fr_CA/en_US/g" $data/postgresql.conf
 
 
 	# systemctl enable postgresql-${version}
-
-    sudo sed -i -e "s/fr_CA/en_US/g" $data/postgresql.conf
     # sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log  restart
 	# systemctl restart postgresql-${version}
 
