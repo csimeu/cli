@@ -2075,7 +2075,7 @@ postgresql_create_db(){
 
 postgresql_start(){
     local version=$POSTGRESQL_VERSION
-    local port=${POSTGRESQL_PORT:-5432}
+    local port=${POSTGRESQL_PORT:-"5432"}
     local data=
     local log=    
 
