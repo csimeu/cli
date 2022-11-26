@@ -2091,7 +2091,20 @@ postgresql_start(){
     #     sudo chown postgres:postgres $log
     # fi
 
-    postgresql_ctl -D $data -l $log -o "\'-p $port\'" restart
+    # postgresql_ctl -D $data -o '-p 5443' restart
+    # postgresql_ctl -D $data -l $log -o "\"-p $port\"" restart
+
+    local cmd=/usr/pgsql-${version}/bin/pg_ctl
+
+    if [ -d /usr/lib/postgresql/${version}/bin ]; then
+        cmd=/usr/lib/postgresql/${version}/bin/pg_ctl
+    fi
+
+    if [ "$(id -u -n)" == "postgres" ]; then
+        $cmd -D $data -o "-p $port" restart
+    else
+        sudo -u postgres $cmd -D $data -o "-p $port" restart
+    fi
 }
 
 postgresql_ctl(){
@@ -2101,14 +2114,16 @@ postgresql_ctl(){
         cmd=/usr/lib/postgresql/${version}/bin/pg_ctl
     fi
     echo $@
-    postgres_exec $cmd "$@"
+    postgres_exec $cmd $@
 }
 
 postgres_exec(){
+    local cmd=$@
+    echo $cmd
     if [ "$(id -u -n)" == "postgres" ]; then
-        $@
+        $cmd
     else
-        sudo -u postgres $@
+        sudo -u postgres $cmd
     fi
 }
 
