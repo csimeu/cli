@@ -191,7 +191,7 @@ postgresql_start(){
     #     sudo chown postgres:postgres $log
     # fi
 
-    postgresql_ctl -D $data -l $log -o "\'-p $port\'" restart
+    postgresql_ctl -D $data -l $log -o "\"-p $port\"" restart
 }
 
 postgresql_ctl(){
@@ -200,7 +200,7 @@ postgresql_ctl(){
     if [ -d /usr/lib/postgresql/${version}/bin ]; then
         cmd=/usr/lib/postgresql/${version}/bin/pg_ctl
     fi
-
+    echo $@
     postgres_exec $cmd $@
 }
 
