@@ -1907,6 +1907,7 @@ postgresql_add_repolist() {
         debian|ubuntu)
             if [[ ! -f /etc/apt/sources.list.d/pgdg.list ]]; then
                 cd /tmp
+                install gnupg2 lsb-release
                 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
                 echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | sudo tee  /etc/apt/sources.list.d/pgdg.list
                 sudo apt -y update
@@ -1978,20 +1979,22 @@ function postgresql_install()
     
     _postgresql_version=${version:-$_postgresql_version}
     _postgis_version=${postgis_version:-$_postgis_version}
-    data=${data:-"/var/lib/pgsql/$_postgresql_version/data"}
-    log=${log:-"/var/log/postgresql.log"}
+    # data=${data:-"/var/lib/pgsql/$_postgresql_version/data"}
+    data=${data:-"/var/lib/postgresql/$_postgresql_version/data"}
+    log=${log:-"/var/log/postgresql-$_postgresql_version.log"}
 
     # echo "PGDATA=/var/lib/pgsql/$_postgresql_version/data"
-    echo "export PATH=$PATH:/usr/pgsql-${_postgresql_version}/bin" | sudo tee -a /etc/profile.d/postgresql.sh
-    # source /etc/profile.d/postgresql.sh
+    PG_BIN="/usr/pgsql-${_postgresql_version}/bin"
+
 
     case `plateform` in 
         alpine)
             install postgresql$_postgresql_version  postgresql$_postgresql_version-openrc postgresql$_postgresql_version-contrib
-            data=/var/lib/postgresql/data
-            postgresql_setup --version=$_postgresql_version --data=$data --log=$log --port=$port
+            # data=/var/lib/postgresql/data
         ;;
         debian|ubuntu)
+            # data="/var/lib/postgresql/${_postgresql_version}/data"
+            PG_BIN="/usr/lib/postgresql/${_postgresql_version}/bin"
             install postgresql-${_postgresql_version} postgresql-client-${_postgresql_version} postgresql-$_postgresql_version-pglogical pgbouncer
             ;;
         redhat)
@@ -2005,20 +2008,28 @@ function postgresql_install()
                 fi
             fi
             install postgresql$_postgresql_version  postgresql$_postgresql_version-libs postgresql$_postgresql_version-server postgresql-contrib-$_postgresql_version
-            postgresql_setup --version=$_postgresql_version --data=$data --log=$log --port=$port
         ;;
     esac
     
+    postgresql_init --version=$_postgresql_version --data=$data
+
+    echo "export PATH=$PATH:$PG_BIN" | sudo tee -a /etc/profile.d/postgresql.sh
+    echo "export PG_DATA=$data" | sudo tee -a /etc/profile.d/postgresql.sh
+    echo "export PG_LOG=$log" | sudo tee -a /etc/profile.d/postgresql.sh
+    source /etc/profile.d/postgresql.sh
+
     if [[ -n "$_postgis_version" ]]
     then 
         # echo "postgis_install --postgresql-version=$_postgresql_version --postgis-version=$_postgis_version"
         postgis_install --postgresql-version=$_postgresql_version --postgis-version=$_postgis_version
     fi
     
-    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG postgres $ADMIN_USER; fi
+    if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then 
+        sudo usermod -aG postgres $ADMIN_USER;    
+    fi
 }
 
-postgresql_createuser(){
+postgresql_create_user(){
     local version=11
     local data=
 
@@ -2039,7 +2050,7 @@ postgresql_createuser(){
 	fi
 }
 
-postgresql_createdb(){
+postgresql_create_db(){
     # local version=11
     # local data=
 
@@ -2048,9 +2059,10 @@ postgresql_createdb(){
     if [ -n "$_parameters" ]; then set $_parameters; fi
     
     cd /tmp
+    DB_NAME=${DB_NAME:-"$NAME"}
     
     if [[ -z "$DB_NAME" ]]; then
-        echo "===>> ERROR: --db-name={DB_NAME} required"
+        echo "===>> ERROR: required --db-name={DB_NAME} or --name={DB_NAME} "
         exit 0;
     fi
     if [[ -z "$DB_USER" ]]; then
@@ -2062,10 +2074,11 @@ postgresql_createdb(){
 	if [[ -z "$EXISTS_DB" ]]; then
 		sudo -u postgres createdb -O $DB_USER $DB_NAME
 	fi
+
 	sudo -u postgres psql $DB_NAME --command "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
 }
 
-postgresql_setup(){
+postgresql_start(){
     local version=11
     local data=
     local log=
@@ -2075,12 +2088,49 @@ postgresql_setup(){
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    data=${data:-"/var/lib/pgsql/${version}/data"}
+    data=${data:-"/var/lib/postgresql/${version}/data"}
     log=${log:-"/var/log/postgresql-${version}.log"}
 
+    if [[ ! -f "$log" ]]; then
+        sudo touch $log
+        sudo chown postgres:postgres $log
+    fi
+
+    postgresql_ctl -D $data -l $log -o "-p $port" restart
+}
+
+postgresql_ctl(){
+
+    if [ -f /usr/lib/postgresql/${version}/bin ]; then
+        sudo -u postgres /usr/postgresql/${version}/bin/pg_ctl $@
+    else
+        sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $@
+    fi
+
+}
+
+postgresql_init(){
+    local version=14
+    local data=
+    # local log=
+    # local port=5432
+
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
+    data=${data:-"/var/lib/postgresql/${version}/data"}
+    # log=${log:-"/var/log/postgresql-${version}.log"}
+
     if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
-        echo "Init postgresql $version"
-        sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data init
+        echo "Init postgresql $version: $data"
+        sudo mkdir -p $data
+        sudo chown postgres:postgres $data
+
+        postgresql_ctl -D $data init
+        # else
+        #     sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data init
+        # fi
     fi
 
     if ! sudo -u postgres grep '0.0.0.0/0' $data/pg_hba.conf ; then
@@ -2088,18 +2138,15 @@ postgresql_setup(){
     fi
     sudo -u postgres sed -i -e 's/ident$/md5/g' $data/pg_hba.conf
 
-	systemctl enable postgresql-${version}
 
-    if [[ ! -f "$log" ]]; then
-        sudo touch $log
-    fi
-    chown postgres:postgres $log
+	# systemctl enable postgresql-${version}
+
     sudo sed -i -e "s/fr_CA/en_US/g" $data/postgresql.conf
-    sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log -o "-p $port" restart
     # sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $data -l $log  restart
 	# systemctl restart postgresql-${version}
 
-	sleep 2
+    # postgresql_start --data=$data --log=$log --port=$port
+	# sleep 2
 	# cd /tmp
 
 	# echo "DB_USER=$DB_USER DB_PASSWORD=$DB_PASSWORD DB_NAME=$DB_NAME" 
