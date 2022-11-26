@@ -202,7 +202,7 @@ postgresql_start(){
 postgresql_ctl(){
 
     if [ -d /usr/lib/postgresql/${version}/bin ]; then
-        sudo -u postgres /usr/postgresql/${version}/bin/pg_ctl $@
+        sudo -u postgres /usr/lib/postgresql/${version}/bin/pg_ctl $@
     else
         sudo -u postgres /usr/pgsql-${version}/bin/pg_ctl -D $@
     fi
