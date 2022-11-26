@@ -2091,7 +2091,7 @@ postgresql_start(){
     #     sudo chown postgres:postgres $log
     # fi
 
-    postgresql_ctl -D $data -l $log -o "-p $port" restart
+    postgresql_ctl -D $data -l $log -o "\'-p $port\'" restart
 }
 
 postgresql_ctl(){
