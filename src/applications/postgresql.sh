@@ -125,23 +125,35 @@ function postgresql_install()
 }
 
 postgresql_create_user(){
-    local version=11
-    local data=
 
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     cd /tmp
+    DB_USER=${DB_USER:-"$user"}
+    DB_PASSWORD=${DB_PASSWORD:-"$password"}
+
 	if [[ -n "$DB_USER" ]] ; then
-		EXISTS_USER="$(sudo -u postgres psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")"
-		if [[ -z "$EXISTS_USER" ]]; then
-			sudo -u postgres psql --command "CREATE USER $DB_USER WITH SUPERUSER ;"
-		fi
-		# TODO: Change user password if user already exist
-		if [[ -n "$DB_PASSWORD" ]]; then
-			sudo -u postgres psql --command "ALTER USER $DB_USER with PASSWORD '$DB_PASSWORD';"
-		fi
+        if [ "$(id -u -n)" == "postgres" ]; then
+            EXISTS_USER="$(psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")"
+            if [[ -z "$EXISTS_USER" ]]; then
+                psql --command "CREATE USER $DB_USER WITH SUPERUSER ;"
+            fi
+            # Change user password if user already exist
+            if [[ -n "$DB_PASSWORD" ]]; then
+                psql --command "ALTER USER $DB_USER with PASSWORD '$DB_PASSWORD';"
+            fi
+        else
+            EXISTS_USER="$(sudo -u postgres psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")"
+            if [[ -z "$EXISTS_USER" ]]; then
+                sudo -u postgres psql --command "CREATE USER $DB_USER WITH SUPERUSER ;"
+            fi
+            # Change user password if user already exist
+            if [[ -n "$DB_PASSWORD" ]]; then
+                sudo -u postgres psql --command "ALTER USER $DB_USER with PASSWORD '$DB_PASSWORD';"
+            fi
+        fi
 	fi
 }
 
@@ -154,7 +166,8 @@ postgresql_create_db(){
     if [ -n "$_parameters" ]; then set $_parameters; fi
     
     cd /tmp
-    DB_NAME=${DB_NAME:-"$NAME"}
+    DB_NAME=${DB_NAME:-"$name"}
+    DB_USER=${DB_USER:-"$user"}
     
     if [[ -z "$DB_NAME" ]]; then
         echo "===>> ERROR: required --db-name={DB_NAME} or --name={DB_NAME} "
@@ -165,12 +178,21 @@ postgresql_create_db(){
         exit 0;
     fi
 
-	EXISTS_DB="$(sudo -u postgres psql -tAc "SELECT datname FROM pg_catalog.pg_database WHERE datname='$DB_NAME'")"
-	if [[ -z "$EXISTS_DB" ]]; then
-		sudo -u postgres createdb -O $DB_USER $DB_NAME
-	fi
+    if [ "$(id -u -n)" == "postgres" ]; then
+            EXISTS_DB="$(psql -tAc "SELECT datname FROM pg_catalog.pg_database WHERE datname='$DB_NAME'")"
+        if [[ -z "$EXISTS_DB" ]]; then
+            createdb -O $DB_USER $DB_NAME
+        fi
 
-	sudo -u postgres psql $DB_NAME --command "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+        psql $DB_NAME --command "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+    else
+        EXISTS_DB="$(sudo -u postgres psql -tAc "SELECT datname FROM pg_catalog.pg_database WHERE datname='$DB_NAME'")"
+        if [[ -z "$EXISTS_DB" ]]; then
+            sudo -u postgres createdb -O $DB_USER $DB_NAME
+        fi
+
+        sudo -u postgres psql $DB_NAME --command "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+    fi
 }
 
 postgresql_start(){
