@@ -37,7 +37,7 @@ function parse_user_arguments()
         case "$1" in
             -h|--help) HELP=1 ; shift 1 ;;
             --uid) uid="-u ${2}" ; shift 2 ;;
-            --gid) gid="-g ${2}" ; shift 2 ;;
+            --gid) gid="${2}" ; shift 2 ;;
             --home) home="${2}" ; shift 2 ;;
             --password) password="${2}" ; shift 2 ;;
             --group) groups+="${2} "; shift 2 ;;
@@ -74,6 +74,7 @@ function user_add()
 
     username=$1
 
+        # echo "----> user_add ${username} "
 
     if [[ -z "$username" ]]; 
     then
@@ -84,15 +85,18 @@ function user_add()
     fi
 
     
-    if [ ! $(getent group ${username}) ]; then 
-        case `plateform` in 
-            alpine) echo "addgroup $gid ${username}" ;;
-            *) groupadd $gid ${username};;
-        esac
-    # else
-    #     groupmod -g $USER_UID ${username};
+    if [ -n "${gid}" ]; then
+        if [[ ! $(getent group ${username}) && ! $(getent group ${gid}) ]]; then 
+            case `plateform` in 
+                alpine) echo "addgroup -g $gid ${username}" ;;
+                *) 
+                    groupadd -g $gid ${username}
+                    
+                ;;
+            esac
+        fi
+        gid="-g $gid"
     fi
-
 
     if ! getent passwd ${username} > /dev/null 2>&1; then
         case `plateform` in 
@@ -103,20 +107,21 @@ function user_add()
             ;;
             debian) 
                 if [ -n "$home" ]; then home="-m -d $home"; fi
-                echo "useradd --shell /bin/bash $uid -g ${username} $home ${username}"
-                useradd --shell /bin/bash $uid -g ${username} $home ${username}
+                echo "useradd --shell /bin/bash $uid $gid $home ${username}"
+                useradd --shell /bin/bash $uid $gid $home ${username}
                 id ${username}
             ;;
             *) 
                 if [ -n "$home" ]; then home="-d $home"; fi
-                echo "useradd --shell /bin/bash $uid -g ${username} $home ${username}"
-                useradd --shell /bin/bash $uid -g ${username} $home ${username}
+                echo "useradd --shell /bin/bash $uid $gid $home ${username}"
+                useradd --shell /bin/bash $uid $gid  $home ${username}
                 id ${username}
             ;;
         esac
         # if [[ -n "$home" && ! -d $home ]]; then sudo mkdir -p $home; fi
         # if [ -n "$home" && ! -d $home ]; then sudo mkdir -p $home; fi
     else
+        echo "----> User ${username} already exists"
         case `plateform` in 
             # alpine) moduser --shell /bin/bash $uid -g ${username} ${username};;
             *) usermod --shell /bin/bash $uid -g ${username} ${username};;
@@ -146,14 +151,15 @@ function user_add()
     if [ -n "$password" ]; then
         case `plateform` in 
             redhat) echo "${password}" | passwd $username --stdin ;;
-            debian|ubuntu) echo -e "${password}" | passwd $username ;;
-            alpine) echo -e "${password}\n${password}" | passwd $username ;;
-            *) echo -e "${password}" | passwd $username ;;
+            # debian|ubuntu) echo -e "${password}\n${password}" | passwd $username ;;
+            # alpine) echo -e "${password}\n${password}" | passwd $username ;;
+            *) echo -e "${password}\n${password}" | passwd $username ;;
         esac
     fi
 #     for user in $_USERS
 #     do  
 #     done
+
 
 }
 
