@@ -558,6 +558,7 @@ elk_import_repolist() {
                 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
                 echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
                 sudo apt-get -y update
+                install gnupg2 lsb-release
             fi
             ;;
         redhat)
