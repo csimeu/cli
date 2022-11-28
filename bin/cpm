@@ -998,10 +998,10 @@ function java_install()
                 install java-${version:-11}-openjdk-devel; 
             fi
             ;;
-        debian)
-            install default-jdk gnupg2
-        ;;
-        ubuntu)
+        # debian)
+        #     install default-jdk gnupg2
+        # ;;
+        debian|ubuntu)
             install openjdk-${version:-11}-jdk gnupg2
         ;;
         *)
