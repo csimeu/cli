@@ -558,8 +558,8 @@ elk_import_repolist() {
                 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
                 echo "deb https://artifacts.elastic.co/packages/$version.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-$version.x.list
                 sudo apt-get -y update
-                install gnupg2 lsb-release
             fi
+            install gnupg2 lsb-release
             ;;
         redhat)
             # echo "redhat"
@@ -630,7 +630,7 @@ elasticsearch_install() {
     sudo sed -i -e "s/^#transport.host: .*/transport.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
     sudo sed -i -e "s/http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
     sudo sed -i -e "s/^#http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
-    execute systemctl enable elasticsearch
+    # execute systemctl enable elasticsearch
 }
 
 kibana_install() {
@@ -640,7 +640,7 @@ kibana_install() {
     
     elk_import_repolist
     install kibana
-    execute systemctl enable kibana
+    # execute systemctl enable kibana
 }
 
 ## detect if a script is being sourced or not
