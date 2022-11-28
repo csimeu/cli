@@ -17,7 +17,7 @@ function mariadb_install()
         debian|ubuntu)
 			install mariadb-server
 			sudo /usr/bin/install -m 755 -o mysql -g root -d /var/run/mysqld
-			sudo mysql --execute="GRANT ALL ON *.* TO 'admin'@'localhost' IDENTIFIED BY '' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+			# sudo mysql --execute="GRANT ALL ON *.* TO 'admin'@'localhost' IDENTIFIED BY '' WITH GRANT OPTION; FLUSH PRIVILEGES;"
         ;;
     esac
 
