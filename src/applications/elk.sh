@@ -68,7 +68,7 @@ elk_install() {
 }
 
 elasticsearch_install() {
-    local version=7
+    local version=8
     local _parameters=
     read_application_arguments $@ 
     
@@ -86,9 +86,9 @@ elasticsearch_install() {
 }
 
 kibana_install() {
-    local version=7
+    local version=8
     local _parameters=
-    parse_elk_arguments $@ 
+    read_application_arguments $@ 
     
     elk_import_repolist
     install kibana
