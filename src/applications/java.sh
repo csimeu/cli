@@ -28,10 +28,10 @@ function java_install()
             fi
             ;;
         debian)
-            install default-jdk
+            install default-jdk gnupg2
         ;;
         ubuntu)
-            install openjdk-${version:-11}-jdk
+            install openjdk-${version:-11}-jdk gnupg2
         ;;
         *)
             echo ">> Noy implemented script for plateform: $plateform"
