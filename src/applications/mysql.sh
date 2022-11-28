@@ -40,15 +40,14 @@ function mysql_install()
 			install mysql-server
             ;;
         debian|ubuntu)
-			local MYSQL_DEB="mysql-apt-config_0.8.16-1_all.deb"
+			local MYSQL_DEB="mysql-apt-config_0.8.22-1_all.deb"
 			if [[ $version =~ ^8.*$ ]];
 			then 
-				# wget https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb
 				if [[ ! -f /tmp/releases/$MYSQL_DEB ]]; then
 					curl -fSL https://dev.mysql.com/get/$MYSQL_DEB -o /tmp/releases/$MYSQL_DEB
 				fi
 				
-				apt-get install /tmp/releases/$MYSQL_DEB
+				apt-get install gnupg2 lsb-release /tmp/releases/$MYSQL_DEB 
 			fi
 			install mysql-server
         ;;
@@ -67,9 +66,9 @@ function mysql_install()
 				sudo /usr/bin/mysqld_pre_systemd
 			fi
 			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
-            ;;
-        debian|ubuntu)
-			execute systemctl enable mysql;
+		# ;;
+        # debian|ubuntu)
+		# 	execute systemctl enable mysql;
         ;;
     esac
 }
@@ -127,12 +126,25 @@ mysql_setup(){
 }
 
 
-mysql_createdb() {
+mysql_create_db() {
 	local FORCE=0
-	local DB_HOST='%'
+	local DROP=0
+	local DB_HOST=
+	local DB_USER=
+	local DB_PASSWORD=
+	local DB_NAME=
+	local user=
+	local password=
+	local host='localhost'
+	local name=
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
+	
+    DB_USER=${DB_USER:-"$user"}
+    DB_PASSWORD=${DB_PASSWORD:-"$password"}
+    DB_HOST=${DB_HOST:-"$host"}
+    DB_NAME=${DB_NAME:-"$name"}
 	
     if [[ -z "$DB_NAME" ]]; then
         echo "===>> ERROR: --db-name={DB_NAME} required"
@@ -140,78 +152,101 @@ mysql_createdb() {
     fi
 	
 	if [ "$FORCE" == "1" ]; then sudo mysql --execute="DROP SCHEMA IF EXISTS $DB_NAME;" ; fi
+	if [ "$DROP" == "1" ]; then sudo mysql --execute="DROP SCHEMA IF EXISTS $DB_NAME;" ; fi
 	
 	sudo mysql --execute="CREATE SCHEMA IF NOT EXISTS $DB_NAME DEFAULT CHARACTER SET utf8;"
 
 	if [[ -n "$DB_USER" ]] ; then
-		EXISTS_DB_USER="$(mysql_existuser $DB_USER ${DB_HOST:-localhost})"
-		if [ "$EXISTS_DB_USER" = 0 ]; then
-			sudo mysql --execute="CREATE USER '$DB_USER'@'${DB_HOST:-localhost}';";
-			echo "CREATE USER '$DB_USER'@'${DB_HOST:-localhost}';"
+		EXISTS_DB_USER="$(mysql_exist_user $DB_USER ${DB_HOST})"
+		if [ "$EXISTS_DB_USER" == "0" ]; then
+			sudo mysql --execute="CREATE USER '$DB_USER'@'${DB_HOST}';";
+			echo "CREATE USER '$DB_USER'@'${DB_HOST}';"
 		fi
 		if [[ -n "$DB_PASSWORD" ]]; then
-			# echo "ALTER USER '$DB_USER'@'${DB_HOST:-localhost}' IDENTIFIED BY '$DB_PASSWORD'"
-			sudo mysql --execute="ALTER USER '$DB_USER'@'${DB_HOST:-localhost}' IDENTIFIED BY '$DB_PASSWORD'; FLUSH PRIVILEGES;";
-			echo "SET PASSWORD '$DB_USER'@'${DB_HOST:-localhost}'"
+			# echo "ALTER USER '$DB_USER'@'${DB_HOST}' IDENTIFIED BY '$DB_PASSWORD'"
+			sudo mysql --execute="ALTER USER '$DB_USER'@'${DB_HOST}' IDENTIFIED BY '$DB_PASSWORD'; FLUSH PRIVILEGES;";
+			echo "SET PASSWORD '$DB_USER'@'${DB_HOST}'"
 		fi
 
-		sudo mysql --execute="GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'${DB_HOST:-localhost}'; FLUSH PRIVILEGES;";
+		sudo mysql --execute="GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'${DB_HOST}'; FLUSH PRIVILEGES;";
 	fi
 }
 
-mysql_existuser() {
+mysql_exist_user() {
 	local username=$1
 	local hostname=${2:-localhost}
-	# local DB_HOST='%'
-	# echo "sudo mysql -sse \"SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$DB_USER@${DB_HOST:-localhost}')\""
 	EXISTS_DB_USER="$(sudo mysql -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$username' AND host = '${hostname:-localhost}');")"
 	echo $EXISTS_DB_USER;
 }
 
-mysql_createuser() {
+mysql_create_user() {
+	local DB_HOST=
+	local DB_USER=
+	local DB_PASSWORD=
+	local DB_NAME=
+	local user=
+	local password=
+	local host='localhost'
+	local name=
     local _parameters=
-	local DB_HOST='%'
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
+    DB_USER=${DB_USER:-"$user"}
+    DB_PASSWORD=${DB_PASSWORD:-"$password"}
+    DB_HOST=${DB_HOST:-"$host"}
+    DB_NAME=${DB_NAME:-"$name"}
+
 	if [[ -n "$DB_USER" ]] ; then
-		EXISTS_DB_USER="$(mysql_existuser $DB_USER ${DB_HOST:-localhost})"
-		if [ "$EXISTS_DB_USER" = 0 ]; then
-			sudo mysql --execute="CREATE USER '$DB_USER'@'${DB_HOST:-localhost}';";
-			echo "CREATE USER '$DB_USER'@'${DB_HOST:-localhost}';"
+		EXISTS_DB_USER="$(mysql_exist_user $DB_USER ${DB_HOST})"
+		if [ "$EXISTS_DB_USER" == "0" ]; then
+			sudo mysql --execute="CREATE USER '$DB_USER'@'${DB_HOST}';";
+			echo "CREATE USER '$DB_USER'@'${DB_HOST}';"
 		fi
 
 		# Change user password if user already exist
 		if [[ -n "$DB_PASSWORD" ]]; then
-			# echo "ALTER USER '$DB_USER'@'${DB_HOST:-localhost}' IDENTIFIED BY '$DB_PASSWORD'"
-			sudo mysql --execute="ALTER USER '$DB_USER'@'${DB_HOST:-localhost}' IDENTIFIED BY '$DB_PASSWORD'; FLUSH PRIVILEGES;";
-			echo "SET PASSWORD '$DB_USER'@'${DB_HOST:-localhost}'"
+			sudo mysql --execute="ALTER USER '$DB_USER'@'${DB_HOST}' IDENTIFIED BY '$DB_PASSWORD'; FLUSH PRIVILEGES;";
+			echo "SET PASSWORD '$DB_USER'@'${DB_HOST}'"
 		fi
 
 		# Create database
 		if [[ -n "$DB_NAME" ]]; then
 			sudo mysql --execute="CREATE SCHEMA IF NOT EXISTS $DB_NAME DEFAULT CHARACTER SET utf8;";
-			sudo mysql --execute="GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'${DB_HOST:-localhost}'; FLUSH PRIVILEGES;";
-			echo "CREATE DATABASE $DB_NAME and grant all privileges to '$DB_USER'@'${DB_HOST:-localhost}'"
+			sudo mysql --execute="GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'${DB_HOST}'; FLUSH PRIVILEGES;";
+			echo "CREATE DATABASE $DB_NAME and grant all privileges to '$DB_USER'@'${DB_HOST}'"
 		fi
 	fi
 }
 
 mysql_update_password() {
+	local DB_HOST=
+	local DB_USER=
+	local DB_PASSWORD=
+	local DB_NAME=
+	local user=
+	local password=
+	local host='localhost'
+	local name=
     local _parameters=
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
+    DB_USER=${DB_USER:-"$user"}
+    DB_PASSWORD=${DB_PASSWORD:-"$password"}
+    DB_HOST=${DB_HOST:-"$host"}
+    DB_NAME=${DB_NAME:-"$name"}
+
 	if [[ -n "$DB_USER" ]] ; then
-		EXISTS_DB_USER="$(mysql_existuser $DB_USER ${DB_HOST:-localhost})"
-		if [ "$EXISTS_DB_USER" = 0 ]; then
-			echo "ERROR:  user '$DB_USER'@'${DB_HOST:-localhost}' not found !";
+		EXISTS_DB_USER="$(mysql_exist_user $DB_USER ${DB_HOST})"
+		if [ "$EXISTS_DB_USER" == "0" ]; then
+			echo "ERROR:  user '$DB_USER'@'${DB_HOST}' not found !";
 			exit 1;
 		fi
 
 		# Change user password 
 		if [[ -n "$DB_PASSWORD" ]]; then
-			sudo mysql --execute="ALTER USER '$DB_USER'@'${DB_HOST:-localhost}' IDENTIFIED BY '$DB_PASSWORD'; FLUSH PRIVILEGES;";
+			sudo mysql --execute="ALTER USER '$DB_USER'@'${DB_HOST}' IDENTIFIED BY '$DB_PASSWORD'; FLUSH PRIVILEGES;";
 		fi
 	fi
 }

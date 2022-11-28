@@ -5,7 +5,7 @@ function read_application_arguments()
 {
     ISDEFAULT=false;
     IS_SUPERUSER=0
-    local long="help,force,default,superuser,data::,name::,version::,file::,log::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,config-dir::,data-dir::,home-dir::"
+    local long="help,force,drop,default,superuser,data::,name::,version::,file::,log::,users-config::,config-file::,catalina-home::,install-dir::,port-offset::,config-dir::,data-dir::,home-dir::"
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,server-url::,server-user::,server-password::,admin-email::,url::,client::,audience::,secret::,login-theme::"
     long+=",postgresql-version::,postgis-version::"
@@ -16,6 +16,7 @@ function read_application_arguments()
     while true ; do
         case "$1" in
             -f|--force) FORCE=1 ; shift 1 ;;
+            --drop) DROP=1 ; shift 1 ;;
             --default) IS_DEFAULT=1 ; shift 1 ;;
             --data) data=${2%"/"} ; shift 2 ;;
             --data-dir) data_dir=${2%"/"} ; shift 2 ;;
