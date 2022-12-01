@@ -131,8 +131,13 @@ function php_install()
 			# for ext in $pecl_exts ; do  cmd+=" php$version-$ext"; done
 			# install php$version  $cmd
 			
-			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath json opcache json zip "
+			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath opcache zip "
 			pecl_exts=
+			case ${version/./} in 
+				5|7) php_exts="$php_exts json  " 
+				;;
+			esac
+
         ;;
     esac
 
