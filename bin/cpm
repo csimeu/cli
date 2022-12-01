@@ -377,8 +377,30 @@ apache_install() {
             sudo sed -i -e "s|^#Mutex |Mutex |g" /etc/apache2/apache2.conf
             execute chown apache:apache -R /etc/apache2
             execute chmod -R g+w /etc/apache2
+
+            if [[ ! -f /etc/profile.d/apache2.sh && ! -L /etc/profile.d/apache2.sh ]]; then
+                sudo ln -s /etc/apache2/envvars /etc/profile.d/apache2.sh ; 
+            fi
+
+            source /etc/apache2/envvars
+            sudo chown apache -R ${APACHE_LOG_DIR} ${APACHE_RUN_DIR} ${APACHE_LOCK_DIR}
+            sudo sed -i -e "s|\${APACHE_PID_FILE}|/var/run/apache2/apache.pid|g" /etc/apache2/apache2.conf
+            sudo sed -i -e "s|\${APACHE_RUN_USER}|apache|g" /etc/apache2/apache2.conf
+            sudo sed -i -e "s|\${APACHE_RUN_GROUP}|apache|g" /etc/apache2/apache2.conf
+            sudo sed -i -e "s|^#Mutex |Mutex |g" /etc/apache2/apache2.conf
+            find /etc/apache2/ -type f -exec sudo sed -i -e "s|\${APACHE_LOG_DIR}|${APACHE_LOG_DIR}|g" {} \;
+            find /etc/apache2/ -type f -exec sudo sed -i -e "s|\${APACHE_RUN_DIR}|${APACHE_RUN_DIR}|g" {} \;
+            find /etc/apache2/ -type f -exec sudo sed -i -e "s|\${APACHE_LOCK_DIR}|${APACHE_LOCK_DIR}|g" {} \;
+    
         ;;
     esac
+
+    if [ -d /var/log/apache2 ]; then
+        sudo chown apache -R /var/log/apache2
+    fi
+    if [ -d /var/lock/apache2 ]; then
+        sudo chown apache -R /var/lock/apache2
+    fi
 
     sudo mkdir -p /var/www/cgi-bin/
     # sudo chown apache:apache -R /var/www/cgi-bin/
@@ -925,6 +947,9 @@ httpd_install() {
                 sudo sed -i -e "s/^LoadModule mpm_event_module/#LoadModule mpm_event_module/" /etc/httpd/conf.modules.d/00-mpm.conf
                 sudo sed -i -e "s/^#LoadModule mpm_prefork_module/LoadModule mpm_prefork_module/" /etc/httpd/conf.modules.d/00-mpm.conf
             fi
+
+            sudo mkdir -p /var/log/httpd /run/httpd /run/mod_fcgid /var/log/httpd
+            sudo chown apache:apache -R /var/log/httpd /etc/pki/tls /run/httpd /run/mod_fcgid /var/log/httpd /etc/pki/tls
             ;;
         debian|ubuntu)
             exit 0
@@ -1941,12 +1966,25 @@ function php_install()
 		sudo sed -i -e "s/^#LoadModule mpm_prefork_module/LoadModule mpm_prefork_module/" /etc/httpd/conf.modules.d/00-mpm.conf
 	fi
 
-	case `plateform` in 
-		debian|ubuntu)
-			install libapache2-mod-php$version
-		;;
-	esac
-	
+
+    if [[ $(getent passwd apache)  ]];
+    then
+		case `plateform` in 
+			debian|ubuntu)
+				install libapache2-mod-php$version
+			;;
+		esac
+
+		if [ -f /etc/php.ini ]; then 
+			sudo chown apache:apache -R /etc/php.ini; 
+			sudo chmod g+w -R /etc/php.ini;
+		fi
+		
+		if [ -d /etc/php$version ]; then 
+			sudo chown apache:apache -R /etc/php$version ; 
+			sudo chmod g+w -R /etc/php$version;
+		fi
+    fi
 	# echo "Install: php$version php$version-* "
 	# install -y php$version php$version-* 
 

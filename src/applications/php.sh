@@ -147,12 +147,25 @@ function php_install()
 		sudo sed -i -e "s/^#LoadModule mpm_prefork_module/LoadModule mpm_prefork_module/" /etc/httpd/conf.modules.d/00-mpm.conf
 	fi
 
-	case `plateform` in 
-		debian|ubuntu)
-			install libapache2-mod-php$version
-		;;
-	esac
-	
+
+    if [[ $(getent passwd apache)  ]];
+    then
+		case `plateform` in 
+			debian|ubuntu)
+				install libapache2-mod-php$version
+			;;
+		esac
+
+		if [ -f /etc/php.ini ]; then 
+			sudo chown apache:apache -R /etc/php.ini; 
+			sudo chmod g+w -R /etc/php.ini;
+		fi
+		
+		if [ -d /etc/php$version ]; then 
+			sudo chown apache:apache -R /etc/php$version ; 
+			sudo chmod g+w -R /etc/php$version;
+		fi
+    fi
 	# echo "Install: php$version php$version-* "
 	# install -y php$version php$version-* 
 

@@ -16,6 +16,9 @@ httpd_install() {
                 sudo sed -i -e "s/^LoadModule mpm_event_module/#LoadModule mpm_event_module/" /etc/httpd/conf.modules.d/00-mpm.conf
                 sudo sed -i -e "s/^#LoadModule mpm_prefork_module/LoadModule mpm_prefork_module/" /etc/httpd/conf.modules.d/00-mpm.conf
             fi
+
+            sudo mkdir -p /var/log/httpd /run/httpd /run/mod_fcgid /var/log/httpd
+            sudo chown apache:apache -R /var/log/httpd /etc/pki/tls /run/httpd /run/mod_fcgid /var/log/httpd /etc/pki/tls
             ;;
         debian|ubuntu)
             exit 0

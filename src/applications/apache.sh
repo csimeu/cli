@@ -42,8 +42,30 @@ apache_install() {
             sudo sed -i -e "s|^#Mutex |Mutex |g" /etc/apache2/apache2.conf
             execute chown apache:apache -R /etc/apache2
             execute chmod -R g+w /etc/apache2
+
+            if [[ ! -f /etc/profile.d/apache2.sh && ! -L /etc/profile.d/apache2.sh ]]; then
+                sudo ln -s /etc/apache2/envvars /etc/profile.d/apache2.sh ; 
+            fi
+
+            source /etc/apache2/envvars
+            sudo chown apache -R ${APACHE_LOG_DIR} ${APACHE_RUN_DIR} ${APACHE_LOCK_DIR}
+            sudo sed -i -e "s|\${APACHE_PID_FILE}|/var/run/apache2/apache.pid|g" /etc/apache2/apache2.conf
+            sudo sed -i -e "s|\${APACHE_RUN_USER}|apache|g" /etc/apache2/apache2.conf
+            sudo sed -i -e "s|\${APACHE_RUN_GROUP}|apache|g" /etc/apache2/apache2.conf
+            sudo sed -i -e "s|^#Mutex |Mutex |g" /etc/apache2/apache2.conf
+            find /etc/apache2/ -type f -exec sudo sed -i -e "s|\${APACHE_LOG_DIR}|${APACHE_LOG_DIR}|g" {} \;
+            find /etc/apache2/ -type f -exec sudo sed -i -e "s|\${APACHE_RUN_DIR}|${APACHE_RUN_DIR}|g" {} \;
+            find /etc/apache2/ -type f -exec sudo sed -i -e "s|\${APACHE_LOCK_DIR}|${APACHE_LOCK_DIR}|g" {} \;
+    
         ;;
     esac
+
+    if [ -d /var/log/apache2 ]; then
+        sudo chown apache -R /var/log/apache2
+    fi
+    if [ -d /var/lock/apache2 ]; then
+        sudo chown apache -R /var/lock/apache2
+    fi
 
     sudo mkdir -p /var/www/cgi-bin/
     # sudo chown apache:apache -R /var/www/cgi-bin/
