@@ -37,6 +37,9 @@ apache_install() {
                 execute groupadd --system apache
                 execute useradd -d /var/www -r -s /bin/false -g apache apache
             fi
+            if [ -f /etc/apache2/envvars ]; then sed -i -e "s/www-data/apache/g" /etc/apache2/envvars ; fi
+            
+            sudo sed -i -e "s|^#Mutex |Mutex |g" /etc/apache2/apache2.conf
             execute chown apache:apache -R /etc/apache2
             execute chmod -R g+w /etc/apache2
         ;;
