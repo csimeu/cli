@@ -7,13 +7,14 @@ apache_install() {
         alpine)
             install apache2 apache2-ssl apache2-mod-wsgi apache2-proxy php$phpverx-apache2
             sudo sed -i '/LoadModule rewrite_module/s/^#//g' /etc/apache2/httpd.conf
-            sudo sed -i -e "s|^# Mutex .*$|Mutex file:/var/run/apache2/mutex default|" /etc/apache2/httpd.conf
+            sudo sed -i -e "s|^# Mutex .*$|Mutex file:/var/lock/apache2 default|" /etc/apache2/httpd.conf
             if ! getent passwd apache > /dev/null 2>&1; then
                 sudo groupadd --system apache
                 sudo useradd -d /var/www -r -s /bin/false -g apache apache
             fi
-            sudo chown apache:apache -R /etc/apache2 /var/run/apache2
-            sudo chmod -R g+w /etc/apache2 /var/run/apache2
+            sudo mkdir -p /var/lock/apache2
+            sudo chown apache:apache -R /etc/apache2 /var/run/apache2 /var/lock/apache2
+            sudo chmod -R g+w /etc/apache2 /var/run/apache2 /var/lock/apache2
             ;;
         redhat)
             install httpd mod_ssl mod_fcgid
