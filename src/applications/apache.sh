@@ -7,12 +7,13 @@ apache_install() {
         alpine)
             install apache2 apache2-ssl apache2-mod-wsgi apache2-proxy php$phpverx-apache2
             sudo sed -i '/LoadModule rewrite_module/s/^#//g' /etc/apache2/httpd.conf
-            # if ! getent passwd apache > /dev/null 2>&1; then
-            #     sudo groupadd --system apache
-            #     sudo useradd -d /var/www -r -s /bin/false -g apache apache
-            # fi
-            # sudo chown apache:apache -R /etc/apache2
-            # sudo chmod -R g+w /etc/apache2
+            sudo sed -i -e "s|^# Mutex |Mutex |g" /etc/apache2/apache2.conf
+            if ! getent passwd apache > /dev/null 2>&1; then
+                sudo groupadd --system apache
+                sudo useradd -d /var/www -r -s /bin/false -g apache apache
+            fi
+            sudo chown apache:apache -R /etc/apache2 /var/run/apache2
+            sudo chmod -R g+w /etc/apache2 /var/run/apache2
             ;;
         redhat)
             install httpd mod_ssl mod_fcgid
@@ -56,7 +57,6 @@ apache_install() {
             find /etc/apache2/ -type f -exec sudo sed -i -e "s|\${APACHE_LOG_DIR}|${APACHE_LOG_DIR}|g" {} \;
             find /etc/apache2/ -type f -exec sudo sed -i -e "s|\${APACHE_RUN_DIR}|${APACHE_RUN_DIR}|g" {} \;
             find /etc/apache2/ -type f -exec sudo sed -i -e "s|\${APACHE_LOCK_DIR}|${APACHE_LOCK_DIR}|g" {} \;
-    
         ;;
     esac
 
