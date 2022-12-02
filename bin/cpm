@@ -401,7 +401,7 @@ apache_install() {
         sudo chown apache:apache -R /var/log/apache2
     fi
     if [ -d /var/lock/apache2 ]; then
-        sudo chown apache:apache -R /var/lock/apache2
+        sudo chown apache:apache_install -R /var/lock/apache2
     fi
 
     sudo mkdir -p /var/www/cgi-bin/
@@ -410,7 +410,7 @@ apache_install() {
     sudo chmod -R g+w /var/www
 
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]];
-    then
+    then    
         sudo usermod -aG apache $ADMIN_USER;
     fi
     
@@ -1802,13 +1802,15 @@ nodejs_install() {
                 sudo rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
             fi
             install nodejs npm yarn
+            sudo npm install -g n && sudo /usr/local/bin/n lts
             ;;
         debian|ubuntu)
             install nodejs npm node-gyp yarn
+            sudo npm install -g n && sudo /usr/local/bin/n lts
         ;;
     esac
 
-    sudo npm install -g n && sudo /usr/local/bin/n lts
+    # sudo npm install -g n && sudo /usr/local/bin/n lts
 
     # echo "---> npm install -g npm@latest"
     # # npm install -g npm@latest

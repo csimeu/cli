@@ -13,13 +13,15 @@ nodejs_install() {
                 sudo rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
             fi
             install nodejs npm yarn
+            sudo npm install -g n && sudo /usr/local/bin/n lts
             ;;
         debian|ubuntu)
             install nodejs npm node-gyp yarn
+            sudo npm install -g n && sudo /usr/local/bin/n lts
         ;;
     esac
 
-    sudo npm install -g n && sudo /usr/local/bin/n lts
+    # sudo npm install -g n && sudo /usr/local/bin/n lts
 
     # echo "---> npm install -g npm@latest"
     # # npm install -g npm@latest
