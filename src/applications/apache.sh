@@ -5,6 +5,7 @@ apache_install() {
     
     case `plateform` in 
         alpine)
+            # https://github.com/nimmis/docker-alpine-apache/blob/master/Dockerfile
             install apache2 apache2-ssl apache2-mod-wsgi apache2-proxy php$phpverx-apache2 libxml2-dev apache2-utils
             sudo sed -i '/LoadModule rewrite_module/s/^#//g' /etc/apache2/httpd.conf
             sudo sed -i -e "s|^# Mutex .*$|Mutex file:/var/lock/apache2 default|" /etc/apache2/httpd.conf
@@ -13,7 +14,7 @@ apache_install() {
                 sudo useradd -d /var/www -r -s /bin/false -g apache apache
             fi
             sudo mkdir -p /var/lock/apache2
-            sudo chown apache -R /etc/apache2 /var/run/apache2 /var/lock/apache2 /etc/ssl/apache2
+            sudo chown apache:apache -R /etc/apache2 /var/run/apache2 /var/lock/apache2 /etc/ssl/apache2
             sudo chmod -R g+w /etc/apache2 /var/run/apache2 /var/lock/apache2 
             ;;
         redhat)
@@ -50,7 +51,7 @@ apache_install() {
             fi
 
             source /etc/apache2/envvars
-            sudo chown apache -R ${APACHE_LOG_DIR} ${APACHE_RUN_DIR} ${APACHE_LOCK_DIR}
+            sudo chown apache:apache -R ${APACHE_LOG_DIR} ${APACHE_RUN_DIR} ${APACHE_LOCK_DIR}
             sudo sed -i -e "s|\${APACHE_PID_FILE}|/var/run/apache2/apache.pid|g" /etc/apache2/apache2.conf
             sudo sed -i -e "s|\${APACHE_RUN_USER}|apache|g" /etc/apache2/apache2.conf
             sudo sed -i -e "s|\${APACHE_RUN_GROUP}|apache|g" /etc/apache2/apache2.conf
@@ -62,10 +63,10 @@ apache_install() {
     esac
 
     if [ -d /var/log/apache2 ]; then
-        sudo chown apache -R /var/log/apache2
+        sudo chown apache:apache -R /var/log/apache2
     fi
     if [ -d /var/lock/apache2 ]; then
-        sudo chown apache -R /var/lock/apache2
+        sudo chown apache:apache -R /var/lock/apache2
     fi
 
     sudo mkdir -p /var/www/cgi-bin/
