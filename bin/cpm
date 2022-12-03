@@ -2326,37 +2326,56 @@ postgresql_start(){
     # postgresql_ctl -D $data -o '-p 5443' restart
     # postgresql_ctl -D $data -l $log -o "\"-p $port\"" restart
 
-    local cmd=/usr/pgsql-${version}/bin/pg_ctl
+    # local cmd=pg_ctl
 
-    if [ -d /usr/lib/postgresql/${version}/bin ]; then
-        cmd=/usr/lib/postgresql/${version}/bin/pg_ctl
-    fi
+    # if [ -d /usr/lib/postgresql/${version}/bin ]; then
+    #     cmd=/usr/lib/postgresql/${version}/bin/pg_ctl
+    # elif [ -f /usr/pgsql-${version}/bin/pg_ctl ]; then
+    #     cmd=/usr/pgsql-${version}/bin/pg_ctl
+    # fi
 
     if [ "$(id -u -n)" == "postgres" ]; then
-        $cmd -D $data -o "-p $port" restart
+        `postgresql_pg_ctl` -D $data -o "-p $port" restart
     else
-        sudo -u postgres $cmd -D $data -o "-p $port" restart
+        sudo -u postgres $(postgresql_pg_ctl) -D $data -o "-p $port" restart
+    fi
+}
+
+postgresql_pg_ctl(){
+    local _prfx=
+    if [ "$(id -u -n)" != "postgres" ]; then
+        _prfx="sudo -u postgres"
+    fi
+    if [ -f /usr/lib/postgresql/${version}/bin/pg_ctl ]; then
+        echo "$_prfx /usr/lib/postgresql/${version}/bin/pg_ctl"
+    elif [ -f /usr/pgsql-${version}/bin/pg_ctl ]; then
+        echo "$_prfx /usr/pgsql-${version}/bin/pg_ctl"
+    else
+        echo "$_prfx /usr/bin/pg_ctl"
     fi
 }
 
 postgresql_ctl(){
-    local cmd=/usr/pgsql-${version}/bin/pg_ctl
+    # local cmd=/usr/pgsql-${version}/bin/pg_ctl
 
-    if [ -d /usr/lib/postgresql/${version}/bin ]; then
-        cmd=/usr/lib/postgresql/${version}/bin/pg_ctl
-    fi
-    echo $@
-    postgres_exec $cmd $@
+    # if [ -d /usr/lib/postgresql/${version}/bin ]; then
+    #     cmd=/usr/lib/postgresql/${version}/bin/pg_ctl
+    # fi
+    # echo $@
+    $(postgresql_pg_ctl) $@
 }
 
 postgres_exec(){
-    local cmd=$@
-    echo $cmd
-    if [ "$(id -u -n)" == "postgres" ]; then
-        $cmd
-    else
-        sudo -u postgres $cmd
+    local _prfx=
+    if [ "$(id -u -n)" != "postgres" ]; then
+        _prfx="sudo -u postgres"
     fi
+    $_prfx $@
+    # if [ "$(id -u -n)" == "postgres" ]; then
+    #     $cmd
+    # else
+    #     sudo -u postgres $cmd
+    # fi
 }
 
 postgresql_init(){
@@ -2374,8 +2393,8 @@ postgresql_init(){
 
     if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
         echo "Init postgresql $version: $data"
-        mkdir -p $data
-        chown postgres:postgres $data
+        sudo mkdir -p $data
+        sudo chown postgres:postgres $data
 
         postgresql_ctl -D $data init
         # else
