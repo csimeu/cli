@@ -1,43 +1,43 @@
 #!/bin/bash
 
 # Install tomcat
-FORCE=0
-IS_DEFAULT=0
-INSTALL_DIR=$INSTALL_DIR
 
-# Reads arguments options
-function parse_tomcat_arguments()
-{
-    # if [ $# -ne 0 ]; then
-    local TEMP=`getopt -o p::,f --long version::,tomcat-config::,users-config::,config-file::,install-dir,force,default -n "$0" -- "$@"`
+# # Reads arguments options
+# function parse_tomcat_arguments()
+# {
+#     # if [ $# -ne 0 ]; then
+#     local TEMP=`getopt -o p::,f --long version::,tomcat-config::,users-config::,config-file::,install-dir,force,default -n "$0" -- "$@"`
       
-    eval set -- "$TEMP"
-    # extract options and their arguments into variables.
-    while true ; do
-        case "$1" in
-            -h|--help) _HELP=1 ; shift 1 ;;
-            -f|--force) FORCE=1 ; shift 1 ;;
-            --default) IS_DEFAULT=1 ; shift 1 ;;
-            --install-dir) INSTALL_DIR=${2%"/"} ; shift 2 ;;
-            --data) data=${2%"/"} ; shift 2 ;;   
-            --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-            --version) version=${2:-"$version"}; shift 2 ;;
-            # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
-            --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-            --) shift ; break ;;
-            *) echo "Internal error! $1" ; exit 1 ;;
-        esac
-    done
+#     eval set -- "$TEMP"
+#     # extract options and their arguments into variables.
+#     while true ; do
+#         case "$1" in
+#             -h|--help) _HELP=1 ; shift 1 ;;
+#             -f|--force) FORCE=1 ; shift 1 ;;
+#             --default) IS_DEFAULT=1 ; shift 1 ;;
+#             --install-dir) INSTALL_DIR=${2%"/"} ; shift 2 ;;
+#             --data) data=${2%"/"} ; shift 2 ;;   
+#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
+#             --version) version=${2:-"$version"}; shift 2 ;;
+#             # --tomcat-config) tomcat_config=${2:-"$tomcat_config"}; shift 2 ;;
+#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
+#             --) shift ; break ;;
+#             *) echo "Internal error! $1" ; exit 1 ;;
+#         esac
+#     done
 
-    shift $(expr $OPTIND - 1 )
-    _parameters=$@
+#     shift $(expr $OPTIND - 1 )
+#     _parameters=$@
     
-  # fi
-}
+#   # fi
+# }
 
 function tomcat_install() 
 {
 	set -e
+    local FORCE=0
+    local IS_DEFAULT=0
+    local INSTALL_DIR=$INSTALL_DIR
     local appName=tomcat
 	local users_config=
 	local file_config=
@@ -45,7 +45,8 @@ function tomcat_install()
 	local version=$TOMCAT_DEFAULT_VERSION
     # echo $@
     local _parameters=
-    parse_tomcat_arguments $@ 
+    # parse_tomcat_arguments $@ 
+    read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
     # data=${data:-"$1"}
     # data=${data:-"."}
