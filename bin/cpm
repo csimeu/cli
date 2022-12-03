@@ -837,21 +837,21 @@ fuseki_install() {
     # local version=3.14.0
     # local install_dir=/usr/share
     # local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
-    # curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.war -o ${catalina_home}/webapps/$name.war
+    curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.war -o ${catalina_home}/webapps/$name.war
 
 
-    if [ ! -f /tmp/apache-jena-fuseki-$version.tar.gz ];
-    then 
-        echo "https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz"
-        curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz
-        # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/releases/apache-jena-fuseki-$version.tar.gz
-    fi
+    # if [ ! -f /tmp/apache-jena-fuseki-$version.tar.gz ];
+    # then 
+    #     echo "https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz"
+    #     curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz
+    #     # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/releases/apache-jena-fuseki-$version.tar.gz
+    # fi
     
 
     # # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o apache-jena-fuseki-$version.tar.gz
     # sudo tar -xzf /tmp/apache-jena-fuseki-$version.tar.gz -C $INSTALL_DIR
     # sudo mv $INSTALL_DIR/apache-jena-fuseki-${version} $INSTALL_DIR/$appName-$version
-    sudo tar -xzf /tmp/apache-jena-fuseki-$version.tar.gz
+    # sudo tar -xzf /tmp/apache-jena-fuseki-$version.tar.gz
     # sudo mv /tmp/apache-jena-fuseki-${version} $INSTALL_DIR/$appName-$version
 
     # # if [ '1' == $IS_DEFAULT ]; then 
@@ -874,7 +874,7 @@ fuseki_install() {
         
     #     # if [ ! -f ${catalina_home}/webapps/${name}.war ]
     #     # then 
-            sudo cp -f "/tmp/apache-jena-fuseki-${version}/fuseki.war" ${catalina_home}/webapps/$name.war
+            # sudo cp -f "/tmp/apache-jena-fuseki-${version}/fuseki.war" ${catalina_home}/webapps/$name.war
     #     # fi
 
     # fi
