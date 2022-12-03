@@ -45,9 +45,9 @@ function blazegraph_install()
         exit 0
     fi
 
-    case "$version" in
+    case $version in
 
-        "2") version=2.1.5;;
+        2|2.1) version=$BLAZEGRAPH_DEFAULT_VERSION;;
 
         *)
         ;;
