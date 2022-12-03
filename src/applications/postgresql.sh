@@ -84,17 +84,18 @@ function postgresql_install()
     log=${log:-"/var/log/postgresql-$_postgresql_version.log"}
 
     # echo "PGDATA=/var/lib/pgsql/$_postgresql_version/data"
-    PG_BIN="/usr/pgsql-${_postgresql_version}/bin"
+    # PG_BIN="/usr/pgsql-${_postgresql_version}/bin"
 
 
     case `plateform` in 
         alpine)
             install postgresql$_postgresql_version  postgresql$_postgresql_version-openrc postgresql$_postgresql_version-contrib
-            # data=/var/lib/postgresql/data
+            sudo mkdir -p /run/postgresql
+            sudo chown postgres:posgres /run/postgresql
         ;;
         debian|ubuntu)
             # data="/var/lib/postgresql/${_postgresql_version}/data"
-            PG_BIN="/usr/lib/postgresql/${_postgresql_version}/bin"
+            # PG_BIN="/usr/lib/postgresql/${_postgresql_version}/bin"
             install postgresql-${_postgresql_version} postgresql-client-${_postgresql_version} postgresql-$_postgresql_version-pglogical pgbouncer
             ;;
         redhat)
