@@ -53,13 +53,13 @@ function blazegraph_install()
         ;;
     esac
 
-    if [ ! -f /tmp/releases/blazegraph-$version.war ];
-    then
-        echo "https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/releases/blazegraph-$version.war"
-        curl -fSL https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o /tmp/releases/blazegraph-$version.war
-    fi
+    # if [ ! -f /tmp/blazegraph-$version.war ];
+    # then
+        echo "https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o ${catalina_home}/webapps/${name}.war"
+        sudo curl -fSL https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_RELEASE_${version//\./_}/blazegraph.war -o ${catalina_home}/webapps/${name}.war
+    # fi
 
-    sudo cp -f /tmp/releases/blazegraph-$version.war ${catalina_home}/webapps/${name}.war
+    # sudo cp -f /tmp/releases/blazegraph-$version.war ${catalina_home}/webapps/${name}.war
 
     if [ -z $data_dir ]; then
         data_dir="/var/lib/${name}"

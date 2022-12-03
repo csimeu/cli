@@ -4,7 +4,7 @@
 
 fuseki_install() {
     
-    local _name=fuseki
+    local appName=fuseki
     local FORCE=0
     local IS_DEFAULT=0
     local version=$FUSEKI_DEFAULT_VERSION
@@ -24,11 +24,22 @@ fuseki_install() {
         ;;
     esac
 
-    local givenname=$name
-    name="$_name-$version"
+    # local givenname=$name
+    name="$appName-$version"
+
+
+    if [ '1' == $IS_DEFAULT ]; then 
+        catalina_home=/usr/share/tomcat; 
+        name=$appName
+    fi
+
+    if [ -z $catalina_home ]; then
+        echo "If not --default, --catalina_home value is required"
+        exit 1
+    fi
 
     if [ '1' == $FORCE ]; then 
-        sudo rm -rf $INSTALL_DIR/$name
+        sudo rm -rf $INSTALL_DIR/$name $INSTALL_DIR/$appName-$version
     fi
     
     if [ -d $INSTALL_DIR/$name ]
@@ -49,34 +60,40 @@ fuseki_install() {
     # local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
 
 
-    if [ ! -f /tmp/releases/apache-jena-fuseki-$version.tar.gz ];
+    if [ ! -f /tmp/apache-jena-fuseki-$version.tar.gz ];
     then 
-        echo "https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/releases/apache-jena-fuseki-$version.tar.gz"
-        curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/releases/apache-jena-fuseki-$version.tar.gz
+        echo "https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz"
+        curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/apache-jena-fuseki-$version.tar.gz
         # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o /tmp/releases/apache-jena-fuseki-$version.tar.gz
     fi
     
-    # sudo cp -f /tmp/releases/fcrepo-webapp-$version.war ${catalina_home}/webapps/${name}.war
 
     # curl -fSL https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$version.tar.gz -o apache-jena-fuseki-$version.tar.gz
-    sudo tar -xzf /tmp/releases/apache-jena-fuseki-$version.tar.gz -C $INSTALL_DIR
-    sudo mv $INSTALL_DIR/apache-jena-fuseki-${version} $INSTALL_DIR/$name
+    sudo tar -xzf /tmp/apache-jena-fuseki-$version.tar.gz -C $INSTALL_DIR
+    sudo mv $INSTALL_DIR/apache-jena-fuseki-${version} $INSTALL_DIR/$appName-$version
 
+    # if [ '1' == $IS_DEFAULT ]; then 
+    #     catalina_home=/usr/share/tomcat; 
+    #     givename=$_name
+    #     sudo rm -rf /usr/share/$_name
+    #     sudo ln -s $INSTALL_DIR/$name /usr/share/$_name
+    # fi
 
     if [ '1' == $IS_DEFAULT ]; then 
-        catalina_home=/usr/share/tomcat; 
-        givename=$_name
-        sudo rm -rf /usr/share/$_name
-        sudo ln -s $INSTALL_DIR/$name /usr/share/$_name
+        # catalina_home=/usr/share/tomcat; 
+        # name=$appName
+        # sudo rm -rf /usr/share/$appName
+        sudo ln -s $INSTALL_DIR/$appName-$version /usr/share/$appName
     fi
 
+
     if [ -d $catalina_home/webapps ]; then
-        if [ '1' == $FORCE ]; then sudo rm -f ${catalina_home}/webapps/${name}.war ; fi
+        # if [ '1' == $FORCE ]; then sudo rm -f ${catalina_home}/webapps/${name}.war ; fi
         
-        if [ ! -f ${catalina_home}/webapps/${name}.war ]
-        then 
-            sudo cp -f "$INSTALL_DIR/${name}/fuseki.war" ${catalina_home}/webapps/${givename:-$name}.war
-        fi
+        # if [ ! -f ${catalina_home}/webapps/${name}.war ]
+        # then 
+            sudo cp -f "$INSTALL_DIR/${name}/fuseki.war" ${catalina_home}/webapps/$name.war
+        # fi
 
     fi
 
@@ -88,5 +105,6 @@ fuseki_install() {
 
     # mkdir -p /etc/$name/configuration
     # chown tomcat:tomcat -R /etc/$name
-    echo ">> Installed application '$_name' (version = $version) in $INSTALL_DIR/${name}"
+    echo ">> Installed application '$name' (version = $version) in $INSTALL_DIR/${name}"
+    sudo rm -f tmp/apache-jena-fuseki-$version.tar.gz 
 }
