@@ -66,7 +66,7 @@ apache_install() {
         sudo chown apache:apache -R /var/log/apache2
     fi
     if [ -d /var/lock/apache2 ]; then
-        sudo chown apache:apache_install -R /var/lock/apache2
+        sudo chown apache:apache -R /var/lock/apache2
     fi
 
     sudo mkdir -p /var/www/cgi-bin/
