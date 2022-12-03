@@ -60,6 +60,7 @@ fuseki_install() {
     # local version=3.14.0
     # local install_dir=/usr/share
     # local catalina_home=${CATALINA_HOME:-"/usr/share/tomcat"}
+    echo "https://$repo_url/jena/binaries/apache-jena-fuseki-$version.war"
     curl -fSL https://$repo_url/jena/binaries/apache-jena-fuseki-$version.war -o ${catalina_home}/webapps/$name.war
 
 
