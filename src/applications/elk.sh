@@ -86,12 +86,59 @@ elasticsearch_install() {
 }
 
 kibana_install() {
+    local version=$KIBANA_DEFAULT_VERSION
+    local _parameters=
+    local INSTALL_DIR=$INSTALL_DIR
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+    
+    case "$version" in
+        "8") version=8.5.2;;
+        *);;
+    esac
+
+    case `plateform` in 
+        alpine)
+            install nodejs curl
+            sudo curl -LO https://artifacts.elastic.co/downloads/kibana/kibana-${version}-linux-x64.tar.gz
+            sudo tar xzf kibana-${version}-linux-x64.tar.gz -C $INSTALL_DIR
+            sudo mv $INSTALL_DIR/kibana-${version}-linux-x64/ $INSTALL_DIR/kibana-${version}
+            sudo rm $INSTALL_DIR/kibana-${version}/node/bin/node
+            sudo rm $INSTALL_DIR/kibana-${version}/node/bin/npm
+            sudo ln -ls $INSTALL_DIR/kibana-${version} $INSTALL_DIR/kibana
+            sudo ln -s /usr/bin/node $INSTALL_DIR/kibana-${version}/node/bin/node
+            sudo ln -s /usr/bin/npm $INSTALL_DIR/kibana-${version}/node/bin/npm
+            sudo sed -i '/elasticsearch_url/s/localhost/elasticsearch/' $INSTALL_DIR/kibana-${version}/config/kibana.yml
+            sudo rm -rf kibana-${version}-linux-x64.tar.gz
+            sudo ln -s $INSTALL_DIR/kibana/config /etc/kibana
+        ;;
+        *)
+            elk_import_repolist
+            install kibana
+        ;;
+    esac
+    # execute systemctl enable kibana
+}
+
+kibana_package() {
     local version=8
     local _parameters=
     read_application_arguments $@ 
     
-    elk_import_repolist
-    install kibana
+    case `plateform` in 
+        alpine)
+            install nodejs curl && \
+    curl -LO https://artifacts.elastic.co/downloads/kibana/kibana-${KIBANA_VERSION}-linux-x64.tar.gz && \
+    tar xzf /kibana-${KIBANA_VERSION}-linux-x64.tar.gz -C / && \
+    rm /kibana-${KIBANA_VERSION}-linux-x64/node/bin/node && \
+    rm /kibana-${KIBANA_VERSION}-linux-x64/node/bin/npm && \
+    ln -s /usr/bin/node /kibana-${KIBANA_VERSION}-linux-x64/node/bin/node && \
+    ln -s /usr/bin/npm /kibana-${KIBANA_VERSION}-linux-x64/node/bin/npm && \
+    sed -i '/elasticsearch_url/s/localhost/elasticsearch/' /kibana-${KIBANA_VERSION}-linux-x64/config/kibana.yml && \
+    rm -rf /var/cache/apk/* /kibana-${KIBANA_VERSION}-linux-x64.tar.gz
+
+        ;;
+    esac
     # execute systemctl enable kibana
 }
 

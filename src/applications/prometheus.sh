@@ -3,43 +3,12 @@
 # Install prometheus
 # https://www.fosslinux.com/10398/how-to-install-and-configure-prometheus-on-centos-7.htm
 
-# # Reads arguments options
-# function parse_prometheus_arguments()
-# {
-#   # if [ $# -ne 0 ]; then
-#     local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
-    
-# 	eval set -- "$TEMP"
-#     # extract options and their arguments into variables.
-#     while true ; do
-#         case "$1" in
-#             --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
-#             --data) data=${2%"/"} ; shift 2 ;;
-#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-#             --version) version=${2:-"$version"}; shift 2 ;;
-#             --port) port=${2:-"$port"}; shift 2 ;;
-#             --users-config) users_config=${2:-"$users_config"}; shift 2 ;;
-#             # --db-name) DB_NAME=${2:-"$DB_NAME"}; shift 2 ;;
-#             # --db-user) DB_USER=${2:-"$DB_USER"}; shift 2 ;;
-#             # --db-password) DB_PASSWORD=${2:-"$DB_PASSWORD"}; shift 2 ;;
-#             # --db-host) DB_HOST=${2:-"$DB_HOST"}; shift 2 ;;
-#             # --port) port=${2:-"$port"}; shift 2 ;;
-#             --) shift ; break ;;
-#             *) echo "Internal error! $1" ; exit 1 ;;
-#         esac
-#     done
 
-#     shift $(expr $OPTIND - 1 )
-#     _parameters=$@
-    
-#   # fi
-# }
 
 function prometheus_install() 
 {
     set -e
     local appName=prometheus
-      cd /tmp/releases
     local version=2.24.1
     local data=/var/lib/$appName
     local port=9099
@@ -55,6 +24,14 @@ function prometheus_install()
     # data=${data%"/"} 
     # INSTALL_DIR=${INSTALL_DIR%"/"} 
 
+    case `plateform_name` in 
+        alpine)  
+            install prometheus
+            exit 0;
+        ;;
+    esac
+
+
     if ! getent passwd $appName > /dev/null 2>&1; then
         sudo groupadd --system $appName
         sudo useradd --no-create-home --shell /bin/false -g $appName $appName
@@ -64,27 +41,28 @@ function prometheus_install()
     sudo mkdir /etc/$appName /var/lib/$appName
     sudo chown $appName:$appName /etc/$appName /var/lib/$appName
     
-    if [ ! -f /tmp/releases/prometheus-$version.tar.gz ];
+    if [ ! -f /tmp/prometheus-$version.tar.gz ];
     then 
-      curl -fSL  https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz -o /tmp/releases/prometheus-$version.tar.gz
+      curl -fSL  https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz -o /tmp/prometheus-$version.tar.gz
     fi
-    cd /tmp/releases
-    tar -xvzf /tmp/releases/prometheus-$version.tar.gz
-    mv prometheus-$version.linux-amd64 prometheuspackage
+    cd /tmp
+    tar -xvzf releases/prometheus-$version.tar.gz
+    rm -r prometheuspackage && mv prometheus-$version.linux-amd64 prometheuspackage
     #
-    sudo cp prometheuspackage/prometheus /usr/local/bin/
-    sudo cp prometheuspackage/promtool /usr/local/bin/
-    sudo chown prometheus:prometheus /usr/local/bin/prometheus
-    sudo chown prometheus:prometheus /usr/local/bin/promtool
+    sudo cp prometheuspackage/prometheus /usr/bin/
+    sudo cp prometheuspackage/promtool /usr/bin/
+    sudo chown prometheus:prometheus /usr/bin/prometheus
+    sudo chown prometheus:prometheus /usr/bin/promtool
     #
     sudo cp -r prometheuspackage/consoles /etc/prometheus
     sudo cp -r prometheuspackage/console_libraries /etc/prometheus
     sudo chown -R prometheus:prometheus /etc/prometheus/consoles
     sudo chown -R prometheus:prometheus /etc/prometheus/console_libraries
+    rm -r prometheuspackage
     #
     # sudo vim /etc/prometheus/prometheus.yml
 
-    cat > /etc/prometheus/prometheus.yml << EOF
+    sudo cat > /etc/prometheus/prometheus.yml << EOF
 global:
   scrape_interval: 10s
 
@@ -94,12 +72,12 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:$port']
 EOF
-    chown prometheus:prometheus /etc/prometheus/prometheus.yml
+    sudo chown prometheus:prometheus /etc/prometheus/prometheus.yml
             
     if [[ -d /etc/systemd ]]; then
 
-    touch /etc/systemd/system/prometheus.service
-    cat /etc/systemd/system/prometheus.service << EOF
+      sudo touch /etc/systemd/system/prometheus.service
+      sudo cat /etc/systemd/system/prometheus.service << EOF
 [Unit]
 Description=Prometheus
 Wants=network-online.target
@@ -109,7 +87,7 @@ After=network-online.target
 #User=prometheus
 Group=prometheus
 Type=simple
-ExecStart=/usr/local/bin/prometheus \
+ExecStart=/usr/bin/prometheus \
 --config.file /etc/prometheus/prometheus.yml \
 --storage.tsdb.path /var/lib/prometheus/ \
 --web.listen-address 0.0.0.0:$port \
