@@ -101,14 +101,14 @@ function tomcat_install()
     sudo tar xf apache-tomcat-${version}.tar.gz -C $INSTALL_DIR
     sudo mv $INSTALL_DIR/apache-tomcat-$version $INSTALL_DIR/tomcat-$version
     sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat-$version
-    sed -i 's|<Connector port="8080".*|<Connector port="8080" URIEncoding="UTF-8"|' $INSTALL_DIR/tomcat-$version/conf/server.xml
+    sudo sed -i 's|<Connector port="8080".*|<Connector port="8080" URIEncoding="UTF-8"|' $INSTALL_DIR/tomcat-$version/conf/server.xml
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG tomcat $ADMIN_USER; fi
 
     CATALINA_HOME=$INSTALL_DIR/tomcat-$version
-    echo "CATALINA_HOME=\"${CATALINA_HOME}\"" > ${CATALINA_HOME}/conf/tomcat.conf
-    echo "CATALINA_BASE=\"${CATALINA_HOME}\""  >> ${CATALINA_HOME}/conf/tomcat.conf
-    echo "CATALINA_OPTS=\"-Xms256m -Xmx256m -server -XX:+UseParallelGC\"" >> ${CATALINA_HOME}/conf/tomcat.conf
-    echo "JAVA_OPTS=\"-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\""  >> ${CATALINA_HOME}/conf/tomcat.conf
+    echo "CATALINA_HOME=\"${CATALINA_HOME}\"" | sudo tee ${CATALINA_HOME}/conf/tomcat.conf
+    echo "CATALINA_BASE=\"${CATALINA_HOME}\"" | sudo tee -a ${CATALINA_HOME}/conf/tomcat.conf
+    echo "CATALINA_OPTS=\"-Xms256m -Xmx256m -server -XX:+UseParallelGC\""| sudo tee -a ${CATALINA_HOME}/conf/tomcat.conf
+    echo "JAVA_OPTS=\"-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\"" | sudo tee -a ${CATALINA_HOME}/conf/tomcat.conf
 
     if [ "1" == "$IS_DEFAULT" ]
     then
@@ -120,10 +120,10 @@ function tomcat_install()
         sudo chown -R tomcat:tomcat $INSTALL_DIR/tomcat /etc/tomcat
 
         CATALINA_HOME=$INSTALL_DIR/tomcat
-        echo "export CATALINA_HOME=${CATALINA_HOME}" > /etc/profile.d/tomcat.sh
-        echo "export CATALINA_BASE=${CATALINA_HOME}"  >> /etc/profile.d/tomcat.sh
-        # echo "export CATALINA_OPTS='-Xms256m -Xmx256m -server -XX:+UseParallelGC'"  >> /etc/profile.d/tomcat.sh
-        # echo "export JAVA_OPTS=\"\$JAVA_OPTS -Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\""  >> /etc/profile.d/tomcat.sh
+        echo "export CATALINA_HOME=${CATALINA_HOME}"| sudo tee /etc/profile.d/tomcat.sh
+        echo "export CATALINA_BASE=${CATALINA_HOME}" | sudo tee -a /etc/profile.d/tomcat.sh
+        # echo "export CATALINA_OPTS='-Xms256m -Xmx256m -server -XX:+UseParallelGC'" | sudo tee -a /etc/profile.d/tomcat.sh
+        # echo "export JAVA_OPTS=\"\$JAVA_OPTS -Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\"" | sudo tee -a /etc/profile.d/tomcat.sh
         source /etc/profile.d/tomcat.sh
 
         if [[ "6" != $OS_VERSION && -d /etc/systemd ]]; then
@@ -155,7 +155,7 @@ EOF
         fi
     fi
 
-    # echo "CATALINA_HOME=$INSTALL_DIR/tomcat" >> /etc/profile.d/environnments.sh
+    # echo "CATALINA_HOME=$INSTALL_DIR/tomcat"| sudo tee -a /etc/profile.d/environnments.sh
     echo ">> Installed application '$name' (version = $version) in $INSTALL_DIR/tomcat-$version"
 }
 
@@ -173,7 +173,7 @@ EOF
 #     mv apache-tomcat-7.0.90/* /opt/tomcat
 #     chown -R tomcat:tomcat /opt/tomcat/
     
-#     echo "CATALINA_HOME=/opt/tomcat" >> /etc/profile.d/environnments.sh
+#     echo "CATALINA_HOME=/opt/tomcat"| sudo tee -a /etc/profile.d/environnments.sh
 # }
 
 # if [ ! $# -eq 0 ]; 
