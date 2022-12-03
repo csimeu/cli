@@ -22,8 +22,8 @@ TOMCAT_DEFAULT_VERSION=${TOMCAT_DEFAULT_VERSION:-"8"}
 FCREPO_RELEASES="5.1.1 4.7.5"
 FCREPO_DEFAULT_VERSION=${FCREPO_DEFAULT_VERSION:-"4.7.5"}
 
-FUSEKI_RELEASES="4.1.0 3.14.0"
-FUSEKI_DEFAULT_VERSION=${FUSEKI_DEFAULT_VERSION:-"4.1.0"}
+FUSEKI_RELEASES="4.6.1 4.1.0 3.14.0"
+FUSEKI_DEFAULT_VERSION=${FUSEKI_DEFAULT_VERSION:-"4.6.1"}
 
 BLAZEGRAPH_RELEASES="2.1.5"
 BLAZEGRAPH_DEFAULT_VERSION=${BLAZEGRAPH_DEFAULT_VERSION:-"2.1.5"}
@@ -794,9 +794,9 @@ fuseki_install() {
     read_application_arguments $@
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    local repo_url=downloads.apache.org
+    local repo_url=dlcdn.apache.org
     case "$version" in
-        "4") version=4.1.0;;
+        "4") version=$FUSEKI_DEFAULT_VERSION;;
         "3") version=3.14.0; repo_url=archive.apache.org/dist ;;
         *)
         ;;

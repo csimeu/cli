@@ -16,9 +16,9 @@ fuseki_install() {
     read_application_arguments $@
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    local repo_url=downloads.apache.org
+    local repo_url=dlcdn.apache.org
     case "$version" in
-        "4") version=4.1.0;;
+        "4") version=$FUSEKI_DEFAULT_VERSION;;
         "3") version=3.14.0; repo_url=archive.apache.org/dist ;;
         *)
         ;;
