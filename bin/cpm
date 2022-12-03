@@ -2333,12 +2333,12 @@ postgresql_start(){
     # elif [ -f /usr/pgsql-${version}/bin/pg_ctl ]; then
     #     cmd=/usr/pgsql-${version}/bin/pg_ctl
     # fi
-
-    if [ "$(id -u -n)" == "postgres" ]; then
-        `postgresql_pg_ctl` -D $data -o "-p $port" restart
-    else
-        sudo -u postgres $(postgresql_pg_ctl) -D $data -o "-p $port" restart
-    fi
+    `postgresql_pg_ctl` -D $data -o "-p $port" restart
+    # if [ "$(id -u -n)" == "postgres" ]; then
+        
+    # else
+    #     $(postgresql_pg_ctl) -D $data -o "-p $port" restart
+    # fi
 }
 
 postgresql_pg_ctl(){
