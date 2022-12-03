@@ -2225,7 +2225,7 @@ function postgresql_install()
         alpine)
             install postgresql$_postgresql_version  postgresql$_postgresql_version-openrc postgresql$_postgresql_version-contrib
             sudo mkdir -p /run/postgresql
-            sudo chown postgres:posgres /run/postgresql
+            sudo chown postgres:postgres /run/postgresql
         ;;
         debian|ubuntu)
             # data="/var/lib/postgresql/${_postgresql_version}/data"
