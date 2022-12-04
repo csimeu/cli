@@ -41,6 +41,7 @@ function alertmanager_install()
     fi
 
     sudo mkdir -p $data_dir /etc/$appName
+    sudo rm -rf /etc/$appName/alertmanager.yml /usr/bin/alertmanager
     sudo ln -s $INSTALL_DIR/$appName/alertmanager.yml /etc/$appName
     sudo ln -s $INSTALL_DIR/$appName/alertmanager /usr/bin
 
