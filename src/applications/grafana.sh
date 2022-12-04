@@ -41,6 +41,8 @@ function grafana_install()
     
     grafana_add_repolist
     install grafana
+    sudo mkdir -p /run/grafana
+    sudo chmod ugo+w /run/grafana
 
     # sudo systemctl enable grafana-server.service
 
