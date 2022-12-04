@@ -47,18 +47,18 @@ function prometheus_install()
     fi
     cd /tmp
     tar -xvzf prometheus-$version.tar.gz
-    rm -r prometheuspackage && mv prometheus-$version.linux-amd64 prometheuspackage
+    rm -rf prometheus-$version && mv prometheus-$version.linux-amd64 prometheus-$version
     #
-    sudo cp prometheuspackage/prometheus /usr/bin/
-    sudo cp prometheuspackage/promtool /usr/bin/
+    sudo cp prometheus-$version/prometheus /usr/bin/
+    sudo cp prometheus-$version/promtool /usr/bin/
     sudo chown prometheus:prometheus /usr/bin/prometheus
     sudo chown prometheus:prometheus /usr/bin/promtool
     #
-    sudo cp -r prometheuspackage/consoles /etc/prometheus
-    sudo cp -r prometheuspackage/console_libraries /etc/prometheus
+    sudo cp -r prometheus-$version/consoles /etc/prometheus
+    sudo cp -r prometheuprometheus-$versionspackage/console_libraries /etc/prometheus
     sudo chown -R prometheus:prometheus /etc/prometheus/consoles
     sudo chown -R prometheus:prometheus /etc/prometheus/console_libraries
-    rm -r prometheuspackage
+    rm -r prometheus-$version
     #
     # sudo vim /etc/prometheus/prometheus.yml
 
