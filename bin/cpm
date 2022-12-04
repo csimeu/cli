@@ -382,7 +382,9 @@ function alertmanager_install()
     sudo ln -s $INSTALL_DIR/$appName/alertmanager.yml /etc/$appName
     sudo ln -s $INSTALL_DIR/$appName/alertmanager /usr/bin
 
-    sudo cat /etc/systemd/system/$appName.service << EOF
+
+    if [[ -d /etc/systemd/system ]]; then
+      sudo tee /etc/systemd/system/$appName.service << EOF > /dev/null
 [Unit]
 Description=Alertmanager for prometheus
 Wants=network-online.target
@@ -399,6 +401,7 @@ SendSIGKILL=no
 [Install]
 WantedBy=multi-user.target
 EOF
+    fi
 
     sudo chown -Rf $appName:$appName $data_dir /etc/$appName
 
