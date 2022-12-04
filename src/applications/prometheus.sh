@@ -46,7 +46,7 @@ function prometheus_install()
       curl -fSL  https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz -o /tmp/prometheus-$version.tar.gz
     fi
     cd /tmp
-    tar -xvzf releases/prometheus-$version.tar.gz
+    tar -xvzf prometheus-$version.tar.gz
     rm -r prometheuspackage && mv prometheus-$version.linux-amd64 prometheuspackage
     #
     sudo cp prometheuspackage/prometheus /usr/bin/

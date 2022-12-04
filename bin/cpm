@@ -345,8 +345,10 @@ function alertmanager_install()
 {
     set -e
     local appName=alertmanager
-    local version=
+    local version=0.24.0
     local data=/var/lib/$appName
+    local data_dir=/var/lib/$appName
+    local INSTALL_DIR=/usr/share
     local port=
     
     local _parameters=
@@ -364,7 +366,41 @@ function alertmanager_install()
         ;;
     esac
 
-  install alertmanager
+    # https://linuxhint.com/install-configure-prometheus-alert-manager-ubuntu/
+    curl -fSL https://github.com/prometheus/alertmanager/releases/download/v$version/alertmanager-$version.linux-amd64.tar.gz -o /tmp/alertmanager-$version.tar.gz
+    tar xzf /tmp/alertmanager-$version.tar.gz --directory $appName -C $INSTALL_DIR
+    sudo mv alertmanager-0.24.0.linux-amd64 $INSTALL_DIR/$appName-$version
+    sudo ln -s $INSTALL_DIR/$appName-$version $INSTALL_DIR/$appName
+
+    if ! getent passwd $appName > /dev/null 2>&1; then
+        sudo groupadd --system $appName
+        sudo useradd --no-create-home --shell /bin/false -g $appName $appName
+    fi
+
+    sudo mkdir -p $data_dir /etc/$appName
+    sudo ln -s $INSTALL_DIR/$appName/alertmanager.yml /etc/$appName
+    sudo ln -s $INSTALL_DIR/$appName/alertmanager /usr/bin
+
+    sudo cat /etc/systemd/system/$appName.service << EOF
+[Unit]
+Description=Alertmanager for prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Restart=always
+User=$appName
+ExecStart=$INSTALL_DIR/$appName/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/var/lib/alertmanager
+# ExecReload=/bin/kill -HUP \$MAINPID
+TimeoutStopSec=20s
+SendSIGKILL=no
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    sudo chown -Rf $appName:$appName $data_dir /etc/$appName
+
 }
 
 
@@ -703,23 +739,23 @@ kibana_install() {
     if [ -n "$_parameters" ]; then set $_parameters; fi
     
     case "$version" in
-        "8") version=8.5.2;;
+        "8") version=8.5.2 ;;
         *);;
     esac
 
     case `plateform` in 
         alpine)
             install nodejs curl
-            sudo curl -LO https://artifacts.elastic.co/downloads/kibana/kibana-${version}-linux-x64.tar.gz
-            sudo tar xzf kibana-${version}-linux-x64.tar.gz -C $INSTALL_DIR
-            sudo mv $INSTALL_DIR/kibana-${version}-linux-x64/ $INSTALL_DIR/kibana-${version}
+            sudo curl -fSL https://artifacts.elastic.co/downloads/kibana/kibana-${version}-linux-x86_64.tar.gz -o /tmp/kibana-${version}-linux-x86_64.tar.gz
+            sudo tar -xzf /tmp/kibana-${version}-linux-x86_64.tar.gz -C $INSTALL_DIR
+            sudo mv $INSTALL_DIR/kibana-${version}-linux-x86_64/ $INSTALL_DIR/kibana-${version}
             sudo rm $INSTALL_DIR/kibana-${version}/node/bin/node
             sudo rm $INSTALL_DIR/kibana-${version}/node/bin/npm
-            sudo ln -ls $INSTALL_DIR/kibana-${version} $INSTALL_DIR/kibana
+            sudo ln -s $INSTALL_DIR/kibana-${version} $INSTALL_DIR/kibana
             sudo ln -s /usr/bin/node $INSTALL_DIR/kibana-${version}/node/bin/node
             sudo ln -s /usr/bin/npm $INSTALL_DIR/kibana-${version}/node/bin/npm
             sudo sed -i '/elasticsearch_url/s/localhost/elasticsearch/' $INSTALL_DIR/kibana-${version}/config/kibana.yml
-            sudo rm -rf kibana-${version}-linux-x64.tar.gz
+            sudo rm -rf /tmp/kibana-${version}-linux-x86_64.tar.gz
             sudo ln -s $INSTALL_DIR/kibana/config /etc/kibana
         ;;
         *)
@@ -730,27 +766,27 @@ kibana_install() {
     # execute systemctl enable kibana
 }
 
-kibana_package() {
-    local version=8
-    local _parameters=
-    read_application_arguments $@ 
+# kibana_package() {
+#     local version=8
+#     local _parameters=
+#     read_application_arguments $@ 
     
-    case `plateform` in 
-        alpine)
-            install nodejs curl && \
-    curl -LO https://artifacts.elastic.co/downloads/kibana/kibana-${KIBANA_VERSION}-linux-x64.tar.gz && \
-    tar xzf /kibana-${KIBANA_VERSION}-linux-x64.tar.gz -C / && \
-    rm /kibana-${KIBANA_VERSION}-linux-x64/node/bin/node && \
-    rm /kibana-${KIBANA_VERSION}-linux-x64/node/bin/npm && \
-    ln -s /usr/bin/node /kibana-${KIBANA_VERSION}-linux-x64/node/bin/node && \
-    ln -s /usr/bin/npm /kibana-${KIBANA_VERSION}-linux-x64/node/bin/npm && \
-    sed -i '/elasticsearch_url/s/localhost/elasticsearch/' /kibana-${KIBANA_VERSION}-linux-x64/config/kibana.yml && \
-    rm -rf /var/cache/apk/* /kibana-${KIBANA_VERSION}-linux-x64.tar.gz
+#     case `plateform` in 
+#         alpine)
+#             install nodejs curl && \
+#     curl -LO https://artifacts.elastic.co/downloads/kibana/kibana-${KIBANA_VERSION}-linux-x64.tar.gz && \
+#     tar xzf /kibana-${KIBANA_VERSION}-linux-x64.tar.gz -C / && \
+#     rm /kibana-${KIBANA_VERSION}-linux-x64/node/bin/node && \
+#     rm /kibana-${KIBANA_VERSION}-linux-x64/node/bin/npm && \
+#     ln -s /usr/bin/node /kibana-${KIBANA_VERSION}-linux-x64/node/bin/node && \
+#     ln -s /usr/bin/npm /kibana-${KIBANA_VERSION}-linux-x64/node/bin/npm && \
+#     sed -i '/elasticsearch_url/s/localhost/elasticsearch/' /kibana-${KIBANA_VERSION}-linux-x64/config/kibana.yml && \
+#     rm -rf /var/cache/apk/* /kibana-${KIBANA_VERSION}-linux-x64.tar.gz
 
-        ;;
-    esac
-    # execute systemctl enable kibana
-}
+#         ;;
+#     esac
+#     # execute systemctl enable kibana
+# }
 
 ## detect if a script is being sourced or not
 # if [[ $_ == $0 ]] 
@@ -997,6 +1033,15 @@ sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 EOF
     fi
             install fontconfig freetype* urw-fonts
+        ;;
+
+        debian|ubuntu)  
+            # https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
+            if [ ! -f /etc/apt/sources.list.d/grafana.list ]; then
+                install apt-transport-https software-properties-common wget
+                sudo wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+                echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+            fi
         ;;
     esac
 }
@@ -2599,7 +2644,7 @@ function prometheus_install()
       curl -fSL  https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz -o /tmp/prometheus-$version.tar.gz
     fi
     cd /tmp
-    tar -xvzf releases/prometheus-$version.tar.gz
+    tar -xvzf prometheus-$version.tar.gz
     rm -r prometheuspackage && mv prometheus-$version.linux-amd64 prometheuspackage
     #
     sudo cp prometheuspackage/prometheus /usr/bin/

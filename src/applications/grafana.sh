@@ -22,6 +22,15 @@ EOF
     fi
             install fontconfig freetype* urw-fonts
         ;;
+
+        debian|ubuntu)  
+            # https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
+            if [ ! -f /etc/apt/sources.list.d/grafana.list ]; then
+                install apt-transport-https software-properties-common wget
+                sudo wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+                echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+            fi
+        ;;
     esac
 }
 
