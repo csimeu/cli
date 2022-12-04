@@ -2653,7 +2653,7 @@ function prometheus_install()
     sudo chown prometheus:prometheus /usr/bin/promtool
     #
     sudo cp -r prometheus-$version/consoles /etc/prometheus
-    sudo cp -r prometheuprometheus-$versionspackage/console_libraries /etc/prometheus
+    sudo cp -r prometheus-$version/console_libraries /etc/prometheus
     sudo chown -R prometheus:prometheus /etc/prometheus/consoles
     sudo chown -R prometheus:prometheus /etc/prometheus/console_libraries
     rm -r prometheus-$version
