@@ -372,7 +372,7 @@ function alertmanager_install()
     sudo mkdir -p $data_dir /etc/$appName
     sudo cp -f alertmanager-$version.linux-amd64/amtool /usr/bin
     sudo cp -f alertmanager-$version.linux-amd64/alertmanager /usr/bin
-    sudo cp -f alertmanager-$version.linux-amd64/$appName/alertmanager.yml /etc/$appName
+    sudo cp -f alertmanager-$version.linux-amd64/alertmanager.yml /etc/$appName
     
     #  $INSTALL_DIR/$appName-$version && rm -rf alertmanager-$version.linux-amd64/
     # sudo rm -rf $INSTALL_DIR/$appName
