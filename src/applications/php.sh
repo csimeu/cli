@@ -61,7 +61,7 @@ function php_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-	local php_exts="fpm pgsql odbc gd intl mbstring ldap xml xmlrpc soap pear opcache json  fileinfo simplexml xmlreader xmlwriter zip zlib"
+	local php_exts="fpm pgsql odbc gd intl mbstring ldap xml soap pear opcache json fileinfo simplexml xmlreader xmlwriter zip zlib"
 	local pecl_exts="apcu xdebug "
 	# local php_exts=" mysql  imap interbase xmlrpc"
 
@@ -75,6 +75,10 @@ function php_install()
 			php_exts="$php_exts mysqlnd mysqli phar pdo pdo_mysql pdo_pgsql pdo_sqlite pdo_odbc pdo_dblib ctype curl iconv dom tokenizer dev exif common"
 			pecl_exts="$pecl_exts memcache memcached uploadprogress igbinary mongodb redis imagick uuid"
 			version=${version%.*}
+			case ${version/./} in 
+				5|7) php_exts="$php_exts xmlrpc " 
+				;;
+			esac
 		;;
         redhat)
 			if [ "1" == "$IS_DEFAULT" ] ; then
@@ -84,7 +88,7 @@ function php_install()
 				case $OS_VERSION in 
 					6|7)
 						execute yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./};
-						php_exts="$php_exts mysql imap interbase "
+						php_exts="$php_exts mysql imap interbase xmlrpc"
 						pecl_exts="$pecl_exts geoip memcache memcached  igbinary mongodb redis imagick zip "
 					;;
 					*)
@@ -131,7 +135,7 @@ function php_install()
 			# for ext in $pecl_exts ; do  cmd+=" php$version-$ext"; done
 			# install php$version  $cmd
 			
-			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath opcache zip "
+			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath opcache zip"
 			pecl_exts=
 			case ${version/./} in 
 				5|7) php_exts="$php_exts json  " 
