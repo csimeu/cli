@@ -19,7 +19,11 @@ function mysql_install()
 	cd /tmp/releases
 
     case `plateform` in
-        alpine) install mysql mysql-client ;;
+        alpine) 
+			install mysql mysql-client 
+			sudo mkdir -p /run/mysqld && sudo chown mysql:mysql /run/mysqld 
+			sudo mysql_install_db --user=mysql --datadir=/var/lib/mysql
+		;;
         redhat)
 			local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
 
@@ -47,7 +51,7 @@ function mysql_install()
 					curl -fSL https://dev.mysql.com/get/$MYSQL_DEB -o /tmp/releases/$MYSQL_DEB
 				fi
 				
-				apt-get install gnupg2 lsb-release /tmp/releases/$MYSQL_DEB 
+				install gnupg2 lsb-release /tmp/releases/$MYSQL_DEB 
 			fi
 			install mysql-server
         ;;
@@ -66,6 +70,7 @@ function mysql_install()
 				sudo /usr/bin/mysqld_pre_systemd
 			fi
 			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
+		;;
 		# ;;
         # debian|ubuntu)
 		# 	execute systemctl enable mysql;
