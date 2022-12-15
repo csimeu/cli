@@ -1719,7 +1719,6 @@ function mysql_install()
 				sudo /usr/bin/mysqld_pre_systemd
 			fi
 			if [[ $OS_VERSION =~ 6 ]]; then execute chkconfig --add mysqld ; else execute systemctl enable mysqld; fi
-		;;
 		# ;;
         # debian|ubuntu)
 		# 	execute systemctl enable mysql;
