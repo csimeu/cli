@@ -1512,6 +1512,9 @@ function mariadb_install()
         ;;
     esac
 
+    if [[ -d /etc/mysql ]]; then
+        find /etc/mysql -type f -exec sudo sed -i  "s|^bind-address.*|bind-address = 0.0.0.0|g" {} \;
+    fi
 }
 
 # ## detect if a script is being sourced or not
@@ -1702,7 +1705,7 @@ function mysql_install()
 				
 				install gnupg2 lsb-release /tmp/releases/$MYSQL_DEB 
 			fi
-			install mysql-server
+			install mysql
         ;;
     esac
 	
@@ -2464,7 +2467,7 @@ postgresql_start(){
     local version=$POSTGRESQL_VERSION
     local port=${POSTGRESQL_PORT:-"5432"}
     local data=
-    local log=    
+    local log=
 
     local _parameters=
     read_application_arguments $@ 
@@ -2548,8 +2551,8 @@ postgresql_init(){
 
     if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
         echo "Init postgresql $version: $data"
-        sudo mkdir -p $data
-        sudo chown postgres:postgres $data
+        # sudo mkdir -p $data
+        # sudo chown postgres:postgres $data
 
         postgresql_ctl -D $data init
         # else

@@ -200,7 +200,7 @@ postgresql_start(){
     local version=$POSTGRESQL_VERSION
     local port=${POSTGRESQL_PORT:-"5432"}
     local data=
-    local log=    
+    local log=
 
     local _parameters=
     read_application_arguments $@ 
@@ -284,8 +284,8 @@ postgresql_init(){
 
     if [[ ( ! -d $data ) || ( ! "$(ls -A $data)" ) ]]; then
         echo "Init postgresql $version: $data"
-        sudo mkdir -p $data
-        sudo chown postgres:postgres $data
+        # sudo mkdir -p $data
+        # sudo chown postgres:postgres $data
 
         postgresql_ctl -D $data init
         # else

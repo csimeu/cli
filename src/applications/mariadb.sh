@@ -21,6 +21,9 @@ function mariadb_install()
         ;;
     esac
 
+    if [[ -d /etc/mysql ]]; then
+        find /etc/mysql -type f -exec sudo sed -i  "s|^bind-address.*|bind-address = 0.0.0.0|g" {} \;
+    fi
 }
 
 # ## detect if a script is being sourced or not

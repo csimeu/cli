@@ -53,7 +53,7 @@ function mysql_install()
 				
 				install gnupg2 lsb-release /tmp/releases/$MYSQL_DEB 
 			fi
-			install mysql-server
+			install mysql
         ;;
     esac
 	
