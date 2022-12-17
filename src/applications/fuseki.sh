@@ -103,7 +103,8 @@ fuseki_install() {
 
     # fi
 
-    
+    sudo mkdir -p /etc/fuseki
+    sudo chown tomcat:tomcat -R $/etc/fuseki
 
 
     # sudo cp -f "$INSTALL_DIR/fuseki-${version}/fuseki.war" "${catalina_home}/webapps/$name.war"

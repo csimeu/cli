@@ -587,7 +587,7 @@ function blazegraph_install()
     fi
 
     sudo mkdir -p $data_dir $config_dir
-    # sudo chown tomcat:tomcat $data_dir/ $config_dir
+    sudo chown tomcat:tomcat $data_dir $config_dir
     # if [ -d /etc/tomcat ]; then
     #     echo 'JAVA_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"'| sudo tee -a /etc/tomcat/$name.conf
     # fi
@@ -1010,7 +1010,8 @@ fuseki_install() {
 
     # fi
 
-    
+    sudo mkdir -p /etc/fuseki
+    sudo chown tomcat:tomcat -R $/etc/fuseki
 
 
     # sudo cp -f "$INSTALL_DIR/fuseki-${version}/fuseki.war" "${catalina_home}/webapps/$name.war"
@@ -3018,6 +3019,9 @@ function tomcat_install()
     echo "CATALINA_BASE=\"${CATALINA_HOME}\"" | sudo tee -a ${CATALINA_HOME}/conf/tomcat.conf
     echo "CATALINA_OPTS=\"-Xms256m -Xmx256m -server -XX:+UseParallelGC\""| sudo tee -a ${CATALINA_HOME}/conf/tomcat.conf
     echo "JAVA_OPTS=\"-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\"" | sudo tee -a ${CATALINA_HOME}/conf/tomcat.conf
+
+    sudo chmod ugo+r -R ${CATALINA_HOME}
+    sudo chmod ugo+rx -R ${CATALINA_HOME}/conf/tomcat.conf
 
     if [ "1" == "$IS_DEFAULT" ]
     then

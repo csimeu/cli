@@ -111,6 +111,9 @@ function tomcat_install()
     echo "CATALINA_OPTS=\"-Xms256m -Xmx256m -server -XX:+UseParallelGC\""| sudo tee -a ${CATALINA_HOME}/conf/tomcat.conf
     echo "JAVA_OPTS=\"-Djava.awt.headless=true -Dlog4j2.formatMsgNoLookups=true\"" | sudo tee -a ${CATALINA_HOME}/conf/tomcat.conf
 
+    sudo chmod ugo+r -R ${CATALINA_HOME}
+    sudo chmod ugo+rx -R ${CATALINA_HOME}/conf/tomcat.conf
+
     if [ "1" == "$IS_DEFAULT" ]
     then
         if [ -L /etc/tomcat ]; then unlink /etc/tomcat; fi

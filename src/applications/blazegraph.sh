@@ -70,7 +70,7 @@ function blazegraph_install()
     fi
 
     sudo mkdir -p $data_dir $config_dir
-    # sudo chown tomcat:tomcat $data_dir/ $config_dir
+    sudo chown tomcat:tomcat $data_dir $config_dir
     # if [ -d /etc/tomcat ]; then
     #     echo 'JAVA_OPTS="-Dcom.bigdata.rdf.sail.webapp.ConfigParams.propertyFile='$config_dir'/RWStore.properties"'| sudo tee -a /etc/tomcat/$name.conf
     # fi
