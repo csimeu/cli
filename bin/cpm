@@ -2365,6 +2365,7 @@ function postgresql_install()
             # data="/var/lib/postgresql/${_postgresql_version}/data"
             # PG_BIN="/usr/lib/postgresql/${_postgresql_version}/bin"
             install postgresql-${_postgresql_version} postgresql-client-${_postgresql_version} postgresql-$_postgresql_version-pglogical pgbouncer
+            sudo localedef -i en_US -f UTF-8 en_US.UTF-8
             ;;
         redhat)
             if [ '8' == "$OS_VERSION" ]; then 
