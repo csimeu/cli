@@ -20,6 +20,10 @@ help: ## Outputs this help screen
 build: ## Build
 	@cpm-build
 
-push: build ## Git push origin
+push: build ## Git push
 	git add -A && git commit -m "@updates"
-	git checkout master && git merge devel && git co devel && git push $(remote) master 
+	git checkout master && git merge devel && git co devel
+	git push $(remote) master 
+
+push-devel-cen: push ## Git push origin
+	git push devel-cen master devel
