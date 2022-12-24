@@ -22,4 +22,4 @@ build: ## Build
 
 push: build ## Git push origin
 	git add -A && git commit -m "@updates"
-	git co devel && git merge devel && git co devel && git push $(remote) master 
+	git checkout master && git merge devel && git co devel && git push $(remote) master 
