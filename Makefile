@@ -25,5 +25,5 @@ push: build ## Git push
 	git checkout master && git merge devel && git co devel
 	git push $(remote) master 
 
-push-devel-cen: push ## Git push origin
+push-devel-cen: ## Git push origin
 	git push devel-cen master devel
