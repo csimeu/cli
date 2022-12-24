@@ -282,6 +282,7 @@ function read_application_arguments()
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,server-url::,server-user::,server-password::,admin-email::,url::,client::,audience::,secret::,login-theme::"
     long+=",postgresql-version::,postgis-version::"
+    long+=",npm-version::,ng-version::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
 
 	eval set -- "$TEMP"         
@@ -300,6 +301,8 @@ function read_application_arguments()
             --log) log=${2}; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
             --version) version=${2:-"$version"}; shift 2 ;;
+            --npm-version) npm_version=${2:-"$npm_version"}; shift 2 ;;
+            --ng-version) ng_version=${2:-"$ng_version"}; shift 2 ;;
             --postgis-version) postgis_version=${2}; shift 2 ;;
             --postgresql-version) postgresql_version=${2}; shift 2 ;;
             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;
@@ -1941,6 +1944,14 @@ nginx_install() {
 
 nodejs_install() {
     local appName="nodejs npm yarn"
+
+    local version=lts
+    local npm_version=latest
+    local ng_version=latest
+    local _parameters=
+    read_application_arguments $@ 
+    if [ -n "$_parameters" ]; then set $_parameters; fi
+
     
     case `plateform` in 
         alpine) install nodejs npm yarn g++;;
@@ -1951,21 +1962,21 @@ nodejs_install() {
                 sudo rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
             fi
             install nodejs npm yarn gcc-c++
-            sudo npm install -g n && sudo /usr/local/bin/n lts
+            # sudo npm install -g n && sudo /usr/local/bin/n $version
             ;;
         debian|ubuntu)
             install nodejs npm node-gyp yarn build-essential
-            sudo npm install -g n && sudo /usr/local/bin/n lts
+            # sudo npm install -g n && sudo /usr/local/bin/n $version
         ;;
     esac
 
-    # sudo npm install -g n && sudo /usr/local/bin/n lts
+    sudo npm install -g n && sudo /usr/local/bin/n $version
 
-    # echo "---> npm install -g npm@latest"
-    # # npm install -g npm@latest
+    echo "---> npm install -g npm@$npm_version"
+    sudo npm install -g npm@$npm_version
 
-    # echo "---> npm install --global 
-    # npm install --global @angular/cli@latest
+    echo "---> npm install --global @angular/cli@$ng_version"
+    sudo npm install --global @angular/cli@$ng_version
     
     echo ">> Installed applications '$appName' "
 }

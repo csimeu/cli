@@ -9,6 +9,7 @@ function read_application_arguments()
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,server-url::,server-user::,server-password::,admin-email::,url::,client::,audience::,secret::,login-theme::"
     long+=",postgresql-version::,postgis-version::"
+    long+=",npm-version::,ng-version::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
 
 	eval set -- "$TEMP"         
@@ -27,6 +28,8 @@ function read_application_arguments()
             --log) log=${2}; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
             --version) version=${2:-"$version"}; shift 2 ;;
+            --npm-version) npm_version=${2:-"$npm_version"}; shift 2 ;;
+            --ng-version) ng_version=${2:-"$ng_version"}; shift 2 ;;
             --postgis-version) postgis_version=${2}; shift 2 ;;
             --postgresql-version) postgresql_version=${2}; shift 2 ;;
             --catalina-home) catalina_home=${2:-"$catalina_home"}; shift 2 ;;

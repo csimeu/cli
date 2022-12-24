@@ -9,6 +9,6 @@
 **/*_bck*
 **/*_backup*
 !/env/*.sh
-
+HELP.md
 */vm-*
 */cenr-*
