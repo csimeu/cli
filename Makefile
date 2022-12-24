@@ -1,7 +1,7 @@
 # include .env.local
 
 # Parameters
-remote=atelier
+remote=atelier-cen
 
 
 
