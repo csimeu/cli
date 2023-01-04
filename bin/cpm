@@ -824,7 +824,7 @@ function install_node_exporter()
     local appName=node_exporter
     local version=1.5.0
     # local port=9100
-    local INSTALL_DIR=/opt/exporter
+    # local INSTALL_DIR=/opt/exporter
     # echo $@
     local _parameters=
     read_application_arguments $@
@@ -840,15 +840,15 @@ function install_node_exporter()
       curl -fSL https://github.com/prometheus/node_exporter/releases/download/v$version/node_exporter-$version.linux-amd64.tar.gz -o /tmp/node_exporter-$version.tar.gz
     fi
 
-    sudo mkdir -p ${INSTALL_DIR}
+    # sudo mkdir -p ${INSTALL_DIR}
     cd /tmp
     tar -xzf node_exporter-$version.tar.gz && rm -f node_exporter-$version.tar.gz
-    rm -rf ${INSTALL_DIR}/node_exporter && mv node_exporter-$version.linux-amd64 node_exporter
-  
-            
+    rm -rf /usr/bin/node_exporter && mv node_exporter-$version.linux-amd64 /usr/bin/node_exporter
+    rm -rf node_exporter-$version.linux-amd64
+
     if [[ -d /etc/systemd && ! -f /etc/systemd/system/node_exporter.service ]]; then
-      sudo touch /etc/systemd/system/node_exporter.service
-      sudo cat /etc/systemd/system/node_exporter.service << EOF
+      # sudo touch /etc/systemd/system/node_exporter.service
+      sudo tee  /etc/systemd/system/node_exporter.service << EOF >> /dev/null
 [Unit]
 Description=Prometheus Node Exporter
 Documentation=https://github.com/prometheus/node_exporter
@@ -857,7 +857,7 @@ After=network-online.target
 [Service]
 User=prometheus
 EnvironmentFile=/etc/default/node_exporter
-ExecStart=${INSTALL_DIR}/node_exporter/node_exporter \$OPTIONS
+ExecStart=/usr/bin/node_exporter \$OPTIONS
 Restart=on-failure
 RestartSec=5
 
