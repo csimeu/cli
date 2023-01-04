@@ -63,7 +63,7 @@ function prometheus_install()
     # sudo vim /etc/prometheus/prometheus.yml
 
     if [ ! -f /etc/prometheus/prometheus.yml ]; then sudo touch /etc/prometheus/prometheus.yml; fi
-    sudo tee > /etc/prometheus/prometheus.yml << EOF > /dev/null
+    sudo tee /etc/prometheus/prometheus.yml << EOF > /dev/null
 global:
   scrape_interval: 10s
 
