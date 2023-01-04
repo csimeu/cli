@@ -28,8 +28,8 @@ function install_node_exporter()
     # sudo mkdir -p ${INSTALL_DIR}
     cd /tmp
     tar -xzf node_exporter-$version.tar.gz && rm -f node_exporter-$version.tar.gz
-    rm -rf /usr/bin/node_exporter && sudo mv node_exporter-$version.linux-amd64/node_exporter /usr/bin/node_exporter
-    rm -rf node_exporter-$version.linux-amd64
+    sudo rm -rf /usr/bin/node_exporter && sudo mv node_exporter-$version.linux-amd64/node_exporter /usr/bin/node_exporter
+    sudo rm -rf node_exporter-$version.linux-amd64
 
     if [[ -d /etc/systemd && ! -f /etc/systemd/system/node_exporter.service ]]; then
       # sudo touch /etc/systemd/system/node_exporter.service
