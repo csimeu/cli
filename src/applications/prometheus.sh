@@ -77,6 +77,7 @@ EOF
     if [[ -d /etc/systemd ]]; then
 
       sudo touch /etc/systemd/system/prometheus.service
+      if [ ! -f /etc/default/prometheus ]; then sudo touch /etc/default/prometheus; fi
       sudo cat /etc/systemd/system/prometheus.service << EOF
 [Unit]
 Description=Prometheus

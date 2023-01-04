@@ -33,6 +33,7 @@ function install_node_exporter()
 
     if [[ -d /etc/systemd && ! -f /etc/systemd/system/node_exporter.service ]]; then
       # sudo touch /etc/systemd/system/node_exporter.service
+      if [ ! -f /etc/default/node_exporter ]; then sudo touch /etc/default/node_exporter; fi
       sudo tee  /etc/systemd/system/node_exporter.service << EOF >> /dev/null
 [Unit]
 Description=Prometheus Node Exporter
