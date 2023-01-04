@@ -101,8 +101,8 @@ ExecStart=/usr/bin/prometheus \
 WantedBy=multi-user.target
 EOF
 
-    systemctl daemon-reload
-    # systemctl enable prometheus
+    sudo systemctl daemon-reload
+    # sudo systemctl enable prometheus
     # sudo systemctl unmask prometheus.service
 
   fi
