@@ -38,7 +38,7 @@ function prometheus_install()
     fi
     
     
-    sudo mkdir /etc/$appName /var/lib/$appName
+    sudo mkdir -p /etc/$appName /var/lib/$appName
     sudo chown $appName:$appName /etc/$appName /var/lib/$appName
     
     if [ ! -f /tmp/prometheus-$version.tar.gz ];
