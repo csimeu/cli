@@ -2789,7 +2789,7 @@ function prometheus_install()
     #
     # sudo vim /etc/prometheus/prometheus.yml
 
-    sudo cat > /etc/prometheus/prometheus.yml << EOF
+    sudo tee > /etc/prometheus/prometheus.yml << EOF > /dev/null
 global:
   scrape_interval: 10s
 
@@ -2801,11 +2801,11 @@ scrape_configs:
 EOF
     sudo chown prometheus:prometheus /etc/prometheus/prometheus.yml
             
-    if [[ -d /etc/systemd ]]; then
+    if [[ -d /etc/systemd/system && ! /etc/systemd/system/prometheus.service ]]; then
 
-      sudo touch /etc/systemd/system/prometheus.service
+      # sudo touch /etc/systemd/system/prometheus.service
       if [ ! -f /etc/default/prometheus ]; then sudo touch /etc/default/prometheus; fi
-      sudo cat /etc/systemd/system/prometheus.service << EOF
+      sudo tee /etc/systemd/system/prometheus.service << EOF > /dev/null
 [Unit]
 Description=Prometheus
 Wants=network-online.target
@@ -2821,13 +2821,13 @@ ExecStart=/usr/bin/prometheus \
 --storage.tsdb.path /var/lib/prometheus/ \
 --web.listen-address 0.0.0.0:$port \
 --web.console.templates=/etc/prometheus/consoles \
---web.console.libraries=/etc/prometheus/console_libraries  \$OPTIONS
+--web.console.libraries=/etc/prometheus/console_libraries \$OPTIONS
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    # systemctl daemon-reload
+    systemctl daemon-reload
     # systemctl enable prometheus
     # sudo systemctl unmask prometheus.service
 
