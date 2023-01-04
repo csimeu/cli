@@ -892,7 +892,7 @@ function exporter_install()
         sudo useradd --no-create-home --shell /bin/false -g prometheus prometheus
     fi
     
-    for module in $_modules do
+    for module in $_modules; do
       cmd="install_${module}_exporter"
       install_${module}_exporter --install-dir=$INSTALL_DIR
     done
