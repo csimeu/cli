@@ -75,9 +75,9 @@ scrape_configs:
 EOF
     sudo chown prometheus:prometheus /etc/prometheus/prometheus.yml
             
-    if [[ -d /etc/systemd/system && ! /etc/systemd/system/prometheus.service ]]; then
+    if [[ -d /etc/systemd/system && ! -f /etc/systemd/system/prometheus.service ]]; then
 
-      sudo touch /etc/systemd/system/prometheus.service
+      # sudo touch /etc/systemd/system/prometheus.service
       if [ ! -f /etc/default/prometheus ]; then sudo touch /etc/default/prometheus; fi
       sudo tee /etc/systemd/system/prometheus.service << EOF > /dev/null
 [Unit]
