@@ -9,7 +9,7 @@ function read_application_arguments()
     long+=",db-name::,db-user::,db-password::,db-host::,db-port::"
     long+=",realm::,server-url::,server-user::,server-password::,admin-email::,url::,client::,audience::,secret::,login-theme::"
     long+=",postgresql-version::,postgis-version::"
-    long+=",npm-version::,ng-version::"
+    long+=",npm-version::,ng-version::,module::"
     local TEMP=`getopt -o p::,f,h --long $long,password::,user::,email::,host::,port:: -n "$0" -- "$@"`
 
 	eval set -- "$TEMP"         
@@ -24,6 +24,7 @@ function read_application_arguments()
             --home-dir) home_dir=${2%"/"} ; shift 2 ;;
             --config-dir) config_dir=${2%"/"} ; shift 2 ;;
             --name) name=${2} ; shift 2 ;;
+            --module) _modules+=" ${2}"; shift 2 ;;
             --file) file=${2}; shift 2 ;;
             --log) log=${2}; shift 2 ;;
             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;

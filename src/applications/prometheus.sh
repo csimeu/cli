@@ -11,7 +11,7 @@ function prometheus_install()
     local appName=prometheus
     local version=2.24.1
     local data=/var/lib/$appName
-    local port=9099
+    local port=9090
     # local prometheus_config=
     # local file_config=
     # local INSTALL_DIR=/usr/share
@@ -87,12 +87,13 @@ After=network-online.target
 #User=prometheus
 Group=prometheus
 Type=simple
+EnvironmentFile=/etc/default/prometheus
 ExecStart=/usr/bin/prometheus \
 --config.file /etc/prometheus/prometheus.yml \
 --storage.tsdb.path /var/lib/prometheus/ \
 --web.listen-address 0.0.0.0:$port \
 --web.console.templates=/etc/prometheus/consoles \
---web.console.libraries=/etc/prometheus/console_libraries
+--web.console.libraries=/etc/prometheus/console_libraries  \$OPTIONS
 
 [Install]
 WantedBy=multi-user.target
