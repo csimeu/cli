@@ -62,6 +62,7 @@ function prometheus_install()
     #
     # sudo vim /etc/prometheus/prometheus.yml
 
+    if [ ! -f /etc/prometheus/prometheus.yml ]; then sudo touch /etc/prometheus/prometheus.yml; fi
     sudo tee > /etc/prometheus/prometheus.yml << EOF > /dev/null
 global:
   scrape_interval: 10s
@@ -76,7 +77,7 @@ EOF
             
     if [[ -d /etc/systemd/system && ! /etc/systemd/system/prometheus.service ]]; then
 
-      # sudo touch /etc/systemd/system/prometheus.service
+      sudo touch /etc/systemd/system/prometheus.service
       if [ ! -f /etc/default/prometheus ]; then sudo touch /etc/default/prometheus; fi
       sudo tee /etc/systemd/system/prometheus.service << EOF > /dev/null
 [Unit]
