@@ -160,6 +160,7 @@ function php_install()
     if [[ $(getent passwd apache)  ]];
     then
 		case `plateform` in 
+			alpine) install php$version-apache2 ;;
 			debian|ubuntu)
 				install libapache2-mod-php$version
 			;;

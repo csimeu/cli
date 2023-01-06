@@ -6,7 +6,7 @@ apache_install() {
     case `plateform` in 
         alpine)
             # https://github.com/nimmis/docker-alpine-apache/blob/master/Dockerfile
-            install apache2 apache2-ssl apache2-mod-wsgi apache2-proxy php$phpverx-apache2 libxml2-dev apache2-utils
+            install apache2 apache2-ssl apache2-mod-wsgi apache2-proxy libxml2-dev apache2-utils
             sudo sed -i '/LoadModule rewrite_module/s/^#//g' /etc/apache2/httpd.conf
             sudo sed -i -e "s|^# Mutex .*$|Mutex file:/var/lock/apache2 default|" /etc/apache2/httpd.conf
             if ! getent passwd apache > /dev/null 2>&1; then
