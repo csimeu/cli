@@ -869,6 +869,7 @@ EOF
     sudo systemctl daemon-reload
     # systemctl enable node_exporter
     # sudo systemctl unmask node_exporter.service
+    # echo "@reboot sleep 30 && /usr/bin/node_exporter " | crontab -
 
   fi
 }
@@ -2057,14 +2058,16 @@ nodejs_install() {
         ;;
     esac
 
-    sudo npm install -g n && sudo /usr/local/bin/n $version
+    if [ "$(plateform)" != "alpine" ]; then
+        sudo npm install -g n && sudo /usr/local/bin/n $version
 
-    echo "---> npm install -g npm@$npm_version"
-    sudo npm install -g npm@$npm_version
+        echo "---> npm install -g npm@$npm_version"
+        sudo npm install -g npm@$npm_version
 
-    echo "---> npm install --global @angular/cli@$ng_version"
-    sudo npm install --global @angular/cli@$ng_version
-    
+        echo "---> npm install --global @angular/cli@$ng_version"
+        sudo npm install --global @angular/cli@$ng_version
+    fi
+        
     echo ">> Installed applications '$appName' "
 }
 

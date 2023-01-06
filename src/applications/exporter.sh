@@ -54,6 +54,7 @@ EOF
     sudo systemctl daemon-reload
     # systemctl enable node_exporter
     # sudo systemctl unmask node_exporter.service
+    # echo "@reboot sleep 30 && /usr/bin/node_exporter " | crontab -
 
   fi
 }

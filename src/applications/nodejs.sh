@@ -29,14 +29,16 @@ nodejs_install() {
         ;;
     esac
 
-    sudo npm install -g n && sudo /usr/local/bin/n $version
+    if [ "$(plateform)" != "alpine" ]; then
+        sudo npm install -g n && sudo /usr/local/bin/n $version
 
-    echo "---> npm install -g npm@$npm_version"
-    sudo npm install -g npm@$npm_version
+        echo "---> npm install -g npm@$npm_version"
+        sudo npm install -g npm@$npm_version
 
-    echo "---> npm install --global @angular/cli@$ng_version"
-    sudo npm install --global @angular/cli@$ng_version
-    
+        echo "---> npm install --global @angular/cli@$ng_version"
+        sudo npm install --global @angular/cli@$ng_version
+    fi
+        
     echo ">> Installed applications '$appName' "
 }
 
