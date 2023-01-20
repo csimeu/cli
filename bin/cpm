@@ -454,6 +454,7 @@ apache_install() {
             execute a2enmod proxy_http
             execute a2enmod proxy_balancer
             execute a2enmod lbmethod_byrequests
+            execute a2enmod rewrite
             if ! getent passwd apache > /dev/null 2>&1; then
                 execute groupadd --system apache
                 execute useradd -d /var/www -r -s /bin/false -g apache apache
