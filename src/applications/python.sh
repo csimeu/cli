@@ -39,6 +39,10 @@ function python_install()
             exit 1;
         ;;
     esac
+
+    if [[ -f /usr/bin/python3 ]]; then
+        execute rm -f /usr/bin/python && execute ln -s python3 /usr/bin/python ;
+    fi
     
     pip_install --upgrade pip;
 }
