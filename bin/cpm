@@ -2941,7 +2941,7 @@ function sentry_install()
     data_dir="${data_dir:-/var/lib/$name}"
     home_dir="${home_dir:-/usr/share/$name}"
 
-    python_install
+    # python_install
     install build-essential libxslt1-dev gcc libffi-dev libjpeg-dev libxml2-dev libxslt-dev libyaml-dev libpq-dev supervisor
     install libxml2 libxmlsec1 pkg-config xmlsec1 libxmlsec1-dev
 
