@@ -2938,27 +2938,27 @@ function sentry_install()
 
 
     name="${name:-$appName}"
-    datadir="${datadir:-/var/lib/$name}"
-    local SENTRY_HOME=/usr/share/$name
+    data_dir="${data_dir:-/var/lib/$name}"
+    home_dir="${home_dir:-/usr/share/$name}"
 
     python_install
     install build-essential libxslt1-dev gcc libffi-dev libjpeg-dev libxml2-dev libxslt-dev libyaml-dev libpq-dev supervisor
     install libxml2 libxmlsec1 pkg-config xmlsec1 libxmlsec1-dev
 
-    # execute mkdir -p $SENTRY_HOME
+    # execute mkdir -p $home_dir
 
-    if ! getent passwd $appName > /dev/null 2>&1; then
-        sudo groupadd --system $appName
-        sudo useradd -d $SENTRY_HOME -r -s /bin/false -g $appName $appName
+    if ! getent passwd $name > /dev/null 2>&1; then
+        sudo groupadd --system $name
+        sudo useradd -d $home_dir -r -s /bin/false -g $name $name
     fi
 
     if [[ -n "$http_proxy" ]]; then
-        sudo -u sentry pip install --proxy $http_proxy -U sentry
+        sudo -u $name pip install --proxy $http_proxy -U sentry
     else
-        sudo -u sentry pip install -U sentry
+        sudo -u $name pip install -U sentry
     fi
 
-    sudo -u sentry sentry init
+    sudo -u $name sentry init
     
     # SENTRY_CONF=/etc/sentry
     # sudo mv $SENTRY_HOME/.sentry/ /etc/$name
