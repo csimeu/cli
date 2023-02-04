@@ -2955,12 +2955,12 @@ function sentry_install()
     sudo mkdir -p $home_dir $data_dir && chown $name:$name -R $home_dir $data_dir
 
     if [[ -n "$http_proxy" ]]; then
-        sudo -u $name pip install --proxy $http_proxy -U sentry
+        execute pip install --proxy $http_proxy sentry
     else
-        sudo -u $name pip install -U sentry
+        execute pip install sentry
     fi
 
-    sudo -u $name sentry init
+    # sudo -u $name $home_dir/.local/bin/sentry init
     
     # SENTRY_CONF=/etc/sentry
     # sudo mv $SENTRY_HOME/.sentry/ /etc/$name
