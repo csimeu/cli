@@ -24,7 +24,7 @@ function sentry_install()
     
     # python_install
     install build-essential libxslt1-dev gcc libffi-dev libjpeg-dev libxml2-dev libxslt-dev libyaml-dev libpq-dev supervisor
-    install libxml2 libxmlsec1 pkg-config xmlsec1 libxmlsec1-dev
+    install libxml2 libxmlsec1 pkg-config xmlsec1 libxmlsec1-dev libsasl2-dev libldap2-dev libssl-dev
 
     # execute mkdir -p $home_dir
 
@@ -37,8 +37,10 @@ function sentry_install()
 
     if [[ -n "$http_proxy" ]]; then
         execute pip install --proxy $http_proxy sentry
+        execute pip install --proxy $http_proxy sentry-ldap-auth python-memcached
     else
         execute pip install sentry
+        execute pip install sentry-ldap-auth python-memcached
     fi
 
     # sudo -u $name $home_dir/.local/bin/sentry init
