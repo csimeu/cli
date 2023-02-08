@@ -44,7 +44,14 @@ function python_install()
             fi
             ;;
         debian|ubuntu)
-            install -qq python$version-pip python$version-dev
+            if [[ "$version" == "2" ]];
+            then
+                install python python-dev
+                curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output /tmp/get-pip.py
+                sudo python2 /tmp/get-pip.py
+            else
+                install -qq python$version python$version-pip python$version-dev
+            fi
         ;;
         *)
             echo ">> Noy implemented script for plateform: $plateform"
