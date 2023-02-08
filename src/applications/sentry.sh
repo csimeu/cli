@@ -8,7 +8,7 @@ function sentry_install()
 
     local FORCE=0
     local IS_DEFAULT=0
-    local version=$SENTRY_DEFAULT_VERSION
+    local version=
     local data=/var/lib
     local name=
 
@@ -35,13 +35,18 @@ function sentry_install()
 
     sudo mkdir -p $home_dir $data_dir && chown $name:$name -R $home_dir $data_dir
 
-    if [[ -n "$http_proxy" ]]; then
-        execute pip install --proxy $http_proxy sentry
-        execute pip install --proxy $http_proxy sentry-ldap-auth python-memcached
+    if [[ -n "$version" ]]; then
+        pip_install sentry==$version
     else
-        execute pip install sentry
-        execute pip install sentry-ldap-auth python-memcached
+        pip_install sentry
     fi
+    # if [[ -n "$http_proxy" ]]; then
+    #     execute pip install --proxy $http_proxy sentry
+    #     execute pip install --proxy $http_proxy sentry-ldap-auth python-memcached
+    # else
+    #     execute pip install sentry
+    pip_install sentry-ldap-auth python-memcached
+    # fi
 
     # sudo -u $name $home_dir/.local/bin/sentry init
     
