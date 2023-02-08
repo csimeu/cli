@@ -45,6 +45,8 @@ function python_install()
     fi
     
     pip_install --upgrade pip;
+    pip_install virtualenv
+
 }
 
 

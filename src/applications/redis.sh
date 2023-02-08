@@ -19,7 +19,11 @@ redis_install() {
     esac
 
     install redis
-    
+    if [[ -f /etc/redis/redis.conf ]]
+    then 
+        execute sed -i -e 's/^bind .*/bind 0.0.0.0/' /etc/redis/redis.conf;
+    fi
+
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG redis $ADMIN_USER; fi
     echo ">> Installed applications '$appName' "
 }
