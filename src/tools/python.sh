@@ -39,13 +39,13 @@ function python_install_requirements()
 {
     set -e
     requirements=${1:-"requirements.txt"}
-    local _USE_PROXY
-    if [[ -n "$http_proxy" ]]; then
-        _USE_PROXY="--proxy $http_proxy";
-    fi
+    # local _USE_PROXY
+    # if [[ -n "$http_proxy" ]]; then
+    #     _USE_PROXY="--proxy $http_proxy";
+    # fi
 
     if [ -f $requirements ]; then
-        pip3 install ${PIP_USE_PROXY} $requirements
+        pip_install $requirements
     fi
 }
 
@@ -53,12 +53,12 @@ function python_install_requirements()
 function pip_install() 
 {
     set -e
-    local _USE_PROXY
+    local PIP_USE_PROXY=
     if [[ -n "$http_proxy" ]]; then
-        _USE_PROXY="--proxy $http_proxy";
+        PIP_USE_PROXY="--proxy $http_proxy";
     fi
 
-    sudo pip3 install ${PIP_USE_PROXY} $@
+    sudo pip install ${PIP_USE_PROXY} $@
 }
 
 

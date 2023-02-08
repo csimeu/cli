@@ -62,6 +62,9 @@ function python_install()
     if [[ -f /usr/bin/python$version ]]; then
         execute rm -f /usr/bin/python && execute ln -s python$version /usr/bin/python ;
     fi
+    if [[ -f /usr/bin/pip$version ]]; then
+        execute rm -f /usr/bin/pip && execute ln -s pip$version /usr/bin/pip ;
+    fi
     
     pip_install --upgrade pip;
     pip_install virtualenv
