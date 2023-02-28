@@ -63,3 +63,14 @@ function sentry_install()
 
     echo ">> Installed application '$appName' (version = $version) in $SENTRY_HOME"
 }
+
+
+sentry_start(){
+    local config_file=${1:-"/etc/redis/redis.conf"}
+    cmdline="/usr/bin/redis-server $config_file --supervised systemd --daemonize no"
+    if [ "$(id -u -n)" == "redis" ]; then 
+        $cmdline &
+    else 
+        sudo -u redis $cmdline &
+    fi
+}

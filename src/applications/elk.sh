@@ -84,7 +84,7 @@ elasticsearch_install() {
     sudo sed -i -e "s/http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
     sudo sed -i -e "s/^#http.host: .*/http.host: 0.0.0.0/" /etc/elasticsearch/elasticsearch.yml
 
-    sudo chown g+wr -R /etc/elasticsearch
+    sudo chmod g+wr -R /etc/elasticsearch
     # execute systemctl enable elasticsearch
 }
 
