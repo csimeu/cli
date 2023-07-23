@@ -29,18 +29,18 @@ function python_install()
             then
                 install python python-dev python-pip
             else
-                if [ "$(rpm -E %{rhel})" ==  "6" ]; then
-                    install python34 python34-libs python34-devel python34-pip;
-                fi
-
-                if [ "$(rpm -E %{rhel})" ==  "7" ]; then
-                    install python36 python36-libs python36-devel python36-pip;
-                    execute ln -s -f /usr/bin/pip3.6 /usr/bin/pip3;
-                fi
-
-                if [ "$(rpm -E %{rhel})" ==  "8" ]; then
-                    install python3 python3-pip;
-                fi
+				case $(rpm -E %{rhel}) in 
+					6) 
+                        install python34 python34-libs python34-devel python34-pip;
+					;;
+                    7) 
+                        install python36 python36-libs python36-devel python36-pip;
+                        execute ln -s -f /usr/bin/pip3.6 /usr/bin/pip3;
+                    ;;
+					*)
+                        install python3 python3-pip;
+					;;
+				esac
             fi
             ;;
         debian|ubuntu)
