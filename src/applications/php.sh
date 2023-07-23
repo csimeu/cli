@@ -66,7 +66,9 @@ function php_install()
 					;;
 					*)
 						execute yum module reset -y php || true;
-						execute yum module enable -y php:${PHP_DEFAULT_VERSION} || true;
+						execute dnf module enable -y php:remi-${PHP_DEFAULT_VERSION} || true;
+						# execute yum module enable -y php:${PHP_DEFAULT_VERSION} || true;
+
 					;;
 				esac
 			fi

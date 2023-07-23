@@ -2140,7 +2140,9 @@ function php_install()
 					;;
 					*)
 						execute yum module reset -y php || true;
-						execute yum module enable -y php:${PHP_DEFAULT_VERSION} || true;
+						execute dnf module enable -y php:remi-${PHP_DEFAULT_VERSION} || true;
+						# execute yum module enable -y php:${PHP_DEFAULT_VERSION} || true;
+
 					;;
 				esac
 			fi
@@ -2822,23 +2824,17 @@ function python_install()
     case $plateform in 
         alpine)
             install python$version python$version-dev py$version-pip
-            # if [[ "$version" == "2" ]];
-            # then
-            #     install python2 python2-dev py2-pip
-            # else
-            #     install python3 python3-dev py3-pip
-            # fi
         ;;
         redhat)
             if [[ "$version" == "2" ]];
             then
                 install python python-dev python-pip
             else
-				case $(rpm -E %{rhel}) in 
-					6) 
+				case $(rpm -E %{rhel}) in
+					6)
                         install python34 python34-libs python34-devel python34-pip;
 					;;
-                    7) 
+                    7)
                         install python36 python36-libs python36-devel python36-pip;
                         execute ln -s -f /usr/bin/pip3.6 /usr/bin/pip3;
                     ;;
