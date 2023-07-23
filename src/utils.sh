@@ -56,7 +56,7 @@ function plateform()
 {
     local value=`plateform_name`
     case $value in
-        centos|rhel|fedora)
+        centos|rhel|fedora|almalinux)
             value="redhat";
         ;;
         debian|ubuntu)
