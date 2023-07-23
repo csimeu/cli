@@ -4,31 +4,6 @@
 
 # https://medium.com/@daniel.bui/multiple-php-version-with-apache-on-centos-7-17078c66692c
 
-# Reads arguments options
-# function parse_php_arguments()
-# {
-#   # if [ $# -ne 0 ]; then
-#     local TEMP=`getopt -o p:: --long data::,version::,port::,config-file:: -n "$0" -- "$@"`
-    
-# 	eval set -- "$TEMP"
-#     # extract options and their arguments into variables.
-#     while true ; do
-#         case "$1" in
-#             # --install-dir) INSTALL_DIR=${2:-"$INSTALL_DIR"} ; shift 2 ;;
-#             # --data) data=${2%"/"} ; shift 2 ;;
-#             --file-config) config_file=${2:-"$config_file"}; shift 2 ;;
-#             --version) version=${2:-"$version"}; shift 2 ;;
-#             --) shift ; break ;;
-#             *) echo "Internal error! $1" ; exit 1 ;;
-#         esac
-#     done
-
-#     shift $(expr $OPTIND - 1 )
-#     _parameters=$@
-    
-#   # fi
-# }
-
 function php_remove()
 {
     set -e
@@ -88,39 +63,26 @@ function php_install()
 				case $OS_VERSION in 
 					6|7)
 						execute yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./};
-						php_exts="$php_exts mysql imap interbase xmlrpc"
-						pecl_exts="$pecl_exts geoip memcache memcached  igbinary mongodb redis imagick zip "
 					;;
 					*)
 						execute yum module reset -y php || true;
 						execute yum module enable -y php:${PHP_DEFAULT_VERSION} || true;
-						# execute yum module install -y php:-${PHP_DEFAULT_VERSION};
-						php_exts="$php_exts mysqlnd  "
-						pecl_exts="$php_exts zip  "
 					;;
 				esac
 			fi
 
-			# if [ -z $version ]; then 
-			# 	echo "PHP_DEFAULT_VERSION=$PHP_DEFAULT_VERSION"
-			# 	case $OS_VERSION in 
-			# 		8)
-			# 			if [ "$EUID" -ne 0 ]; then sudo yum module install -y php:remi-$PHP_DEFAULT_VERSION; else yum module install -y php:remi-$PHP_DEFAULT_VERSION; fi
-			# 			# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
-			# 			# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
-			# 		;;
-			# 		6|7)
-			# 			if [ "$EUID" -ne 0 ]; then sudo yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./}; else yum-config-manager --enable remi-php${PHP_DEFAULT_VERSION/./}; fi
-			# 			# php_exts="fpm imap mysqlnd pgsql odbc gd  interbase intl mbstring ldap xml xmlrpc soap pear opcache json  ";
-			# 			# pecl_exts="geoip memcache memcached apcu igbinary mongodb xdebug redis imagick zip"
-			# 		;;
-			# 	esac
-			# fi 
+			case $OS_VERSION in 
+				6|7)
+					php_exts="$php_exts mysql imap interbase xmlrpc"
+					pecl_exts="$pecl_exts geoip memcache memcached  igbinary mongodb redis imagick zip "
+				;;
+				*)
+					php_exts="$php_exts mysqlnd "
+					pecl_exts="$php_exts zip  "
+				;;
+			esac
 
 			version=${version/./}
-			# local pversion=
-			# if [ -n "$version" ]; then pversion=${version}-php;	fi
-			#mcrypt mssql process
             ;;
         debian|ubuntu)
 			# https://www.digitalocean.com/community/tutorials/how-to-run-multiple-php-versions-on-one-server-using-apache-and-php-fpm-on-ubuntu-18-04
