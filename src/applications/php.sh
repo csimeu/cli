@@ -146,10 +146,10 @@ function php_install()
     esac
 
 	for ext in $php_exts ; do  cmd+=" php$version-$ext"; done
-	# for ext in $pecl_exts ; do  cmd+=" php$version-pecl-$ext"; done
-	echo "Install: php$version $cmd php$version-pecl-*"
+	for ext in $pecl_exts ; do  cmd+=" php$version-pecl-$ext"; done
+	echo "Install: php$version $cmd"
 	
-	install php$version $cmd php$version-pecl-*
+	install php$version $cmd
 
 	if [ -f /etc/httpd/conf.modules.d/00-mpm.conf ]; then
 		sudo sed -i -e "s/^LoadModule mpm_event_module/#LoadModule mpm_event_module/" /etc/httpd/conf.modules.d/00-mpm.conf
