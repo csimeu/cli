@@ -148,7 +148,7 @@ function install()
         ;;
             
         redhat)
-            execute yum install -y $@
+            execute yum install -y --allowerasing $@
             execute rm -rf /var/cache/yum/* 
             execute rm -rf /var/cache/dnf/* 
         ;;
