@@ -92,8 +92,8 @@ function php_install()
 						pecl_exts="$pecl_exts geoip memcache memcached  igbinary mongodb redis imagick zip "
 					;;
 					*)
-						execute yum module reset -y php;
-						execute yum module enable -y php:${PHP_DEFAULT_VERSION};
+						execute yum module reset -y php || true;
+						execute yum module enable -y php:${PHP_DEFAULT_VERSION} || true;
 						# execute yum module install -y php:-${PHP_DEFAULT_VERSION};
 						php_exts="$php_exts mysqlnd  "
 						pecl_exts="$php_exts zip  "
@@ -135,7 +135,7 @@ function php_install()
 			# for ext in $pecl_exts ; do  cmd+=" php$version-$ext"; done
 			# install php$version  $cmd
 			
-			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath opcache zip"
+			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath opcache zip sqlite3"
 			pecl_exts=
 			case ${version/./} in 
 				5|7) php_exts="$php_exts json  " 
