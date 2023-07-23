@@ -78,7 +78,7 @@ function php_install()
 				;;
 				*)
 					php_exts="$php_exts mysqlnd "
-					pecl_exts="$php_exts zip  "
+					pecl_exts="$pecl_exts zip  "
 				;;
 			esac
 
