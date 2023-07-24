@@ -9,6 +9,7 @@ httpd_install() {
             sudo mkdir -p /etc/httpd/sites-enabled
             sudo mkdir -p /etc/httpd/sites-availables
             sudo chown apache:apache -R /etc/httpd/sites-enabled /etc/httpd/sites-availables
+            echo "IncludeOptional sites-enabled/*.conf" | sudo tee -a /etc/httpd/conf/httpd.conf >> /dev/null
             # pip install mod_wsgi
             sudo chown apache:apache -R /etc/httpd
             sudo chmod -R g+w /etc/httpd
@@ -18,7 +19,7 @@ httpd_install() {
             fi
 
             sudo mkdir -p /var/log/httpd /run/httpd /run/mod_fcgid /var/log/httpd
-            sudo chown apache:apache -R /var/log/httpd /etc/pki/tls /run/httpd /run/mod_fcgid /var/log/httpd /etc/pki/tls
+            sudo chown apache:apache -R /var/log/httpd /etc/pki/tls /run/httpd /run/mod_fcgid /var/log/httpd
             ;;
         debian|ubuntu)
             exit 0
