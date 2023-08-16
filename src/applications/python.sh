@@ -45,6 +45,7 @@ function python_install()
                 sudo python2 /tmp/get-pip.py
             else
                 install -qq python$version python$version-pip python$version-dev
+                rm -f /usr/lib/python*/EXTERNALLY-MANAGED
             fi
         ;;
         *)
@@ -60,8 +61,8 @@ function python_install()
         execute rm -f /usr/bin/pip && execute ln -s pip$version /usr/bin/pip ;
     fi
     
-    # pip_install --upgrade pip;
-    # pip_install virtualenv
+    pip_install --upgrade pip;
+    pip_install virtualenv
 
 }
 
