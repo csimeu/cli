@@ -12,7 +12,7 @@ nodejs_install() {
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     
-    case `plateform` in 
+    case `plateform` in
         alpine) install nodejs npm yarn g++;;
         redhat)
             if [ ! -f /etc/yum.repos.d/yarn.repo ]
@@ -24,7 +24,9 @@ nodejs_install() {
             # sudo npm install -g n && sudo /usr/local/bin/n $version
             ;;
         debian|ubuntu)
-            install nodejs npm node-gyp yarn build-essential
+            install nodejs npm node-gyp build-essential
+            # fixed https://stackoverflow.com/questions/46013544/yarn-install-command-error-no-such-file-or-directory-install
+            # sudo npm install -g yarn
             # sudo npm install -g n && sudo /usr/local/bin/n $version
         ;;
     esac
@@ -38,7 +40,13 @@ nodejs_install() {
         echo "---> npm install --global @angular/cli@$ng_version"
         sudo npm install --global @angular/cli@$ng_version
     fi
-        
+
+    case `plateform` in
+        debian|ubuntu)
+            # fixed https://stackoverflow.com/questions/46013544/yarn-install-command-error-no-such-file-or-directory-install
+            sudo npm install -g yarn
+        ;;
+    esac
+
     echo ">> Installed applications '$appName' "
 }
-
