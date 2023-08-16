@@ -48,7 +48,7 @@ function python_install()
             fi
         ;;
         *)
-            echo ">> Noy implemented script for plateform: $plateform"
+            echo ">> Not yet implemented script for plateform: $plateform"
             exit 1;
         ;;
     esac
@@ -60,8 +60,8 @@ function python_install()
         execute rm -f /usr/bin/pip && execute ln -s pip$version /usr/bin/pip ;
     fi
     
-    pip_install --upgrade pip;
-    pip_install virtualenv
+    # pip_install --upgrade pip;
+    # pip_install virtualenv
 
 }
 
