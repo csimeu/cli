@@ -45,8 +45,8 @@ nodejs_install() {
         debian|ubuntu)
             # fixed https://stackoverflow.com/questions/46013544/yarn-install-command-error-no-such-file-or-directory-install
             # sudo npm install -g yarn
-            sudo apt remove -y cmdtest
-            sudo apt remove -y yarn
+            # sudo apt remove -y cmdtest
+            # sudo apt remove -y yarn
             curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
             echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
             sudo apt-get update
