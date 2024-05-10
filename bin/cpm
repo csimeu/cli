@@ -1988,7 +1988,10 @@ nodejs_install() {
 
     
     case `plateform` in
-        alpine) install nodejs npm yarn g++;;
+        alpine) 
+            install nodejs npm yarn g++
+            install libc6-compat
+            ;;
         redhat)
             if [ ! -f /etc/yum.repos.d/yarn.repo ]
             then
@@ -2003,22 +2006,11 @@ nodejs_install() {
             # fixed https://stackoverflow.com/questions/46013544/yarn-install-command-error-no-such-file-or-directory-install
             # sudo npm install -g yarn
             # sudo npm install -g n && sudo /usr/local/bin/n $version
-        ;;
-    esac
+    #     ;;
+    # esac
 
-    if [ "$(plateform)" != "alpine" ]; then
-        sudo npm install -g n && sudo /usr/local/bin/n $version
-
-        echo "---> npm install -g npm@$npm_version"
-        sudo npm install -g npm@$npm_version
-
-        echo "---> npm install --global @angular/cli@$ng_version"
-        sudo npm install --global @angular/cli@$ng_version
-    fi
-
-    case `plateform` in
-        debian|ubuntu)
-            # fixed https://stackoverflow.com/questions/46013544/yarn-install-command-error-no-such-file-or-directory-install
+    # case `plateform` in
+    #     debian|ubuntu)
             # sudo npm install -g yarn
             # sudo apt remove -y cmdtest
             # sudo apt remove -y yarn
@@ -2029,6 +2021,18 @@ nodejs_install() {
             # echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
         ;;
     esac
+
+    if [ "$(plateform)" != "alpine" ]; then
+        sudo npm install -g n && sudo /usr/local/bin/n $version
+        echo "---> npm install -g npm@$npm_version"
+        sudo npm install -g npm@$npm_version
+    fi
+
+    echo "---> npm install --global @angular/cli@$ng_version"
+    sudo npm install --global @angular/cli@$ng_version
+
+    echo "---> npm install --global @angular/cli@$ng_version"
+    sudo npm install --global pnpm turbo
 
     echo ">> Installed applications '$appName' "
 }
