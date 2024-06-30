@@ -45,6 +45,7 @@ function mysql_install()
             ;;
         debian|ubuntu)
 			local MYSQL_DEB="mysql-apt-config_0.8.24-1_all.deb"
+			execute wget https://repo.mysql.com/RPM-GPG-KEY-mysql-2022 -O /etc/apt/trusted.gpg.d/mysql.gpg
 			if [[ $version =~ ^8.*$ ]];
 			then 
 				if [[ ! -f /tmp/releases/$MYSQL_DEB ]]; then
