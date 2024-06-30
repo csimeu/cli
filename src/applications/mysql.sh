@@ -44,13 +44,13 @@ function mysql_install()
 			install mysql-server
             ;;
         debian|ubuntu)
-			local MYSQL_DEB="mysql-apt-config_0.8.22-1_all.deb"
+			local MYSQL_DEB="mysql-apt-config_0.8.24-1_all.deb"
 			if [[ $version =~ ^8.*$ ]];
 			then 
 				if [[ ! -f /tmp/releases/$MYSQL_DEB ]]; then
 					curl -fSL https://dev.mysql.com/get/$MYSQL_DEB -o /tmp/releases/$MYSQL_DEB
 				fi
-				
+
 				install gnupg2 lsb-release /tmp/releases/$MYSQL_DEB 
 			fi
 			install mysql
