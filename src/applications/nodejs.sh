@@ -14,7 +14,7 @@ nodejs_install() {
     
     case `plateform` in
         alpine) 
-            install nodejs npm yarn g++
+            install nodejs npm g++
             install libc6-compat
             ;;
         redhat)
@@ -23,27 +23,17 @@ nodejs_install() {
                 curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
                 sudo rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
             fi
-            install nodejs npm yarn gcc-c++
+            install nodejs npm gcc-c++
             # sudo npm install -g n && sudo /usr/local/bin/n $version
             ;;
         debian|ubuntu)
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
             install nodejs npm node-gyp build-essential
-            # fixed https://stackoverflow.com/questions/46013544/yarn-install-command-error-no-such-file-or-directory-install
-            # sudo npm install -g yarn
-            # sudo npm install -g n && sudo /usr/local/bin/n $version
-    #     ;;
-    # esac
-
-    # case `plateform` in
-    #     debian|ubuntu)
-            # sudo npm install -g yarn
-            # sudo apt remove -y cmdtest
-            # sudo apt remove -y yarn
-            curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-            echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-            sudo apt-get update
-            sudo apt-get install yarn -y
-            # echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+            # # curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+            # # echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+            # sudo apt-get update
+            # sudo apt-get install yarn -y
+            echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
         ;;
     esac
 
@@ -56,8 +46,8 @@ nodejs_install() {
     echo "---> npm install --global @angular/cli@$ng_version"
     sudo npm install --global @angular/cli@$ng_version
 
-    echo "---> npm install --global @angular/cli@$ng_version"
-    sudo npm install --global pnpm turbo
+    echo "---> npm install --global pnpm turbo yarn"
+    sudo npm install --global pnpm turbo yarn
 
     echo ">> Installed applications '$appName' "
 }
