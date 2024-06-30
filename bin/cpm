@@ -2003,10 +2003,10 @@ nodejs_install() {
             ;;
         debian|ubuntu)
             curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
-            install nodejs npm node-gyp build-essential
+            install nodejs
             # # curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
             # # echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-            # sudo apt-get update
+            sudo apt-get update
             # sudo apt-get install yarn -y
             echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
         ;;
