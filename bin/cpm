@@ -2012,11 +2012,11 @@ nodejs_install() {
         ;;
     esac
 
-    if [ "$(plateform)" != "alpine" ]; then
-        sudo npm install -g n && sudo /usr/local/bin/n $version
-        echo "---> npm install -g npm@$npm_version"
-        sudo npm install -g npm@$npm_version
-    fi
+    # if [ "$(plateform)" != "alpine" ]; then
+    #     sudo npm install -g n && sudo /usr/local/bin/n $version
+    #     echo "---> npm install -g npm@$npm_version"
+    #     sudo npm install -g npm@$npm_version
+    # fi
 
     echo "---> npm install --global @angular/cli@$ng_version"
     sudo npm install --global @angular/cli@$ng_version
