@@ -4280,9 +4280,9 @@ function user_add()
                 adduser -D --shell /bin/bash  $uid $home ${username}
             ;;
             debian) 
-                if [ -n "$home" ]; then home="-m -d $home"; fi
-                echo "useradd --shell /bin/bash $uid $gid $home ${username}"
-                useradd --shell /bin/bash $uid $gid $home ${username}
+                if [ -n "$home" ]; then home="-d $home"; fi
+                echo "useradd --shell /bin/bash -m  $uid $gid $home ${username}"
+                useradd --shell /bin/bash -m $uid $gid $home ${username}
                 id ${username}
             ;;
             *) 
