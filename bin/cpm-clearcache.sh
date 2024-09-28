@@ -13,6 +13,8 @@ sudo su -c "echo ${1:-1} > '/proc/sys/vm/drop_caches' && swapoff -a && swapon -a
 # crontab -e
 # 0  2  *  *  *  /path/to/clearcache.sh 
 
+# echo 1 > '/proc/sys/vm/drop_caches'
+
 #  echo "0  2  *  *  *  /opt/cenr/cpm-cli/bin/cpm-clearcache.sh 3" | crontab -
 #  echo "0  2  *  *  *  /opt/cenr/cenr-cli/bin/cpm-clearcache.sh 3" | crontab -
 #  echo "0  2  *  *  *  echo 3 > '/proc/sys/vm/drop_caches' && swapoff -a && swapon -a " | crontab -

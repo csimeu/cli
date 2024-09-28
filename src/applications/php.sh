@@ -56,6 +56,7 @@ function php_install()
 			esac
 		;;
         redhat)
+			install -y ImageMagick ImageMagick-devel
 			if [ "1" == "$IS_DEFAULT" ] ; then
 				PHP_DEFAULT_VERSION=${version:-$PHP_DEFAULT_VERSION}
 				version=
@@ -99,7 +100,7 @@ function php_install()
 			# for ext in $pecl_exts ; do  cmd+=" php$version-$ext"; done
 			# install php$version  $cmd
 			
-			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath opcache zip sqlite3"
+			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath opcache zip sqlite3 imagick xdebug apcu"
 			pecl_exts=
 			case ${version/./} in 
 				5|7) php_exts="$php_exts json  " 
@@ -248,11 +249,21 @@ function php_install()
 exec $_BIN_/php$version-cgi
 EOF
     fi
-	
 
 	sudo chmod 755 /var/www/cgi-bin/*.fcgi
 }
 
+
+if [ -f /etc/ImageMagick-6/policy.xml ] thenLiL
+	# 1. Sauvegarde du fichier original
+	sudo cp /etc/ImageMagick-6/policy.xml /etc/ImageMagick-6/policy.xml.backup
+
+	# 2. Supprimer les restrictions de formats PDF
+	sudo sed -i '/<policy domain="coder" rights="none" pattern="PDF"/d' /etc/ImageMagick-6/policy.xml
+
+	# 3. Supprimer toutes les autres restrictions
+	sudo sed -i '/<policy domain="coder" rights="none" pattern=/d' /etc/ImageMagick-6/policy.xml
+fi
 
 # ## detect if a script is being sourced or not
 # if [[ $_ == $0 ]] 
