@@ -18,10 +18,11 @@ help: ## Outputs this help screen
 
 
 ## —— Cli ————————————————————————————————————————————————————————————————
-build: ## Build
-	@cpm-build
+build: push ## Build
 
-push: build ## Git push
+
+push:  ## Git push
+	@cpm-build
 	(git add -A && git commit -m "@updates") || true
 	git checkout master && git merge devel && git co devel
 	git push $(remote) master
