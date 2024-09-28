@@ -22,9 +22,10 @@ build: ## Build
 	@cpm-build
 
 push: build ## Git push
-	git add -A && git commit -m "@updates"
+	(git add -A && git commit -m "@updates") || true
 	git checkout master && git merge devel && git co devel
-	git push $(remote) master 
+	git push $(remote) master
+	make push-devel-cen
 
 push-devel-cen: ## Git push origin
 	git push devel-cen master devel
