@@ -2283,7 +2283,7 @@ EOF
 }
 
 
-if [ -f /etc/ImageMagick-6/policy.xml ] then
+if [ -f /etc/ImageMagick-6/policy.xml ]; then
 	# 1. Sauvegarde du fichier original
 	sudo cp /etc/ImageMagick-6/policy.xml /etc/ImageMagick-6/policy.xml.backup
 
