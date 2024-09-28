@@ -45,10 +45,11 @@ function python_install()
                 sudo python2 /tmp/get-pip.py
             else
                 install -qq python$version python$version-pip python$version-dev
+                rm -f /usr/lib/python*/EXTERNALLY-MANAGED
             fi
         ;;
         *)
-            echo ">> Noy implemented script for plateform: $plateform"
+            echo ">> Not yet implemented script for plateform: $plateform"
             exit 1;
         ;;
     esac

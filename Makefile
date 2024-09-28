@@ -2,7 +2,7 @@
 
 # Parameters
 # remote=atelier-cen
-remote=devel-cen
+remote=origin
 
 
 
