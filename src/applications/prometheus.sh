@@ -24,7 +24,7 @@ function prometheus_install()
     # data=${data%"/"} 
     # INSTALL_DIR=${INSTALL_DIR%"/"} 
 
-    case `plateform_name` in 
+    case `platform_name` in 
         alpine)  
             install prometheus
             exit 0;

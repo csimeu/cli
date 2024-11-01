@@ -44,7 +44,7 @@ function php_install()
 	# for ext in $php_exts ; do  phps+=" php$pversion-$ext"; done
 	# for ext in $pecl_exts ; do  phps+=" php$pversion-pecl-$ext"; done
 
-    case `plateform` in 
+    case `platform` in 
         alpine)
 			# https://www.cyberciti.biz/faq/how-to-install-php-7-fpm-on-alpine-linux/
 			php_exts="$php_exts mysqlnd mysqli phar pdo pdo_mysql pdo_pgsql pdo_sqlite pdo_odbc pdo_dblib ctype curl iconv dom tokenizer dev exif common"
@@ -124,7 +124,7 @@ function php_install()
 
     if [[ $(getent passwd apache)  ]];
     then
-		case `plateform` in 
+		case `platform` in 
 			alpine) install php$version-apache2 ;;
 			debian|ubuntu)
 				install libapache2-mod-php$version
@@ -201,7 +201,7 @@ function php_install()
     if [ ! -f /usr/bin/composer ]
     then
 		curl -sS https://getcomposer.org/installer |sudo  php -- --install-dir=/usr/bin --filename=composer
-		# case `plateform` in 
+		# case `platform` in 
 		# 	alpine) install composer ;;
 		# 	*) curl -sS https://getcomposer.org/installer | php$version && sudo mv composer.phar /usr/bin/composer
 		# 	;;
@@ -210,7 +210,7 @@ function php_install()
 
     if [ ! -f /usr/bin/symfony ]
     then 
-		case `plateform` in 
+		case `platform` in 
 			redhat)
 				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.rpm.sh' | sudo -E bash
 				install symfony-cli
@@ -236,7 +236,7 @@ function php_install()
 
     local _BIN_="/bin"
 
-    if [[ "$OS_VERSION" == "6" || "$(plateform)" == "debian" || "$(plateform)" == "ubuntu" ]];
+    if [[ "$OS_VERSION" == "6" || "$(platform)" == "debian" || "$(platform)" == "ubuntu" ]];
     then
         _BIN_="/usr/bin"
     fi

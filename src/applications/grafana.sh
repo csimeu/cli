@@ -5,7 +5,7 @@
 
 
 grafana_add_repolist() {
-    case `plateform_name` in 
+    case `platform_name` in 
         redhat|fedora)  
             if [ ! -f /etc/yum.repos.d/grafana.repo ]; then 
                 sudo cat > /etc/yum.repos.d/grafana.repo << EOF

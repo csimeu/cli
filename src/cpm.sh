@@ -11,8 +11,8 @@
 # Stop on first error [duplicate]
 if [ -f /etc/os-release ];
 then 
-    OS_NAME=$(plateform_name)
-    OS_VERSION=$(plateform_version)
+    OS_NAME=$(platform_name)
+    OS_VERSION=$(platform_version)
 fi
 
 mkdir -p /tmp/releases

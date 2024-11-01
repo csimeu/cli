@@ -1,7 +1,7 @@
 #!/bin/bash
 
 install_ansible() {
-    case `plateform` in 
+    case `platform` in 
 
         debian|ubuntu)
             sudo apt update
@@ -17,7 +17,7 @@ install_ansible() {
         # alpine)
         # ;;
         *)
-            echo "No script implemented for this platform: $(plateform)";
+            echo "No script implemented for this platform: $(platform)";
             exit 100;
         ;;
     esac

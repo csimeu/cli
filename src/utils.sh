@@ -51,10 +51,10 @@ function is_alphanum()
 }
 
 
-# get plateform
-function plateform() 
+# get platform
+function platform() 
 {
-    local value=`plateform_name`
+    local value=`platform_name`
     case $value in
         centos|rhel|fedora|almalinux)
             value="redhat";
@@ -70,22 +70,22 @@ function plateform()
     echo $value
 }
 
-# get plateform name
-function plateform_name() 
+# get platform name
+function platform_name() 
 {
     local value=$(awk -F= '/^ID=/{print $2}' /etc/os-release)
     echo ${value//\"/}
 }
 
-# get plateform version
-function plateform_version() 
+# get platform version
+function platform_version() 
 {
     local value=$(awk -F= '/^VERSION_ID=/{print $2}' /etc/os-release)
     echo ${value//\"/}
 }
 
 
-# get plateform version
+# get platform version
 function os_type() 
 {
     local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
@@ -100,7 +100,7 @@ function os_type()
 }
 function is_alpine() 
 {
-    local value=$(plateform_name)
+    local value=$(platform_name)
     regex="^(alpine)$"
     if [[ $value =~ $regex ]]
     then 
@@ -140,7 +140,7 @@ function is_redhat()
 function install() 
 {
     # echo "sudo yum install $@"
-    case `plateform` in 
+    case `platform` in 
         debian|ubuntu)
             execute apt-get update
             execute apt-get install -y $@
@@ -163,7 +163,7 @@ function install()
 function remove() 
 {
     # echo "sudo yum remove $@"
-    case `plateform` in 
+    case `platform` in 
         debian|ubuntu)
             execute apt-get remove $@
         ;;
@@ -190,7 +190,7 @@ function command_resolver()
     
     case $cmd in 
         useradd) echo "${password}" | passwd $username --stdin ;;
-        usermod) if [ "$(plateform)" == "alpine" ]; then echo 'moduser'; fi;;
+        usermod) if [ "$(platform)" == "alpine" ]; then echo 'moduser'; fi;;
         *) echo $cmd ;;
     esac
     # name="INFRA_ADMIN_GROUP_UID LOGNAME INFRA_ADMIN_PASSWORD"
@@ -206,20 +206,20 @@ function servicectl()
     # echo "sudo yum install $@"
     case $cmd in 
         enable)
-            case `plateform` in 
+            case `platform` in 
                 alpine) rc-update add $svc;;
-                redhat) if [ "$(plateform_version)" == "6" ]; then execute chkconfig $svc on; else execute systemctl enable $svc; fi ;;
+                redhat) if [ "$(platform_version)" == "6" ]; then execute chkconfig $svc on; else execute systemctl enable $svc; fi ;;
             esac
             ;;
         disable)
-            case `plateform` in 
+            case `platform` in 
                 alpine) rc-update remove $svc;;
-                redhat) if [ "$(plateform_version)" == "6" ]; then execute chkconfig $svc off; else execute systemctl disable $svc; fi ;;
+                redhat) if [ "$(platform_version)" == "6" ]; then execute chkconfig $svc off; else execute systemctl disable $svc; fi ;;
             esac
             ;;
         *)
-            case `plateform` in 
-                redhat) if [ "$(plateform_version)" == "6" ]; then execute /etc/init.d/$svc $cmd; else  execute service $svc $cmd; fi ;;
+            case `platform` in 
+                redhat) if [ "$(platform_version)" == "6" ]; then execute /etc/init.d/$svc $cmd; else  execute service $svc $cmd; fi ;;
                 *) execute service $svc $cmd ;;
             esac
             ;;

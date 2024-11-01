@@ -12,7 +12,7 @@ nodejs_install() {
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     
-    case `plateform` in
+    case `platform` in
         alpine) 
             install nodejs npm g++
             install libc6-compat
@@ -37,7 +37,7 @@ nodejs_install() {
         ;;
     esac
 
-    if [ "$(plateform)" != "alpine" ]; then
+    if [ "$(platform)" != "alpine" ]; then
         # sudo npm install -g n && sudo /usr/local/bin/n $version
         echo "---> npm install -g npm@$npm_version"
         sudo npm install -g npm@$npm_version

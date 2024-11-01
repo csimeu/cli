@@ -16,12 +16,12 @@ function java_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    plateform=`plateform`
+    platform=`platform`
 
-    case $plateform in 
+    case $platform in 
         alpine)  install openjdk${version:-11} ;; 
         redhat)
-			if [[ `plateform_version` =~ 6 ]]; then 
+			if [[ `platform_version` =~ 6 ]]; then 
                 install java-1.8.0-openjdk-devel; 
             else 
                 install java-${version:-11}-openjdk-devel; 
@@ -34,7 +34,7 @@ function java_install()
             install openjdk-${version:-11}-jdk gnupg2
         ;;
         *)
-            echo ">> Noy implemented script for plateform: $plateform"
+            echo ">> Noy implemented script for platform: $platform"
         ;;
     esac
 

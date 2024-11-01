@@ -95,10 +95,10 @@ function is_alphanum()
 }
 
 
-# get plateform
-function plateform() 
+# get platform
+function platform() 
 {
-    local value=`plateform_name`
+    local value=`platform_name`
     case $value in
         centos|rhel|fedora|almalinux)
             value="redhat";
@@ -114,22 +114,22 @@ function plateform()
     echo $value
 }
 
-# get plateform name
-function plateform_name() 
+# get platform name
+function platform_name() 
 {
     local value=$(awk -F= '/^ID=/{print $2}' /etc/os-release)
     echo ${value//\"/}
 }
 
-# get plateform version
-function plateform_version() 
+# get platform version
+function platform_version() 
 {
     local value=$(awk -F= '/^VERSION_ID=/{print $2}' /etc/os-release)
     echo ${value//\"/}
 }
 
 
-# get plateform version
+# get platform version
 function os_type() 
 {
     local value=$(awk -F= '/^ID_LIKE=/{print $2}' /etc/os-release)
@@ -144,7 +144,7 @@ function os_type()
 }
 function is_alpine() 
 {
-    local value=$(plateform_name)
+    local value=$(platform_name)
     regex="^(alpine)$"
     if [[ $value =~ $regex ]]
     then 
@@ -184,7 +184,7 @@ function is_redhat()
 function install() 
 {
     # echo "sudo yum install $@"
-    case `plateform` in 
+    case `platform` in 
         debian|ubuntu)
             execute apt-get update
             execute apt-get install -y $@
@@ -207,7 +207,7 @@ function install()
 function remove() 
 {
     # echo "sudo yum remove $@"
-    case `plateform` in 
+    case `platform` in 
         debian|ubuntu)
             execute apt-get remove $@
         ;;
@@ -234,7 +234,7 @@ function command_resolver()
     
     case $cmd in 
         useradd) echo "${password}" | passwd $username --stdin ;;
-        usermod) if [ "$(plateform)" == "alpine" ]; then echo 'moduser'; fi;;
+        usermod) if [ "$(platform)" == "alpine" ]; then echo 'moduser'; fi;;
         *) echo $cmd ;;
     esac
     # name="INFRA_ADMIN_GROUP_UID LOGNAME INFRA_ADMIN_PASSWORD"
@@ -250,20 +250,20 @@ function servicectl()
     # echo "sudo yum install $@"
     case $cmd in 
         enable)
-            case `plateform` in 
+            case `platform` in 
                 alpine) rc-update add $svc;;
-                redhat) if [ "$(plateform_version)" == "6" ]; then execute chkconfig $svc on; else execute systemctl enable $svc; fi ;;
+                redhat) if [ "$(platform_version)" == "6" ]; then execute chkconfig $svc on; else execute systemctl enable $svc; fi ;;
             esac
             ;;
         disable)
-            case `plateform` in 
+            case `platform` in 
                 alpine) rc-update remove $svc;;
-                redhat) if [ "$(plateform_version)" == "6" ]; then execute chkconfig $svc off; else execute systemctl disable $svc; fi ;;
+                redhat) if [ "$(platform_version)" == "6" ]; then execute chkconfig $svc off; else execute systemctl disable $svc; fi ;;
             esac
             ;;
         *)
-            case `plateform` in 
-                redhat) if [ "$(plateform_version)" == "6" ]; then execute /etc/init.d/$svc $cmd; else  execute service $svc $cmd; fi ;;
+            case `platform` in 
+                redhat) if [ "$(platform_version)" == "6" ]; then execute /etc/init.d/$svc $cmd; else  execute service $svc $cmd; fi ;;
                 *) execute service $svc $cmd ;;
             esac
             ;;
@@ -359,7 +359,7 @@ function alertmanager_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    # case `plateform_name` in 
+    # case `platform_name` in 
     #     alpine)  
     #         install alertmanager
     #         exit 0;
@@ -419,7 +419,7 @@ EOF
 #!/bin/bash
 
 install_ansible() {
-    case `plateform` in 
+    case `platform` in 
 
         debian|ubuntu)
             sudo apt update
@@ -435,7 +435,7 @@ install_ansible() {
         # alpine)
         # ;;
         *)
-            echo "No script implemented for this platform: $(plateform)";
+            echo "No script implemented for this platform: $(platform)";
             exit 100;
         ;;
     esac
@@ -447,7 +447,7 @@ install_ansible() {
 
 apache_install() {
     
-    case `plateform` in 
+    case `platform` in 
         alpine)
             # https://github.com/nimmis/docker-alpine-apache/blob/master/Dockerfile
             install apache2 apache2-ssl apache2-mod-wsgi apache2-proxy libxml2-dev apache2-utils
@@ -694,8 +694,8 @@ EOF
 
 
 elk_import_repolist() {
-    # echo $(plateform)
-    case `plateform` in 
+    # echo $(platform)
+    case `platform` in 
         debian|ubuntu)
             # echo "debian"
             if [[ ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]]; then
@@ -792,7 +792,7 @@ kibana_install() {
         *);;
     esac
 
-    case `plateform` in 
+    case `platform` in 
         alpine)
             install nodejs curl
             sudo curl -fSL https://artifacts.elastic.co/downloads/kibana/kibana-${version}-linux-x86_64.tar.gz -o /tmp/kibana-${version}-linux-x86_64.tar.gz
@@ -820,7 +820,7 @@ kibana_install() {
 #     local _parameters=
 #     read_application_arguments $@ 
     
-#     case `plateform` in 
+#     case `platform` in 
 #         alpine)
 #             install nodejs curl && \
 #     curl -LO https://artifacts.elastic.co/downloads/kibana/kibana-${KIBANA_VERSION}-linux-x64.tar.gz && \
@@ -1154,7 +1154,7 @@ fuseki_install() {
 
 
 grafana_add_repolist() {
-    case `plateform_name` in 
+    case `platform_name` in 
         redhat|fedora)  
             if [ ! -f /etc/yum.repos.d/grafana.repo ]; then 
                 sudo cat > /etc/yum.repos.d/grafana.repo << EOF
@@ -1223,12 +1223,12 @@ function java_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    plateform=`plateform`
+    platform=`platform`
 
-    case $plateform in 
+    case $platform in 
         alpine)  install openjdk${version:-11} ;; 
         redhat)
-			if [[ `plateform_version` =~ 6 ]]; then 
+			if [[ `platform_version` =~ 6 ]]; then 
                 install java-1.8.0-openjdk-devel; 
             else 
                 install java-${version:-11}-openjdk-devel; 
@@ -1241,7 +1241,7 @@ function java_install()
             install openjdk-${version:-11}-jdk gnupg2
         ;;
         *)
-            echo ">> Noy implemented script for plateform: $plateform"
+            echo ">> Noy implemented script for platform: $platform"
         ;;
     esac
 
@@ -1565,7 +1565,7 @@ function mariadb_install()
 	local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
     
 
-    case `plateform` in
+    case `platform` in
         alpine) install mariadb-server ;;
         redhat)
 			install mariadb-server
@@ -1735,7 +1735,7 @@ function mysql_install()
 	
 	cd /tmp/releases
 
-    case `plateform` in
+    case `platform` in
         alpine) 
 			install mysql mysql-client 
 			sudo mkdir -p /run/mysqld && sudo chown mysql:mysql /run/mysqld 
@@ -1777,7 +1777,7 @@ function mysql_install()
 	
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG mysql $ADMIN_USER; fi
 
-    case `plateform` in 
+    case `platform` in 
         redhat)
 			if [ -f /usr/libexec/mysqld ]; then sudo setcap -r /usr/libexec/mysqld; fi
 			if [ -f /usr/libexec/mysql-check-socket ]; then 
@@ -2014,7 +2014,7 @@ nodejs_install() {
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
     
-    case `plateform` in
+    case `platform` in
         alpine) 
             install nodejs npm g++
             install libc6-compat
@@ -2039,7 +2039,7 @@ nodejs_install() {
         ;;
     esac
 
-    if [ "$(plateform)" != "alpine" ]; then
+    if [ "$(platform)" != "alpine" ]; then
         # sudo npm install -g n && sudo /usr/local/bin/n $version
         echo "---> npm install -g npm@$npm_version"
         sudo npm install -g npm@$npm_version
@@ -2099,7 +2099,7 @@ function php_install()
 	# for ext in $php_exts ; do  phps+=" php$pversion-$ext"; done
 	# for ext in $pecl_exts ; do  phps+=" php$pversion-pecl-$ext"; done
 
-    case `plateform` in 
+    case `platform` in 
         alpine)
 			# https://www.cyberciti.biz/faq/how-to-install-php-7-fpm-on-alpine-linux/
 			php_exts="$php_exts mysqlnd mysqli phar pdo pdo_mysql pdo_pgsql pdo_sqlite pdo_odbc pdo_dblib ctype curl iconv dom tokenizer dev exif common"
@@ -2179,7 +2179,7 @@ function php_install()
 
     if [[ $(getent passwd apache)  ]];
     then
-		case `plateform` in 
+		case `platform` in 
 			alpine) install php$version-apache2 ;;
 			debian|ubuntu)
 				install libapache2-mod-php$version
@@ -2256,7 +2256,7 @@ function php_install()
     if [ ! -f /usr/bin/composer ]
     then
 		curl -sS https://getcomposer.org/installer |sudo  php -- --install-dir=/usr/bin --filename=composer
-		# case `plateform` in 
+		# case `platform` in 
 		# 	alpine) install composer ;;
 		# 	*) curl -sS https://getcomposer.org/installer | php$version && sudo mv composer.phar /usr/bin/composer
 		# 	;;
@@ -2265,7 +2265,7 @@ function php_install()
 
     if [ ! -f /usr/bin/symfony ]
     then 
-		case `plateform` in 
+		case `platform` in 
 			redhat)
 				curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.rpm.sh' | sudo -E bash
 				install symfony-cli
@@ -2291,7 +2291,7 @@ function php_install()
 
     local _BIN_="/bin"
 
-    if [[ "$OS_VERSION" == "6" || "$(plateform)" == "debian" || "$(plateform)" == "ubuntu" ]];
+    if [[ "$OS_VERSION" == "6" || "$(platform)" == "debian" || "$(platform)" == "ubuntu" ]];
     then
         _BIN_="/usr/bin"
     fi
@@ -2330,7 +2330,7 @@ fi
 
 
 postgresql_add_repolist() {
-    case `plateform_name` in 
+    case `platform_name` in 
         debian|ubuntu)
             if [[ ! -f /etc/apt/sources.list.d/pgdg.list ]]; then
                 cd /tmp
@@ -2368,7 +2368,7 @@ function postgis_install()
     _postgresql_version=${postgresql_version:-$_postgresql_version}
     _postgis_version=${postgis_version:-$_postgis_version}
 
-    case `plateform` in 
+    case `platform` in 
         alpine)
             install postgis ;;
         debian|ubuntu)
@@ -2414,7 +2414,7 @@ function postgresql_install()
     # PG_BIN="/usr/pgsql-${_postgresql_version}/bin"
 
 
-    case `plateform` in 
+    case `platform` in 
         alpine)
             install postgresql$_postgresql_version  postgresql$_postgresql_version-openrc postgresql$_postgresql_version-contrib
             sudo mkdir -p /run/postgresql
@@ -2712,7 +2712,7 @@ function prometheus_install()
     # data=${data%"/"} 
     # INSTALL_DIR=${INSTALL_DIR%"/"} 
 
-    case `plateform_name` in 
+    case `platform_name` in 
         alpine)  
             install prometheus
             exit 0;
@@ -2811,9 +2811,9 @@ function python_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    plateform=`plateform`
+    platform=`platform`
 
-    case $plateform in 
+    case $platform in 
         alpine)
             install python$version python$version-dev py$version-pip
         ;;
@@ -2848,7 +2848,7 @@ function python_install()
             fi
         ;;
         *)
-            echo ">> Not yet implemented script for plateform: $plateform"
+            echo ">> Not yet implemented script for platform: $platform"
             exit 1;
         ;;
     esac
@@ -2870,7 +2870,7 @@ function python_install()
 
 redis_install() {
     local appName=redis
-    case `plateform` in 
+    case `platform` in 
         redhat)
             case $OS_VERSION in 
                 6|7)
@@ -3850,7 +3850,7 @@ function proxy_load_config()
 {
     set -e
 
-    case `plateform` in 
+    case `platform` in 
         debian)
             sudo rm -f /etc/apt/apt.conf.d/proxy.conf
             sudo touch /etc/apt/apt.conf.d/proxy.conf
@@ -3900,7 +3900,7 @@ proxy_unset()
     unset https_proxy
     unset no_proxy
 
-    case `plateform` in 
+    case `platform` in 
         debian)
             sudo rm /etc/apt/apt.conf.d/proxy.conf
             ;;
@@ -3926,7 +3926,7 @@ proxy_unset()
 
 yum_set_proxy() 
 {
-    case `plateform` in 
+    case `platform` in 
         redhat)
             local proxy=${1:-$https_proxy}
             proxy=${proxy:-$http_proxy}
@@ -3939,7 +3939,7 @@ yum_set_proxy()
 }
 yum_unset_proxy() 
 {
-    case `plateform` in 
+    case `platform` in 
         redhat)
             sudo sed -i -e "/^proxy=.*/d" /etc/yum.conf;
         ;;
@@ -4042,9 +4042,9 @@ function mysql_service()
     # local serviceName= $1
     local cmd=$1
     
-    case `plateform` in 
+    case `platform` in 
         redhat)
-			if [[ `plateform_version` =~ 6 ]]; then 
+			if [[ `platform_version` =~ 6 ]]; then 
                 /etc/init.d/mysqld $cmd; 
             else 
                 systemctl $cmd mysqld; 
@@ -4298,7 +4298,7 @@ function user_add()
     
     if [ -n "${gid}" ]; then
         if [[ ! $(getent group ${username}) && ! $(getent group ${gid}) ]]; then 
-            case `plateform` in 
+            case `platform` in 
                 alpine) echo "addgroup -g $gid ${username}" ;;
                 *) 
                     groupadd -g $gid ${username}
@@ -4310,7 +4310,7 @@ function user_add()
     fi
 
     if ! getent passwd ${username} > /dev/null 2>&1; then
-        case `plateform` in 
+        case `platform` in 
             alpine) 
                 if [ -n "$home" ]; then home="-h $home"; fi
                 echo "adduser -D --shell /bin/bash $uid $home ${username}"
@@ -4333,7 +4333,7 @@ function user_add()
         # if [ -n "$home" && ! -d $home ]; then sudo mkdir -p $home; fi
     else
         echo "----> User ${username} already exists"
-        case `plateform` in 
+        case `platform` in 
             # alpine) moduser --shell /bin/bash $uid -g ${username} ${username};;
             *) usermod --shell /bin/bash $uid -g ${username} ${username};;
         esac
@@ -4344,7 +4344,7 @@ function user_add()
         # checks if user exit
         if ! $(getent group ${group})
         then
-            case `plateform` in 
+            case `platform` in 
                 # alpine) addgroup $group;;
                 *) groupadd $group;;
             esac
@@ -4353,14 +4353,14 @@ function user_add()
         fi
         
         
-        case `plateform` in 
+        case `platform` in 
             alpine) usermod -aG $group ${username};;
             *) usermod -aG $group ${username};;
         esac
     done
 
     if [ -n "$password" ]; then
-        case `plateform` in 
+        case `platform` in 
             redhat) echo "${password}" | passwd $username --stdin ;;
             # debian|ubuntu) echo -e "${password}\n${password}" | passwd $username ;;
             # alpine) echo -e "${password}\n${password}" | passwd $username ;;
@@ -4406,7 +4406,7 @@ function user_update()
     fi
 
     if [ -n "$uid" ] ; then
-        case `plateform` in 
+        case `platform` in 
             redhat) echo "${password}" | passwd $username --stdin ;;
             debian|ubuntu) echo -e "${password}" | passwd $username ;;
             *) echo -e "${password}" | passwd $username ;;
@@ -4422,7 +4422,7 @@ function user_update()
         # checks if user exit
         if ! $(getent group ${group})
         then
-            case `plateform` in 
+            case `platform` in 
                 # alpine) addgroup $group;;
                 *) groupadd $group;;
             esac            
@@ -4526,8 +4526,8 @@ function user_update()
 # Stop on first error [duplicate]
 if [ -f /etc/os-release ];
 then 
-    OS_NAME=$(plateform_name)
-    OS_VERSION=$(plateform_version)
+    OS_NAME=$(platform_name)
+    OS_VERSION=$(platform_version)
 fi
 
 mkdir -p /tmp/releases

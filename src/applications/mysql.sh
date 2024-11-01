@@ -18,7 +18,7 @@ function mysql_install()
 	
 	cd /tmp/releases
 
-    case `plateform` in
+    case `platform` in
         alpine) 
 			install mysql mysql-client 
 			sudo mkdir -p /run/mysqld && sudo chown mysql:mysql /run/mysqld 
@@ -60,7 +60,7 @@ function mysql_install()
 	
     if [[ -n "$ADMIN_USER" && $(getent passwd $ADMIN_USER)  ]]; then sudo usermod -aG mysql $ADMIN_USER; fi
 
-    case `plateform` in 
+    case `platform` in 
         redhat)
 			if [ -f /usr/libexec/mysqld ]; then sudo setcap -r /usr/libexec/mysqld; fi
 			if [ -f /usr/libexec/mysql-check-socket ]; then 

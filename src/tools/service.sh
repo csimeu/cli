@@ -11,9 +11,9 @@ function mysql_service()
     # local serviceName= $1
     local cmd=$1
     
-    case `plateform` in 
+    case `platform` in 
         redhat)
-			if [[ `plateform_version` =~ 6 ]]; then 
+			if [[ `platform_version` =~ 6 ]]; then 
                 /etc/init.d/mysqld $cmd; 
             else 
                 systemctl $cmd mysqld; 

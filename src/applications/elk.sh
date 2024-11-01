@@ -2,8 +2,8 @@
 
 
 elk_import_repolist() {
-    # echo $(plateform)
-    case `plateform` in 
+    # echo $(platform)
+    case `platform` in 
         debian|ubuntu)
             # echo "debian"
             if [[ ! -f /etc/apt/sources.list.d/elastic-$version.x.list ]]; then
@@ -100,7 +100,7 @@ kibana_install() {
         *);;
     esac
 
-    case `plateform` in 
+    case `platform` in 
         alpine)
             install nodejs curl
             sudo curl -fSL https://artifacts.elastic.co/downloads/kibana/kibana-${version}-linux-x86_64.tar.gz -o /tmp/kibana-${version}-linux-x86_64.tar.gz
@@ -128,7 +128,7 @@ kibana_install() {
 #     local _parameters=
 #     read_application_arguments $@ 
     
-#     case `plateform` in 
+#     case `platform` in 
 #         alpine)
 #             install nodejs curl && \
 #     curl -LO https://artifacts.elastic.co/downloads/kibana/kibana-${KIBANA_VERSION}-linux-x64.tar.gz && \

@@ -17,7 +17,7 @@ function alertmanager_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    # case `plateform_name` in 
+    # case `platform_name` in 
     #     alpine)  
     #         install alertmanager
     #         exit 0;

@@ -83,7 +83,7 @@ function proxy_load_config()
 {
     set -e
 
-    case `plateform` in 
+    case `platform` in 
         debian)
             sudo rm -f /etc/apt/apt.conf.d/proxy.conf
             sudo touch /etc/apt/apt.conf.d/proxy.conf
@@ -133,7 +133,7 @@ proxy_unset()
     unset https_proxy
     unset no_proxy
 
-    case `plateform` in 
+    case `platform` in 
         debian)
             sudo rm /etc/apt/apt.conf.d/proxy.conf
             ;;
@@ -159,7 +159,7 @@ proxy_unset()
 
 yum_set_proxy() 
 {
-    case `plateform` in 
+    case `platform` in 
         redhat)
             local proxy=${1:-$https_proxy}
             proxy=${proxy:-$http_proxy}
@@ -172,7 +172,7 @@ yum_set_proxy()
 }
 yum_unset_proxy() 
 {
-    case `plateform` in 
+    case `platform` in 
         redhat)
             sudo sed -i -e "/^proxy=.*/d" /etc/yum.conf;
         ;;

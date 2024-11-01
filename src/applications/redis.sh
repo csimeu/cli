@@ -2,7 +2,7 @@
 
 redis_install() {
     local appName=redis
-    case `plateform` in 
+    case `platform` in 
         redhat)
             case $OS_VERSION in 
                 6|7)

@@ -87,7 +87,7 @@ function user_add()
     
     if [ -n "${gid}" ]; then
         if [[ ! $(getent group ${username}) && ! $(getent group ${gid}) ]]; then 
-            case `plateform` in 
+            case `platform` in 
                 alpine) echo "addgroup -g $gid ${username}" ;;
                 *) 
                     groupadd -g $gid ${username}
@@ -99,7 +99,7 @@ function user_add()
     fi
 
     if ! getent passwd ${username} > /dev/null 2>&1; then
-        case `plateform` in 
+        case `platform` in 
             alpine) 
                 if [ -n "$home" ]; then home="-h $home"; fi
                 echo "adduser -D --shell /bin/bash $uid $home ${username}"
@@ -122,7 +122,7 @@ function user_add()
         # if [ -n "$home" && ! -d $home ]; then sudo mkdir -p $home; fi
     else
         echo "----> User ${username} already exists"
-        case `plateform` in 
+        case `platform` in 
             # alpine) moduser --shell /bin/bash $uid -g ${username} ${username};;
             *) usermod --shell /bin/bash $uid -g ${username} ${username};;
         esac
@@ -133,7 +133,7 @@ function user_add()
         # checks if user exit
         if ! $(getent group ${group})
         then
-            case `plateform` in 
+            case `platform` in 
                 # alpine) addgroup $group;;
                 *) groupadd $group;;
             esac
@@ -142,14 +142,14 @@ function user_add()
         fi
         
         
-        case `plateform` in 
+        case `platform` in 
             alpine) usermod -aG $group ${username};;
             *) usermod -aG $group ${username};;
         esac
     done
 
     if [ -n "$password" ]; then
-        case `plateform` in 
+        case `platform` in 
             redhat) echo "${password}" | passwd $username --stdin ;;
             # debian|ubuntu) echo -e "${password}\n${password}" | passwd $username ;;
             # alpine) echo -e "${password}\n${password}" | passwd $username ;;
@@ -195,7 +195,7 @@ function user_update()
     fi
 
     if [ -n "$uid" ] ; then
-        case `plateform` in 
+        case `platform` in 
             redhat) echo "${password}" | passwd $username --stdin ;;
             debian|ubuntu) echo -e "${password}" | passwd $username ;;
             *) echo -e "${password}" | passwd $username ;;
@@ -211,7 +211,7 @@ function user_update()
         # checks if user exit
         if ! $(getent group ${group})
         then
-            case `plateform` in 
+            case `platform` in 
                 # alpine) addgroup $group;;
                 *) groupadd $group;;
             esac            

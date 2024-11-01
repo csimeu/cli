@@ -9,7 +9,7 @@ function mariadb_install()
 	local MYSQL_RPM="mysql57-community-release-el7-9.noarch.rpm"
     
 
-    case `plateform` in
+    case `platform` in
         alpine) install mariadb-server ;;
         redhat)
 			install mariadb-server

@@ -3,7 +3,7 @@
 
 
 postgresql_add_repolist() {
-    case `plateform_name` in 
+    case `platform_name` in 
         debian|ubuntu)
             if [[ ! -f /etc/apt/sources.list.d/pgdg.list ]]; then
                 cd /tmp
@@ -41,7 +41,7 @@ function postgis_install()
     _postgresql_version=${postgresql_version:-$_postgresql_version}
     _postgis_version=${postgis_version:-$_postgis_version}
 
-    case `plateform` in 
+    case `platform` in 
         alpine)
             install postgis ;;
         debian|ubuntu)
@@ -87,7 +87,7 @@ function postgresql_install()
     # PG_BIN="/usr/pgsql-${_postgresql_version}/bin"
 
 
-    case `plateform` in 
+    case `platform` in 
         alpine)
             install postgresql$_postgresql_version  postgresql$_postgresql_version-openrc postgresql$_postgresql_version-contrib
             sudo mkdir -p /run/postgresql

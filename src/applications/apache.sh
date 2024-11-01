@@ -3,7 +3,7 @@
 
 apache_install() {
     
-    case `plateform` in 
+    case `platform` in 
         alpine)
             # https://github.com/nimmis/docker-alpine-apache/blob/master/Dockerfile
             install apache2 apache2-ssl apache2-mod-wsgi apache2-proxy libxml2-dev apache2-utils

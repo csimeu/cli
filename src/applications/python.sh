@@ -12,9 +12,9 @@ function python_install()
     read_application_arguments $@ 
     if [ -n "$_parameters" ]; then set $_parameters; fi
 
-    plateform=`plateform`
+    platform=`platform`
 
-    case $plateform in 
+    case $platform in 
         alpine)
             install python$version python$version-dev py$version-pip
         ;;
@@ -49,7 +49,7 @@ function python_install()
             fi
         ;;
         *)
-            echo ">> Not yet implemented script for plateform: $plateform"
+            echo ">> Not yet implemented script for platform: $platform"
             exit 1;
         ;;
     esac
