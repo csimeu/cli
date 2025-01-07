@@ -81,7 +81,7 @@ function php_install()
 				;;
 				*)
 					php_exts="$php_exts mysqlnd "
-					pecl_exts="$pecl_exts zip  "
+					pecl_exts="$pecl_exts zip redis  "
 				;;
 			esac
 
@@ -100,7 +100,7 @@ function php_install()
 			# for ext in $pecl_exts ; do  cmd+=" php$version-$ext"; done
 			# install php$version  $cmd
 			
-			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath opcache zip sqlite3 imagick xdebug apcu"
+			php_exts="fpm cli mysql pgsql odbc gd imap interbase intl mbstring ldap xml xmlrpc soap pdo curl bcmath opcache zip sqlite3 imagick xdebug apcu redis"
 			pecl_exts=
 			case ${version/./} in 
 				5|7) php_exts="$php_exts json  " 

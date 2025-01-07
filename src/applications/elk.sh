@@ -96,7 +96,7 @@ kibana_install() {
     if [ -n "$_parameters" ]; then set $_parameters; fi
     
     case "$version" in
-        "8") version=8.5.2 ;;
+        "8") version=8 ;;
         *);;
     esac
 
