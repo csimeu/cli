@@ -2,6 +2,7 @@
 
 # Install prometheus
 # https://www.fosslinux.com/10398/how-to-install-and-configure-prometheus-on-centos-7.htm
+# https://endoflife.date/prometheus
 
 
 
@@ -9,7 +10,7 @@ function prometheus_install()
 {
     set -e
     local appName=prometheus
-    local version=2.24.1
+    local version=2.53.3
     local data=/var/lib/$appName
     local port=9090
     # local prometheus_config=
