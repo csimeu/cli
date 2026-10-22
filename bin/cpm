@@ -2160,6 +2160,12 @@ function php_install()
 			case ${version/./} in 
 				5|7) php_exts="$php_exts json  " 
 				;;
+				# Sury PHP 8.5+: pdo/opcache are built into phpX.Y-common/cli (no separate debs).
+				# Requesting php8.5-opcache aborts apt and leaves the image without php.
+				85|86|87|88|89)
+					php_exts="${php_exts/ pdo / }"
+					php_exts="${php_exts/ opcache / }"
+				;;
 			esac
 
         ;;
