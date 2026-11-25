@@ -1172,7 +1172,7 @@ EOF
             install fontconfig freetype* urw-fonts
         ;;
 
-        debian|ubuntu)  
+        debian|ubuntu)
             # https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
             if [ ! -f /etc/apt/sources.list.d/grafana.list ]; then
                 install apt-transport-https software-properties-common wget
